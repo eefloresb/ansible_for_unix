@@ -1,0 +1,37 @@
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: copy file VBoxLinuxAdditions.run in remote server
+      ansible.builtin.copy:
+        src: /mnt/VBoxLinuxAdditions.run
+        dest: /root/
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Instalar VBoxLinuxAdditions
+      ansible.builtin.shell: |
+        set -o pipefail
+        cd /root
+        chmod +x VBoxLinuxAdditions.run
+        yes | ./VBoxLinuxAdditions.run --accept --confirm --nox11
+      args:
+        chdir: /root # Ruta al directorio que contiene VBoxLinuxAdditions.run
+      async: 300
+      poll: 0
+      register: result
+      #      async_timeout: 60
+
+    - name: Esperar hasta que el script termine
+      async_status:
+        jid: "{{ result.ansible_job_id }}"
+      register: job_result
+      until: job_result.finished
+      retries: 20
+      delay: 10
+      failed_when: false
+
+    - name: Reiniciar la máquina virtual
+      command: VBoxManage controlvm rhel8master reset
+      when: install_output.finished and install_output.rc != 0

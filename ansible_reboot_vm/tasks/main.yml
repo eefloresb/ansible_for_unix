@@ -1,0 +1,20 @@
+--- 
+  - name: Pause stop by execute reboot 
+    pause: 
+      prompt: "are you continue"
+      echo: yes
+
+  - name: sanity reboot of server 
+    when: sanity_reboot == "true"
+    reboot:
+      reboot_timeout: 300 
+
+  - name: Pause stop by execute reboot 
+    when: sanity_reboot == "true"
+    pause: 
+      prompt: "are you continue"
+      echo: yes
+
+  - name: sanity reboot of server 
+    reboot:
+      reboot_timeout: 300 

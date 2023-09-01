@@ -1,0 +1,10 @@
+---
+ - hosts: all
+   become: false
+   gather_facts: false 
+   tasks:
+    - name: show result the metric beat
+      ansible.builtin.command:
+        cmd: sudo systemctl status metricbeat.service
+
+

@@ -1,0 +1,10 @@
+---
+smbinst_share: //10.100.13.61/instaladores
+smbinst_user: gmdadmin
+smbinst_domain: MSHOME
+smbinst_pass: GmDlnxad
+#### Define Directorios puntos de Montaje para MAC
+smbinst_share_mac: /instaladores
+smbinst_hosts_mac: 10.100.13.61
+SUBSCRIPTIONKEY: "BMAT-3ZUV-R368-FECA-NTQT"
+volumen_mount: /mnt

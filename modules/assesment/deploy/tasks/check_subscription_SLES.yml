@@ -1,0 +1,10 @@
+---
+- name: Check registred Suse
+  ansible.builtin.command: SUSEConnect -s
+  register: subscription_status
+  changed_when: subscription_status.rc != 0
+  ignore_errors: true
+
+- name: Assigned register to value
+  ansible.builtin.set_fact:
+   os_subscription: "{{ subscription_status.stdout | from_json | json_query('[*].status') | first if subscription_status.rc == 0 else 'Not Registered' }}"

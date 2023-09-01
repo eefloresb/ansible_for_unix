@@ -1,0 +1,78 @@
+---
+- name: create directorio scripts into remote server
+  file:
+    path: /scripts
+    mode: '0755'
+    owner: root
+    group: root
+    state: directory
+
+- name: copiar scripts remotos
+  template:
+    src: "{{item}}"
+    dest: /scripts/{{item | regex_replace('\.j2$', '')}}.sh
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - check_internet.j2
+    - check_susbcription.j2
+
+- name: Ejecutar scripts remotos
+  command: bash /scripts/check_internet.sh
+  register:
+    _return_internet
+  failed_when: ( _return_internet.rc | int == 2 or _return_internet.rc | int == 1 )
+
+- name: validar suscription to SO
+  when: _return_internet.stdout == "Sucess"
+  command: bash /scripts/check_susbcription.sh
+  register:
+    _return_subscription
+  failed_when: ( _return_internet.rc | int == 2 or _return_internet.rc | int == 1 )
+
+- name: Registrar sistema Linux
+  when:
+    - _return_subscription.stdout == "NOTSubscribed"
+  include_tasks: linux-register.yml
+  ignore_errors: true
+
+- name: Update Samba Package
+  block:
+
+    - name: Update samba if RedHat family
+      when: ansible_os_family == "RedHat"
+      yum:
+        name: samba
+        state: latest
+      register: smb_check
+
+    - name: Update samba if Debian family
+      when: ansible_os_family == "Debian"
+      apt:
+        name: samba
+        state: latest
+      register: smb_check
+
+    - name: Update samba if Suse family
+      when: ansible_os_family == "Suse"
+      zypper:
+        name: samba
+        state: latest
+      register: smb_check
+
+- debug:
+    msg: "{{smb_check}}"
+
+- name: Unregister {{ansible-distribution}}
+  when: _return_subscription.stdout == "NOTSubscribed"
+  redhat_subscription:
+    state: absent
+
+- name: generate report to samba
+  shell:  |
+    echo "{{ansible_hostname}},{{ansible_default_ipv4.address}},{{ansible_system}},{{ "Paquete actualizado" if smb_check.rc == 0 else "el paquete no se pudo actualizar"}}" > {{file_report}}
+
+
+
+

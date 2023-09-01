@@ -1,0 +1,429 @@
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    IP_ADDR: "{{ ansible_all_ipv4_addresses[1] }}"
+    HOSTNAME: "{{ ansible_fqdn }}"
+    SHORTNAME: "{{ ansible_hostname }}"
+    SERVER_NAME: "rhel8master.labrhel.com"
+    DOMAIN: "labrhel.com"
+    REALM: "LABRHEL.COM"
+    LDAPHOME: "/home/ldap"
+    DNSGOOGLE: "8.8.8.8"
+  tasks:
+    - name: Add the ipv6 in server
+      ansible.builtin.lineinfile:
+        path: "/etc/sysctl.conf"
+        line: "{{ item }}"
+        state: present
+      loop:
+        - "net.ipv6.conf.lo.disable_ipv6=0"
+
+    - name: reemplace of file systctl.conf
+      ansible.builtin.lineinfile:
+        path: "/etc/sysctl.conf"
+        regexp: "net.ipv6.conf.all.disable_ipv6 = 1"
+        line: "net.ipv6.conf.all.disable_ipv6 = 0"
+
+    - name: reload configuration systctl.conf
+      ansible.builtin.command:
+        cmd: "sysctl -p"
+      register: systctl_std
+      changed_when: systctl_std.rc != 0
+
+    - name: Active the web console
+      ansible.builtin.systemd:
+        name: cockpit.socket
+        state: started
+        enabled: true
+
+    - name: starting and enabling Firewalld
+      ansible.builtin.service:
+        name: firewalld
+        state: started
+        enabled: true
+
+    - name: Masquerade the Network
+      ansible.builtin.firewalld:
+        state: enabled
+        masquerade: true
+        permanent: true
+      notify: reload_firewalld
+
+    - name: Install IPA Server and Others tools
+      ansible.builtin.yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - "@idm:DL1"
+        - ipa-server
+        - ipa-server-dns
+        - bind-dyndb-ldap
+        - "@Development tools"
+
+    - name: capture the uname -r
+      ansible.builtin.command:
+        cmd: |
+          uname -r
+      register: uname_r
+      changed_when: uname_r.rc != 0
+
+    - name: install guest additions on RHEL 8 / CentOS 8
+      ansible.builtin.dnf:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - tar
+        - bzip2
+        - kernel-devel-{{ uname_r.stdout }}
+        - kernel-headers
+        - perl
+        - gcc
+        - make
+        - elfutils-libelf-devel
+
+    - name: NFS utils installation
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - nfs-utils
+      notify: start_services
+
+    - name: Installing everything unattended
+      ansible.builtin.command: |
+        ipa-server-install --domain="{{ DOMAIN }}" --realm="{{ REALM }}" --ds-password=password --admin-password=password --hostname="{{ HOSTNAME }}" --ip-address="{{ IP_ADDR }}" --reverse-zone=20.168.192.in-addr.arpa. --forwarder="{{ DNSGOOGLE }}" --allow-zone-overlap --setup-dns --unattended
+      register: ipa_server_install
+      changed_when: ipa_server_install.rc != 0
+      ignore_errors: true
+      #when: HOSTNAME == "rhel8master.labrhel.com"
+
+    - name: Opening ports for http, https, ldap, ldaps, kerberos, kpasswd, dns, ntp
+      ansible.builtin.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+      loop:
+        - http
+        - https
+        - ldap
+        - ldaps
+        - kerberos
+        - kpasswd
+        - dns
+        - ntp
+        - ftp
+      notify: reload_firewalld
+
+    - name: Kerberos ticket for the rest of the configuration
+      ansible.builtin.shell:
+        cmd: echo -n 'password' | kinit admin
+      register: kinit_std
+      changed_when: kinit_std.rc != 0
+
+    - name: Changing default home directory on new user
+      ansible.builtin.command:
+        cmd: ipa config-mod --homedirectory="{{ LDAPHOME }}"
+      register: ipa_std
+      changed_when: ipa_std.rc != 0
+      ignore_errors: true
+
+    - name: create directory
+      ansible.builtin.file:
+        name: "{{ item }}"
+        state: directory
+        recurse: true
+        owner: root
+        group: root
+        mode: 0755
+      loop:
+        - "{{ LDAPHOME }}"
+        - /srv/nfs
+        - /srv/indirect/oeste
+        - /srv/indirect/centro
+        - /srv/indirect/este
+        - /srv/direct/externo
+
+    - name: add content to file exports
+      ansible.builtin.lineinfile:
+        path: /etc/exports
+        line: "{{ item }}"
+        state: present
+      loop:
+        - "{{ LDAPHOME }} *(rw)"
+        - "/srv/nfs *(rw)"
+        - "/srv/direct/externo *(rw)"
+        - "/srv/indirect *(rw)"
+
+    - name: "generate content for direct_file"
+      ansible.builtin.copy:
+        dest: /srv/direct/externo/direct_file.txt
+        mode: 0644
+        content: |
+          hola mundo direct
+
+    - name: "create file by cardinal points"
+      ansible.builtin.copy:
+        dest: "/srv/indirect/oeste/{{ item }}_file.txt"
+        content: |
+          {{ item }}
+        mode: 0644
+      loop:
+        - oeste
+        - este
+        - centro
+
+    - name: "change permise to directory"
+      ansible.builtin.shell: |
+        set -o pipefail
+        chown nobody /srv/nfs
+        chown -R nobody /srv/direct
+        chown -R nobody /srv/indirect
+        exportfs -vr
+      register: cmd_std
+      changed_when: cmd_std.rc != 0
+
+    - name: enabled services for firewalld input
+      ansible.builtin.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+      loop:
+        - mountd
+        - rpc-bind
+        - nfs
+      notify: reload_firewalld
+
+    - name: configure users for ldap
+      ansible.builtin.shell: |
+        set -o pipefail
+        mkdir ldapuser{1..5}
+        ipa user-add ldapuser1 --first=ldapuser1 --last=ldapuser1
+        ipa user-add ldapuser2 --first=ldapuser2 --last=ldapuser2
+        ipa user-add ldapuser3 --first=ldapuser3 --last=ldapuser3
+        ipa user-add ldapuser4 --first=ldapuser4 --last=ldapuser4
+        ipa user-add ldapuser5 --first=ldapuser5 --last=ldapuser5
+
+        echo 'password' | ipa passwd ldapuser1
+        echo 'password' | ipa passwd ldapuser2
+        echo 'password' | ipa passwd ldapuser3
+        echo 'password' | ipa passwd ldapuser4
+        echo 'password' | ipa passwd ldapuser5
+
+        chown ldapuser1 ldapuser1
+        chown ldapuser2 ldapuser2
+        chown ldapuser3 ldapuser3
+        chown ldapuser4 ldapuser4
+        chown ldapuser5 ldapuser5
+      args:
+        chdir: "{{ LDAPHOME }}"
+      when: HOSTNAME == "rhel8master.labrhel.com"
+
+    - name: Samba Configuration
+      ansible.builtin.file:
+        path: "{{ item }}"
+        mode: 0755
+        recurse: true
+        state: directory
+      loop:
+        - /srv/public
+        - /srv/samba
+
+    - name: create files
+      ansible.builtin.file:
+        path: "/srv/samba/{{ item }}"
+        state: touch
+        mode: 0644
+      loop:
+        - samba-user-1
+        - samba-user-2
+        - samba-user-3
+
+    - name: Creating the group
+      ansible.builtin.group:
+        name: userssamba
+        state: present
+
+    - name: change permise in directory
+      ansible.builtin.file:
+        path: /srv/samba
+        group: userssamba
+
+    - name: Installing Samba
+      ansible.builtin.yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - samba
+
+    - name: Creating usernames
+      ansible.builtin.user:
+        name: "{{ item.user }}"
+        password: "{{ item.password | password_hash('sha512') }}"
+        groups: userssamba
+        state: present
+      loop:
+        - { user: "sambauser1", password: "password" }
+        - { user: "sambauser2", password: "password" }
+        - { user: "sambauser3", password: "password" }
+
+    - name: Add samba user
+      ansible.builtin.expect:
+        command: smbpasswd -a "{{ item.user }}"
+        responses:
+          New SMB password: "{{ item.password }}"
+          Retype new SMB password: "{{ item.password }}"
+      loop:
+        - { user: "sambauser1", password: "password" }
+        - { user: "sambauser2", password: "password" }
+        - { user: "sambauser3", password: "password" }
+
+    - name: Firewall for Samba
+      ansible.builtin.firewalld:
+        service: samba
+        permanent: true
+        state: enabled
+      notify: reload_firewalld
+
+    - name: Editing the smb.conf to data directory
+      ansible.builtin.lineinfile:
+        path: /etc/samba/smb.conf
+        line: "{{ item }}"
+      loop:
+        - "[data]"
+        - "comment = data share"
+        - "path = /srv/samba"
+        - "write list = @userssamba"
+
+    - name: "the add configuration to smb"
+      ansible.builtin.lineinfile:
+        path: /etc/samba/smb.conf
+        insertafter: "[global]"
+        line: "a map to guest = bad user"
+
+    - name: Editing the smb.conf to public directory
+      ansible.builtin.lineinfile:
+        path: /etc/samba/smb.conf
+        line: "{{ item }}"
+      loop:
+        - "[public]"
+        - "comment = Public Directory"
+        - "path = /srv/public"
+        - "browseable = yes"
+        - "writable = yes"
+        - "guest ok = yes"
+        - "read only = no"
+
+    - name: Allow Samba to modify files in /srv/{samba,public}
+      ansible.builtin.sefcontext:
+        target: "{{ item }}"
+        setype: samba_share_t
+        state: present
+        ftype: a
+      loop:
+        - "/srv/samba(/.*)?"
+        - "/srv/public(/.*)?"
+
+    - name: restart daemon smb/nmb
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - smb
+        - nmb
+
+    - name: Restorecon in /srv
+      ansible.builtin.command:
+        cmd: restorecon -Rv /srv
+      register: restorecon_std
+      changed_when: restorecon_std.rc != 0
+
+    - name: Creating Network repo
+      ansible.builtin.file:
+        path: /var/www/html/repos
+        state: directory
+        recurse: true
+
+    - name: create the file base repo
+      ansible.builtin.file:
+        path: /var/www/html/repos/base.repo
+        state: touch
+        owner: root
+        group: root
+        mode: 0664
+
+    - name: Restorecon in /var/www/html
+      ansible.builtin.command: restorecon -Rvv /var/www/html
+      register: restorecon_std
+      changed_when: restorecon_std.rc != 0
+
+    - name: Creating Base Repo File - Base
+      ansible.builtin.lineinfile:
+        path: "/var/www/html/repos/base.repo"
+        line: "{{ item }}"
+        state: present
+      loop:
+        - "[base]"
+        - "name = Base Reporitory for RHEL 8"
+        - "baseurl = http://{{ SERVER_NAME }}/repos/rhel8/BaseOS"
+        - "enabled = 1"
+        - "gpgcheck = 0"
+
+    - name: Creating Base Repo File - AppStream
+      ansible.builtin.lineinfile:
+        path: /var/www/html/repos/base.repo
+        line: "{{ item }}"
+        state: present
+      loop:
+        - "[appstream]"
+        - "name = App Stream Reporitory for RHEL 8"
+        - "baseurl = http://{{ SERVER_NAME }}/repos/rhel8/AppStream"
+        - "enabled = 1"
+        - "gpgcheck = 0"
+
+    - name: add ip 192.168.20.50 resolv.conf
+      ansible.builtin.lineinfile:
+        path: /etc/resolv.conf
+        line: "nameserver 192.168.20.50"
+
+    - name: ipactl status
+      ansible.builtin.command:
+        cmd: ipactl status
+      register: ipactl_status
+      changed_when: ipactl_status.rc != 0
+
+    - name: show result ipactl_status
+      ansible.builtin.debug:
+        var: ipactl_status
+
+    - name: register in insigth
+      ansible.builtin.shell: |
+        insights-client --register
+      register: insights_result
+      changed_when: insights_result.rc != 0
+
+    - name: show insights_result
+      ansible.builtin.debug:
+        var: insights_result
+
+    - name: configure selinux for reportes-mon
+      ansible.builtin.sefcontext:
+        target: /scripts/reportes.sh
+        setype: bin_t
+        state: present
+
+  handlers:
+    - name: reload_firewalld
+      ansible.builtin.service:
+        name: firewalld
+        state: reloaded
+        enabled: true
+
+    - name: start_services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - nfs-server
+        - rpcbind

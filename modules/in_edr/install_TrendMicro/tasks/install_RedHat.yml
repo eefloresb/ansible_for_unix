@@ -1,0 +1,12 @@
+---
+    - name: copy file installer to /usr/local/src/
+      copy:
+        src: "{{file_installer}}{{ansible_distribution_major_version}}-{{file_installer_number}}-{{file_installer_version}}.{{ansible_machine}}.rpm"
+        dest: /usr/local/src/
+
+    - name: install when redhat family
+      block:
+      - name: Install in {{ansible_distribution}} - {{ansible_distribution_major_version}}
+        yum:
+          name: "/usr/local/src/{{file_installer}}{{ansible_distribution_major_version}}-{{file_installer_number}}-{{file_installer_version}}.{{ansible_machine}}.rpm"
+          state: present

@@ -1,0 +1,37 @@
+---
+ - hosts: all 
+   become: true
+   gather_facts: true 
+   vars:
+    usuarios: 
+      - name: securitysoft 
+        comment: "Seguridad de Información"
+        password: "AiVie4ok"
+
+   tasks:
+
+   - name: crear grupo 
+     ansible.builtin.group:
+      name: "seguridad"
+      state: present 
+
+   - name: crear usuario remoto 
+     ansible.builtin.user:
+        name: "{{ item.name }}"
+        comment: "{{ item.comment }}" 
+        password: "{{ item.password | password_hash('sha512') }}"
+        groups:
+          - seguridad
+          - users 
+        group: seguridad 
+     loop: "{{ usuarios }}"
+
+   - name: elevar privilegios 
+     ansible.builtin.template:
+      src: ./sudoadmin.j2 
+      dest: /etc/sudoers.d/securitysoft 
+      owner: root 
+      group: root
+      validate: /usr/sbin/visudo -cf %s
+     loop: "{{ usuarios }}"
+

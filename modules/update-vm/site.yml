@@ -1,0 +1,23 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+
+    - include_vars:
+        file: ./vars_update.yml 
+
+  #    - include_role: 
+    #     name: os_previas
+
+  #    - include_role: 
+  #        name: os_take_photo 
+  #
+    - include_role: 
+        name: os_register 
+  
+    - include_role:
+        name: os_report
+  #
+  #  #    - include_role:   
+  #         name: os_update    

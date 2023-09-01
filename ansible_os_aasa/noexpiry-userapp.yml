@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Identificar el Sistema Operativo
+      command: uname
+      register: ansible_os
+
+    - name: Remover expiracion de usuarios de aplicacion (AIX)
+      shell: grep -Ei "^[[:alpha:]]+adm:" /etc/passwd | cut -d ":" -f 1 | while read user; do chuser maxage=0 $user ; done
+      when: ansible_os.stdout == 'AIX'
+
+    - name: Remover expiracion de usuarios de aplicacion (Linux)
+      shell: grep -Ei "^[[:alpha:]]+adm:" /etc/passwd | cut -d ":" -f 1 | while read user; do chage -M 999999 $user ; done
+      when: ansible_os.stdout == 'Linux'

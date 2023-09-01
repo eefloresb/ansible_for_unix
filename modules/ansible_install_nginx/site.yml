@@ -1,0 +1,11 @@
+---
+- hosts: all
+  tasks:
+
+  - name: capture valus from gather_facts 
+    include_role:
+        name: ../ansible_os_basevars
+
+  - name: install nginx in remote server
+    ansible.builtin.include_role:
+        name: deploy

@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    - password: "quicee2Y$%.Mk14"
+  tasks: 
+
+    - name: crear grupo mqm en el servidor remoto
+      ansible.builtin.group:
+        name: mqm
+        state: present
+    
+    - name: crear usuario mqm en el servidor remoto
+      ansible.builtin.user:
+        name: mqm
+        state: present
+        groups: mqm
+        password: "{{ password | password_hash('sha512') }}"
+        create_home: true
+        home: /home/mqm
+        shell: /bin/bash 
+        update_password: on_create
+     
+    

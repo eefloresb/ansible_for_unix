@@ -1,0 +1,19 @@
+---
+- name: Avg consume cpu in %
+  ansible.builtin.shell: |
+   top -b -n 2 | grep -iE "^%?cpu"|awk -F "," '{print $4}'|grep -Eo "[[:digit:]]+\.?[[:digit:]]*"|awk 'BEGIN{SUM+=SUM+$1}END{print 100-$SUM/NR}'
+  register: get_cpu_per
+  changed_when: get_cpu_per.rc != 0
+
+- name: Show process consume cpu
+  when: get_cpu_per.stdout|int > 85
+  ansible.builtin.shell: |
+   top -b -n 1 | grep -v top | awk 'NR > 7 {print $9, $12}' | sort -rnk 1 | head -n 1
+  register: proccess_cpu
+  changed_when: proccess_cpu.rc != 0
+
+- name: Avg consume mem in %
+  ansible.builtin.shell: |
+   bash /scripts/check_mem_used.sh
+  register: get_mem_per
+  changed_when: get_mem_per.rc != 0

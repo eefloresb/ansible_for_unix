@@ -1,0 +1,10 @@
+---
+ - hosts: all
+   tasks: 
+   # reject the value what init with loop and dm  
+    - ansible.builtin.set_fact: 
+        my_devices: "{{ ansible_devices.keys() | reject('match','(^loop(.*)$|^dm(.*)$)') | list }}"
+
+    - debug:
+        msg: "{{item}} {{ ansible_devices[item].size }}"
+      loop: "{{ my_devices }}"

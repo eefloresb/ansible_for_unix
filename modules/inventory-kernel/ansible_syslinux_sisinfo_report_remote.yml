@@ -1,0 +1,57 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    report_file: reporte.csv
+  tasks:
+    - name: Crear nuevo archivo de reporte
+      local_action:
+        module: copy
+        dest: "{{ report_file }}"
+        content: |
+          "Hostname","IP principal","Sistema operativo","Arquitectura","Version de kernel","Cores","Memoria (MB)","Swap (MB)","Dias encendido","Todas las IPs"
+
+- hosts: all
+#  connection: local
+  become: true
+  gather_facts: true
+  vars:
+    report_file: reporte.csv
+  tasks:
+    - name: Obtener version de distribucion Linux (Red Hat/CentOS)
+      shell: grep -oE "release ([0-9]\.?)+" /etc/redhat-release | awk '{ print $2 }'
+      register: redhat_release
+      when: ansible_os_family == 'RedHat'
+
+    - name: Obtener version de distribucion Linux (SUSE)
+      shell: echo $(grep -w "VERSION" /etc/SuSE-release | awk '{ print $3 }').$(grep -w "PATCHLEVEL" /etc/SuSE-release | awk '{ print $3 }')
+      register: suse_release
+      when: ansible_os_family == 'Suse'
+
+    - name: Obtener version de distribucion Linux (Debian/Ubuntu)
+      shell: grep -w "VERSION" /etc/os-release | cut -d = -f 2 | awk '{ print $1 }' | tr -d '"'
+      register: debian_release
+      when: ansible_os_family == 'Debian'
+
+    - name: Configurar variable os_release (Red Hat/CentOS)
+      set_fact:
+        os_release: "{{ redhat_release.stdout | default(omit) }}"
+      when: redhat_release.stdout is defined
+
+    - name: Configurar variable os_release (SUSE)
+      set_fact:
+        os_release: "{{ suse_release.stdout | default(omit) }}"
+      when: suse_release.stdout is defined
+
+    - name: Configurar variable os_release (Debian/Ubuntu)
+      set_fact:
+        os_release: "{{ debian_release.stdout | default(omit) }}"
+      when: debian_release.stdout is defined
+
+    - name: Escribir reporte
+      shell: |
+        echo "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ ansible_system }} {{ ansible_distribution }} {{ os_release | default(omit) }}," \
+        "{{ ansible_architecture }},{{ ansible_kernel }},{{ ansible_processor_count }},{{ ansible_memtotal_mb }},{{ ansible_swaptotal_mb }}," \
+        "{{ ansible_uptime_seconds // 86400 }},{{ ansible_all_ipv4_addresses | list }}" >> {{ report_file }}
+      delegate_to: localhost
+      register: result

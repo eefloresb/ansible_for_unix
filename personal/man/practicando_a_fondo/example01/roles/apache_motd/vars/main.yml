@@ -1,0 +1,8 @@
+---
+server_admin: eflores@canvia.com
+web_root: "/var/www/html"
+curso: "Ansible, Automation - road to certification EX407"
+instructor: "Fidel Valero"
+srv: httpd
+fw: firewalld
+fw_srv: httpd 

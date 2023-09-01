@@ -1,0 +1,20 @@
+---
+ - hosts: localhost
+   connection: local
+   vars:
+    - file_report: smb_report.scv
+   tasks:
+    - name: create report log
+      copy:
+        dest: "{{file_report}}"
+        content: |
+          Hostname,IP Address, System, Details
+
+
+ - hosts: all
+   become: true
+   gather_facts: true
+   tasks:
+
+    - ansible.builtin.include_role:
+        name: fixed

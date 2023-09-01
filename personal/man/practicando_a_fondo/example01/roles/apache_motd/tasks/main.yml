@@ -1,0 +1,35 @@
+---
+- hosts: group1
+  tasks: 
+    - name: install httpd
+      yum: 
+        name: httpd 
+        state: latest
+
+    - name: begin {{ srv }}
+      service: 
+        name: "{{srv}}"
+        state: started 
+        enabled: true
+
+    - name: open to {{ firewalld }}
+      firewalld: 
+        service: "{{fw_srv}}"
+        inmediate: true 
+        permanent: true 
+        state: enabled
+
+    - name: the copy templates for HTTP 
+      template: 
+        src: httpd.conf.j2 
+        dest: /etc/httpd/conf/httpd.conf 
+        
+    - name: set opening for ssh 
+      template: 
+        src: motd.j2 
+        dest: /etc/motd 
+    
+    - name: service restarted 
+      service: 
+        name: httpd 
+        state: restarted 

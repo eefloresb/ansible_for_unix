@@ -1,0 +1,38 @@
+---
+  - name: copy script a achivo sudo 
+    template: 
+      src: change_sudo.j2
+      dest: /scripts/change_sudo.sh 
+      mode: 0755
+      owner: root
+
+  - name: "Añadir los usuarios solicitados a sudoers"
+    lineinfile:
+      path: /etc/sudoers
+      regexp: '^{{user.name}}.*ALL'
+      line: '{{user.name}} ALL=(ALL) NOPASSWD: ALL'
+      validate: '/usr/sbin/visudo -cf %s'
+      backup: yes
+    loop: '{{ users }}'
+    loop_control:  
+      loop_var: user
+
+  - name: "Inicializar el servicio at"
+    failed_when: 1 == 2
+    command: which atd
+    register: atd_check
+
+  - name: install package {{ ansible_os_family}}
+    when: atd_check.rc != 0
+    include_tasks: install_{{ansible_os_family}}.yml
+
+  - name: "Inicializar el servicio at"
+    command: atd
+
+  - name: "Rotas el permiso por usuario para un periodo de {{ days }} días"
+    shell:
+      echo "bash /scripts/change_sudo.sh {{ user.name }}" | at -m now +{{days}} days
+    loop: '{{ users }}'
+    loop_control:
+      loop_var: user
+      label: "{{user.name }}"

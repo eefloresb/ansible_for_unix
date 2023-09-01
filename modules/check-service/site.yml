@@ -1,0 +1,69 @@
+- name: Validar DNS y conectividad a Internet
+  hosts: all
+  become: true
+  tasks:
+
+  - name: Checkear internet para familia redhat
+    when: 
+      - ansible_os_family == "RedHat" or ansible_os_family != "SuSe"
+    block:
+      - name: Verificar DNS
+        command: dig redhat.com
+        register: dig_output
+        ignore_errors: true
+
+      - name: Validar salida DNS
+        fail:
+          msg: "No se puede resolver el dominio redhat.com"
+        when: "'status: NOERROR' in dig_output.stdout_lines"
+
+      - name: Verificar conectividad a Internet
+        uri:
+          url: https://redhat.com/en
+          return_content: no
+        register: uri_output
+        ignore_errors: true
+
+      - name: Validar salida de Internet
+        fail:
+          msg: "No se puede acceder a redhat.com"
+        when: uri_output.status != 200
+
+  - name: Checkear internet para familia SuSe
+    when: ansible_os_family == "SuSe"
+    block:
+   
+    - name: Verificar DNS
+      command: dig suse.com
+      register: dig_output2
+      ignore_errors: true
+
+    - name: Validar salida DNS
+      fail:
+        msg: "No se puede resolver el dominio suse.com"
+      when: "'status: NOERROR' in dig_output2.stdout_lines"
+
+    - name: Verificar conectividad a Internet
+      uri:
+        url: https://scc.suse.com
+        return_content: no
+      register: uri_output2
+      ignore_errors: true
+
+    - name: Validar salida de Internet
+      fail:
+        msg: "No se puede acceder a suse.com"
+      when: uri_output2.status != 200
+
+  - name: Check OS subscription status
+    command: >
+      {% if ansible_distribution == 'SLES' %}
+        SUSEConnect -s
+      {% elif ansible_distribution == 'RedHat' %}
+        subscription-manager status | grep -i 'overall status:' | awk '{print $NF}'
+      {% endif %}
+    register: subscription_status
+    ignore_errors: true
+  
+  - set_fact:
+      os_subscription: "{{ subscription_status.stdout.strip() if subscription_status.rc == 0 else 'Not Registered' }}"

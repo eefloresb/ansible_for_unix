@@ -1,0 +1,27 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: true 
+  tasks: 
+
+   - name: create directory in remote server 
+     ansible.builtin.file:
+      path: /scripts/
+      state: present 
+      owner: root
+      group: root
+      mode: 0755
+
+   - name: copy the script in remote server 
+     ansible.builtin.tempfile:
+      src: templates/script_rhel8_beta.j2 
+      dest: /scripts/script_rhel8_beta.sh 
+
+   - name: execute script in remote server 
+     ansible.builtin.shell: | 
+      bash /scripts/script_rhel8_beta.sh
+     register: out_script 
+
+   - name: show the results execute in remote server 
+     ansible.builtin.debug:
+      var: out_script

@@ -1,0 +1,42 @@
+- hosts: localhost
+  become: true
+  connection: local
+  vars:
+    file: "tcp_listen_vm.csv"
+  gather_facts: true
+  tasks:
+    - name: generar datos de columnas iniciales
+      ansible.builtin.copy:
+        content: |
+          IPAddress,Hostname,Port Listen, Type Connection, command
+        dest: ~/data/{{ file }}
+        mode: "0644"
+      become: false
+
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    file: "tcp_listen_vm.csv"
+  tasks:
+    - name: capture ipaddress from remote server
+      ansible.builtin.set_fact:
+        ipaddress: "{{ ansible_host }}"
+
+    - name: capture hostname from remote server
+      ansible.builtin.set_fact:
+        hostname: "{{ ansible_hostname }}"
+
+    - name: tcp ports facts
+      community.general.listen_ports_facts:
+
+    - name: crear archivo csv
+      ansible.builtin.shell:
+        cmd: |
+          {% for port in ansible_facts['tcp_listen'] %}
+          echo "{{ ipaddress }},{{ hostname }},{{ port.address }},{{ port.port }},{{port.protocol}},{{ port.pid }},{{ port.name }}" >> "/Users/eflores/data/{{ file }}"
+          {% endfor %}
+      delegate_to: localhost
+      register: command_std
+      changed_when: command_std.rc != 0
+      become: false

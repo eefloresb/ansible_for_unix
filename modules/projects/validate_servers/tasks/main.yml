@@ -1,0 +1,52 @@
+---
+# Validar python 
+- name: check python version 
+  when: 2 == 1
+  raw: | 
+    python --version 
+  register: stdout_python
+
+# Validar shell 
+- name: check shell 
+  raw: | 
+    echo $SHELL
+  register: stdout_shell
+
+# Validar version del SO y Soporte 
+- name: check level SO
+  raw: | 
+    # Función para detectar la distribución y llamar a la función de actualización correspondiente
+
+# Validar FECHA  
+- name: check date now 
+
+# Validar DNS
+- name: check dns 
+
+# Validar Internet
+- name: check internet
+
+# Retornar Validar Internet
+- name: return check internet 
+
+# Validar Proxy Reverso
+- name: check proxy Reverso
+
+# Validar accesos por dominios de acuerdo al SO
+- name: check domains
+
+# Validar repositorios
+- name: check repositories
+
+# Validar suscripciones
+- name: check subscription 
+
+# Validar espacios a nivel del disco /usr /tmp o / 
+- name: check size disk 
+
+# Validar reinicio del SO
+- name: check sanity reboot 
+
+# Generar reportes
+- name: generate report 
+

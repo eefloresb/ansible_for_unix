@@ -1,0 +1,143 @@
+---
+base_packages:
+# Dev tools
+  - build-essential
+  - zlib1g-dev
+  - libncurses5-dev
+  - libgdbm-dev
+  - libnss3-dev
+  - libssl-dev
+  - libreadline-dev
+  - libffi-dev
+  - libsqlite3-dev
+  - libbz2-dev
+# Administration from SO
+  - ack
+  - at
+  - bc
+  - bridge-utils
+  - bsdmainutils
+  - build-essential
+  - ca-certificates
+  - ccze
+  - curl
+  - exfat-fuse
+  - fd
+  - finger
+  - filezilla
+  - fontconfig
+  - gnupg
+  - gnome-remote-desktop
+  - host
+  - iftop
+  - iotop
+  - libdate-manip-perl
+  - links
+  - lsb-release
+  - lsscsi
+  - mlocate
+  - net-tools
+  - nmap
+  - nmon
+  - ntfs-3g
+  - ntp
+  - ntpdate
+  - perl
+  - procps
+  - psmisc
+  - ruby-dev
+  - rsync
+  - rsyslog
+  - snmp
+  - snmpd
+  - sysstat
+  - ssh
+  - sshpass
+  - telnet
+  - tcpdump
+  - tmux
+  - traceroute
+  - ubuntu-advantage-tools
+  - vlc
+  - wget
+  - xclip
+  - xsel
+# Compresores
+  - bzip2
+  - p7zip-full
+  - p7zip-rar
+  - rar
+  - unrar
+  - unzip
+  - zip
+  # Fuentes y Codecs
+  - ideviceinstaller
+  - ifuse
+  - ipheth-utils
+  - libavcodec-extra
+  - mtp-tools
+  - ttf-mscorefonts-installer
+  - ubuntu-restricted-extras
+
+packages:
+# Automation Package
+  - apt-transport-https
+  - azure-cli
+  - cpanminus
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+  - exa
+  - fd-find
+  - gem
+  - gh
+  - git
+  - hfsplus
+  - hfsutils
+  - lua5.4
+  - lua-nvim
+  - ninja-build
+  - microft-edge-stable
+  - nodejs
+  - python3-pip
+  - python3-setuptools
+  - python3-venv
+  - ripgrep
+  - ruby
+  - vault
+  - vim
+  - virtualbox-7.0
+# Tools
+  - peco
+
+snap_packages:
+  - node
+  - nvim
+  - go
+  - teams-for-linux
+
+npm_packages:
+  - "@fsouza/prettierd"
+  - "eslint_d"
+  - "tree-sitter-cli"
+  - "yaml-language-server"
+  - "@ansible/ansible-language-server"
+  - yarn
+
+npm_packages_sudo:
+  - neovim
+
+fisher_packages:
+  - PatrickF1/fzf.fish
+  - jethrokuan/z
+
+pip_packages:
+  - jedi
+  - "pynvim==0.4.3"
+  - pyx
+  - require
+  - "ansible-lint"
+  - "ansible-core"
+  - tree-sitter

@@ -1,0 +1,14 @@
+--- 
+- hosts: all
+  become: true
+  tasks: 
+
+  - name: create copy of security  
+    shell: tar cfz /tmp/backup1.tar.gz /etc/ 
+    when: inventory_hostname in groups['backup1']
+
+  - name: create copy of security  
+    shell: tar cfz /tmp/backup2.tar.gz /var/ 
+    when: inventory_hostname in groups['backup2']
+
+

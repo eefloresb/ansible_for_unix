@@ -1,0 +1,147 @@
+# Begin Global Aliases standard template Ver 2.0.2b  Date 2015-04-23  * Master * Refer NA15106023 Begin #
+#
+#
+# Version control
+# April 2015 Update V 2.0.0
+#   Initial release as stand alone template.  Moved standard negations out of
+#     sudoers.sampleconfig.8.3 into this template. No content change.
+# V 2.0.1 skipped.
+# April 23, 2015 Update V 2.0.2
+#   Add in the  IBM_UNIX_SA_CMDS alias as it existed in 
+#     sudoers.sampleconfig.8.3 into this template. Functional update.
+# May 28, 2015 Update V 2.0.2b
+#   Strictly documentation update to add NA 'Refer' number.  No need to 
+#   re-deploy this template if at lvl 2.0.2.  2.0.2b for use going forward.
+#------------------------------------------------------------------------------
+#==============================================================================
+# Required Command Aliases
+#==============================================================================
+#
+# sudo
+#
+Cmnd_Alias      SUDOSUDO = /usr/local/bin/sudo, /usr/bin/sudo, /bin/sudo 
+# 
+#   Fully qualified commands not present on the server are not required
+#   to be in this list.
+#   Commands on this list that do not exist on the servers have no impact.
+#   Add any local paths.
+#------------------------------------------------------------------------------
+#
+# Forbidden commands: Commands only system admin might be permitted.
+#
+Cmnd_Alias IBM_NONE_ALL = /usr/bin/su * , /bin/su *, \
+  /bin/bash2bug, /usr/bin/bash2bug, \
+  /usr/bin/chuser *root*, /usr/bin/mkuser, \
+  /usr/bin/chgroup, /usr/bin/chgrpmem -*, /usr/bin/smit*, \
+  /usr/sbin/visudo, /usr/bin/vi *sudo*, /usr/bin/more *sudo*, \
+  /usr/bin/view *sudo*, /usr/bin/cp *sudo*, /usr/bin/mv *sudo*, \
+  /usr/bin/rm *sudo*, /usr/bin/view /etc/passwd*, /usr/bin/vi /etc/passwd*, \
+  /usr/bin/view /etc/security/passwd*, /usr/bin/vim /etc/security/passwd*, \
+  /usr/bin/vi /etc/security/passwd*, \ 
+  /bin/view /etc/security/passwd*,   /bin/vim /etc/security/passwd*,\
+  /bin/vi /etc/security/passwd*, \ 
+  /bin/view /etc/shadow*, /usr/bin/vim /etc/shadow*, /bin/vi /etc/shadow*, \ 
+  /usr/sbin/sam, \
+  /usr/bin/view /etc/group*, /usr/bin/vi /etc/group*, /usr/bin/command, \
+  /usr/bin/hostname, /usr/sbin/chdev *hostname*, \   
+  /usr/local/sbin/visudo, /bin/chmod * /etc/*, /bin/chmod * /etc/security/*, \
+  /bin/chmod * /root/*, /bin/chmod * /*, \
+  /bin/chown * /etc/*, /bin/chown * /etc/security/*, \
+  /bin/chown * /root/*, /bin/chmod * /usr/local/sbin/visudo, \
+  /bin/chown * /usr/local/sbin/visudo, \
+  /bin/time *, /usr/bin/time * 
+#
+#  If you remove anything you need to provide documentation,rationale and 
+#  secondary controls if required; if an alternative -technical- control
+#  is in place, document.
+#  Commands not present on the server are not required to be in this list. 
+#  Commands on this list that do not exist on the servers have no impact. 
+#  It is permissible to hard code these to the exact directory structure where 
+#  the commands are present on the system if installed in a different location.
+#------------------------------------------------------------------------------
+#
+# su commands
+#
+Cmnd_Alias IBM_NONE_SA = /usr/bin/su, /usr/bin/su root, \ 
+  /bin/su, /bin/su root
+
+# Permit SA teams to su to root if secondary logging has been established.
+#
+Cmnd_Alias  IBM_UNIX_SA_CMDS = /usr/bin/su -, /bin/su -, /usr/bin/su - root,\
+    /bin/su - root
+
+#
+#   If you remove anything you need to provide documentation,rationale and 
+#   secondary controls if required; if an alternative -technical- control
+#   is in place, document.
+#   Commands not present on the server are not required to be in this list. 
+#   Commands on this list that do not exist on the servers have no impact. 
+#
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# Shells
+# 
+Cmnd_Alias IBM_SHELLS_ALL = /bin/ash, /usr/bin/ash, \
+  /bin/bash, /usr/bin/bash, /opt/freeware/bin/bash, /usr/opt/freeware/bin/bash, \
+  /bin/bash1, /usr/bin/bash1, /bin/bash2, /usr/bin/bash2 , \
+  /bin/bsh, /usr/bin/bsh, /bin/ch, /usr/bin/ch, /bin/csh, /usr/bin/csh , \
+  /bin/jsh, /usr/bin/jsh, /bin/ksh, /usr/bin/ksh, /bin/ksh93, /usr/bin/ksh93,\
+  /bin/pfcsh, /usr/bin/pfcsh , \
+  /bin/pfksh, /usr/bin/pfksh, /bin/pfsh, /usr/bin/pfsh, /bin/psh, /usr/bin/psh, \
+  /bin/recsh, /usr/bin/recsh, /bin/rksh, /usr/bin/rksh, \
+  /bin/rsh, /usr/bin/rsh, /usr/ucb/rsh, \
+  /bin/sh, /usr/bin/sh, /usr/samples/tcpip/sendmail/sh , \
+  /usr/shell, /usr/bin/shell, \
+  /bin/tclsh, /usr/bin/tclsh, /opt/freeware/bin/tclsh, /usr/opt/freeware/bin/tclsh, \
+  /bin/tclsh8.4, /usr/bin/tclsh8.4, /opt/freeware/bin/tclsh8.4, \
+  /usr/opt/freeware/bin/tclsh8.4, \
+  /bin/tcsh, /usr/bin/tcsh, /bin/tsh, /usr/bin/tsh , \
+  /bin/wish, /usr/bin/wish, /opt/freeware/bin/wish, /usr/opt/freeware/bin/wish, \
+  /bin/wish8.4, /usr/bin/wish8.4, /opt/freeware/bin/wish8.4,\
+  /usr/opt/freeware/bin/wish8.4, \
+  /bin/wishx, /usr/bin/wishx, \
+  /bin/zsh, /usr/bin/zsh 
+#
+#   Shells not present on the server are not required to be in this list. 
+#   Shells on this list that do not exist on the servers have no impact.
+#   Add any local shells.
+#
+#------------------------------------------------------------------------------
+# Shell Escapes
+#
+Cmnd_Alias IBM_SHELLESCAPE_ALL = /usr/bin/ed, \
+  /usr/bin/bash2bug, /usr/bin/bashbug, \ 
+  /usr/bin/find * -exec *,  /usr/bin/find * -ok *, \
+  /bin/find * -exec *,      /bin/find * -ok *, \
+  /usr/bin/find * -execdir *, /usr/bin/find * -okdir *, \ 
+  /bin/find * -execdir *,     /bin/find * -okdir *, \
+  /usr/bin/ftp, /bin/ftp,  \
+  /usr/bin/ex, /bin/ex,  /usr/bin/less, \ 
+  /usr/bin/more, /bin/more, /usr/bin/pg, /bin/pg, \
+  /usr/bin/vi, /bin/vi, /bin/view, /usr/bin/view,  \
+  /usr/bin/gview, /bin/gview, /usr/bin/eview, /bin/eview, \
+  /usr/bin/evim, /bin/evim, /usr/bin/gvim, /bin/gvim, \
+  /usr/bin/vimdiff, /bin/vimdiff,  \
+  /usr/bin/vim, /bin/vim,  \
+  /usr/sbin/format
+#       Commands not present on the server are not required to be in this list. 
+#       Commands on this list that do not exist on the servers have no impact.
+#       Add any local commands.
+#
+#------------------------------------------------------------------------------
+# Disallowed editors
+#
+Cmnd_Alias IBM_NONE_EDITOR = /bin/vi, /bin/tvi, \
+  /bin/vim, /bin/rvim, /bin/gvim, /bin/evim, /bin/emacs, /bin/ed, \
+  /usr/bin/vi, /usr/bin/tvi, \
+  /usr/bin/vim, /usr/bin/rvim, /usr/bin/gvim, /usr/bin/evim, /usr/bin/emacs, \
+  /usr/bin/ed, /bin/view, /usr/bin/view, /bin/rvi, /usr/bin/rvi
+#
+#       Commands not present on the server are not required to be in this list. 
+#       Commands on this list that do not exist on the servers have no impact.
+#       Add any local commands.
+#
+#------------------------------------------------------------------------------
+#
+# End Global Aliases standard template Ver 2.0.2b  Date 2015-04-23   * Master * Refer NA15106023 End #

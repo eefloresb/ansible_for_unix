@@ -1,0 +1,49 @@
+---
+- name: Crear directorio
+  ansible.builtin.raw: |
+    if [[ ! -d /scripts ]]; then
+      sudo mkdir /scripts
+    fi
+    sudo chmod -R 755 /scripts
+    sudo chown -R "{{ user_remote }}" /scripts
+  register: create_directory
+  changed_when: create_directory.rc != 0
+
+- name: Copiar archivo al equipo remoto
+  ansible.builtin.raw: scp -i ~/.ssh/pivot_rsa ~/ansible/ansible_take_photo/files/photo-linux.sh \
+    {{ user_remote }}@{{ ansible_host }}:/scripts/check-foto.sh
+  become: false
+  register: scp_rs
+  delegate_to: localhost
+  changed_when: scp_rs.rc != 0
+
+- name: Chmod 755 script check photo
+  ansible.builtin.raw: |
+   chmod 755 /scripts/check-foto.sh
+  register: check_foto_aix
+  changed_when: check_foto_aix.rc != 0
+
+- name: Create directory in local
+  ansible.builtin.file:
+      path: "{{ dest_folder }}"
+      state: directory
+      recurse: true
+  delegate_to: localhost
+  become: false
+
+- name: Ejecutar fotografia del servidor
+  ansible.builtin.raw: |
+   set -o pipefail
+   sudo bash /scripts/check-foto.sh > /tmp/{{ ansible_host }}.txt
+   cat /tmp/{{ ansible_host }}.txt
+  register: result_server
+  changed_when: result_server.rc != 0
+
+- name: Copy content in file located in localhost
+  become: false
+  ansible.builtin.copy:
+      dest: "{{ dest_folder }}/{{ inventory_hostname }}-{{ ansible_host }}.txt"
+      mode: "0644"
+      content: |
+       {{ result_server.stdout }}
+  delegate_to: localhost

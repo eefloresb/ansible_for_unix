@@ -1,0 +1,35 @@
+---
+ - hosts: localhost
+   become: false
+   connection: local
+   vars:
+     dest_dir: "~/data/{{ client | default('CANVIA')}}"
+     dest_remote_dir: "~/data/{{ client | default('CANVIA')}}/report_assesment.csv"
+   tasks:
+     - name: create directory
+       file:
+        path: "{{ dest_dir }}"
+        state: directory
+
+     - name: create file report in .csv
+       copy:
+        dest: "{{dest_remote_dir}}"
+        content: |
+          hostname,ipaddress,gateway,interface,architecture,date,Uptime,Os Family,Distribution,Version,Subscripted,Memoria(MB),memoria libre(MB),swap(MB),cores,processor cores,virtual cpu, HyperVisor, Check Internet
+
+ - hosts: all 
+   gather_facts: true
+   become: true
+   tasks:
+ 
+    - name: load values in yaml deploy 
+      ansible.builtin.include_role: 
+       name: ansible_os_basevars
+ 
+    - name: take photo in remote server 
+      ansible.builtin.include_role:
+       name: ansible_take_photo
+ 
+    - name: assesment in remote server 
+      ansible.builtin.include_role:
+       name: ansible_os_assesment

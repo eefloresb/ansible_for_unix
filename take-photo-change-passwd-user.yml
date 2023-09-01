@@ -1,0 +1,43 @@
+---
+- hosts: FMV
+  become: true
+  gather_facts: true
+  vars:
+    usuarios:
+      - user: ""
+        password: ""
+  tasks:
+    - name: change passwrd to remote user with name gmdadmin
+      ansible.builtin.shell: echo "{{item.user}}:{{item.password}} | chpasswd"
+      loop: "{{ usuarios }}"
+
+    - name: create directory in remote server
+      ansible.builtin.file:
+        path: /scripts/
+        owner: root
+        group: root
+
+    - name: copy the file of template to remote server
+      ansible.builtin.template:
+        src: ./Templates/foto-linux.sh
+        dest: /scripts/foto-linux.sh
+        owner: root
+        group: root
+
+    - name: ejecutar photo remota en servidor
+      shell: |
+        FILE=$(bash /scripts/foto-linux.sh|awk '{print $5}')
+        cat $FILE
+      register: resultado
+
+    - name: copy resultado in file
+      ansible.builtin.copy:
+        content: |
+          {{resultado.stdout}}
+        dest: ~/{{ansible_hostname}}.txt
+      delegate_to: localhost
+      become: false
+
+    #- name: Take photo
+    #  include_role:
+    #   name: ansible_take_photo

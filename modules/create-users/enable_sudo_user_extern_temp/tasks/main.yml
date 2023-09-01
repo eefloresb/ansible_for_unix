@@ -1,0 +1,5 @@
+---
+- name: "create users for ansible Linux"
+  when: ansible_system == "Linux"
+  include_tasks: ./linux-users.yml
+

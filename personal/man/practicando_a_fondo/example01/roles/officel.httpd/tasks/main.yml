@@ -1,0 +1,24 @@
+---
+# tasks file for ansible-role-httpd
+
+- name: install packages
+  yum:
+    name: "{{ item.name }}"
+    state: present
+    enablerepo: "{{ item.enablerepo | default('') }}"
+  with_items: "{{ httpd_install_from }}"
+  tags: ['httpd']
+
+- name: chmod log dir
+  file:
+    path: /var/log/httpd
+    state: directory
+    mode: "{{ var_log_httpd_permission | default('0755') }}"
+  tags: ['httpd']
+
+- name: chkconfig on
+  service:
+    name: httpd
+    enabled: "{{ httpd_service_on | default('no') }}"
+  tags: ['httpd']
+

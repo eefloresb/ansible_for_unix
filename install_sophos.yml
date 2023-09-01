@@ -1,0 +1,39 @@
+---
+ - hosts: all 
+   become: true 
+   gather_facts: true
+   environment:
+      http_proxy: http://127.0.0.1:3128
+      https_proxy: http://127.0.0.1:3128
+   vars:
+     disabled: false
+     ip_proxy: "127.0.0.1:3128"
+     take_reboot: True 
+     proxy_is_enable: True
+   tasks: 
+
+    - name: Define global vars
+      when: 
+        - proxy_is_enable == True
+      set_fact:
+          proxy_env:
+            http_proxy: "{{  ip_proxy | default(omit) }}"
+            https_proxy: "{{  ip_proxy | default(omit) }}"
+            ftp_proxy: "{{  ip_proxy | default(omit) }}"
+
+    - name: take 
+      include_role:
+        name: ansible_os_basevars
+
+    - name: Take photo to remote server 
+      ansible.builtin.include_role: 
+        name: ansible_take_photo
+
+    - name: Install sophos in remote server 
+      ansible.builtin.include_role:
+        name: ansible_os_sophos
+
+    - name: Reboot the remote server
+      when: take_reboot == True
+      ansible.builtin.include_role:      
+        name: ansible_reboot_vm

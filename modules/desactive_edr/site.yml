@@ -1,0 +1,24 @@
+---
+ - hosts: all 
+   become: true
+   gather_facts: false
+   tasks: 
+
+    - name: check the ds_agent
+      when: 1 == 2
+      ansible.builtin.shell:
+        cmd: ps -fea | grep ds_agent | grep -v grep 
+      register: status_ds
+
+    - name: validate status 
+      when: status_ds is defined
+      ansible.builtin.shell:
+        cmd: | 
+          /opt/ds_agent/dsa_control –r 
+      register: dsa_control
+
+    - name: show messages of remote server 
+      ansible.builtin.debug:
+        var: dsa_control
+      
+

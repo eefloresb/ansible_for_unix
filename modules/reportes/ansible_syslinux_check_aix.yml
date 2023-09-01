@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    report_file: reporte.csv
+  tasks:
+    - name: Crear nuevo archivo de reporte
+      local_action:
+        module: copy
+        dest: "{{ report_file }}"
+        content: |
+          "Hostname","IP principal","Sistema operativo","Arquitectura","Version de kernel","Cores","Memoria (MB)","Swap (MB)","Dias encendido","Todas las IPs"
+
+- hosts: all
+#  connection: local
+  become: true
+  gather_facts: true
+  vars:
+    report_file: reporte.csv
+  tasks:
+
+    - name: 

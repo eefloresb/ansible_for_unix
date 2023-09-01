@@ -1,0 +1,44 @@
+---
+    - name: create directory to saved file 
+      file:
+        path: /scripts
+        owner: root
+        group: root
+        state: directory 
+        mode: '0755'
+    
+    - name: copy script to remote directory 
+      copy:
+        src: "{{ item }}"
+        dest: "/scripts/{{ item }}"
+        owner: root
+        group: root   
+        mode: '0755'
+      loop:
+        - cis_cnvlinux.sh
+        - run-cis-script.sh
+
+    - name: execute script in remote server 
+      shell: | 
+        bash run-cis-script.sh
+      args:
+        chdir: /scripts
+
+    - name: copy archivos from remote server 
+      fetch:
+        src: "/scripts/{{item}}"
+        dest: "~/data/{{ client | default('Canvia') }}/hardening/{{ansible_host}}/{{item}}"
+        flat: true
+      loop: 
+        - detalleValidacionHardening.html
+        - reporteValidacionHardening.csv
+
+    - name: remove files copied
+      file:  
+        path: /scripts/"{{ item }}"
+        state: absent
+      loop:
+        - detalleValidacionHardening.html
+        - reporteValidacionHardening.csv   
+        - cis_cnvlinux.sh
+        - run-cis-script.sh 

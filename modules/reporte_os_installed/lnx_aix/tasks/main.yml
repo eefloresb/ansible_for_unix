@@ -1,0 +1,26 @@
+---
+    - name: copy the file get_user_sudo.sh script in remote server
+      local_action: command scp -i {{ansible_ssh_private_key_file}} -oStrictHostKeyChecking=no ./lnx_aix/files/get_equipment.sh {{ansible_user}}@{{ansible_host}}:/tmp/
+  
+    - name: execute file script 
+      raw: | 
+          chmod 755 /tmp/get_equipment.sh
+          bash /tmp/get_equipment.sh
+      register: 
+        user_with_root
+
+    - name: Define variable unica 
+      delegate_to: localhost
+      set_fact: 
+          user_root: "{{ user_with_root.stdout | regex_replace('[\\r\\n]','' }}"
+
+    - name: Guardar archivos de manera local 
+      delegate_to: localhost
+      become: false
+      shell: | 
+          echo "{{user_root}}" >> {{dest_out_file}}.csv
+
+    - name: delete file script get_user_sudo.sh
+      file: 
+        path: /tmp/get_equipment.sh
+        state: absent

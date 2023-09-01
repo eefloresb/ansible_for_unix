@@ -1,0 +1,9 @@
+---
+ - hosts: all
+   become: true
+   gather_facts: false
+   tasks: 
+
+   - name: include tasks to change file resolv.conf 
+     include_tasks:
+        file: ./tasks/main.yml 

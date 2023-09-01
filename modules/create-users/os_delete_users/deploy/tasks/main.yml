@@ -1,0 +1,28 @@
+---
+- name: delete user in remote server {{ansible_hostname}}-{{ansible_host}} 
+  user:
+      name: "{{user.name}}"
+      state: absent 
+      remove: "{{remove_directory | default(false)}}"
+  loop: "{{usuarios}}"
+  loop_control: 
+      loop_var: user 
+
+- name: delete user from sudoers file 
+  lineinfile:
+    path: /etc/sudoers
+    regex: '^(\s+)?{{user.name}}.*ALL$'
+    state: absent 
+    validate: '/usr/sbin/visudo -cf %s'
+    backup: yes   
+  loop: "{{usuarios}}"
+  loop_control: 
+    loop_var: user
+
+- name: delete file from sudoers.d 
+  file: 
+    path: /etc/sudoers.d/{{user.name}}
+    state: absent  
+  loop: "{{usuarios}}"
+  loop_control: 
+      loop_var: user 

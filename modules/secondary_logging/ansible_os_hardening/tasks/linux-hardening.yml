@@ -1,0 +1,52 @@
+---
+- name: Habilitar Secondary Logging
+  block:
+      - name: Crear directorio de historial de comandos
+        file:
+          path: /var/log/history
+          mode: 01777
+          state: directory
+
+      - name: Asegurarse que exista directorio de scripts
+        file:
+          path: /scripts
+          mode: 0755
+          state: directory
+          owner: root
+          group: root
+
+      - name: Copiar scripts de registro de historial de comandos
+        template:
+          src: "{{ item }}"
+          mode: 0755
+          dest: /scripts
+        with_items:
+          - files/history-log.sh
+          - files/compress-history-log.sh
+
+      - name: Configurar cron para comprimir logs de historial de comandos
+        template:
+          src: templates/compress-history-log.cron
+          dest: /etc/cron.d
+          mode: 0644
+
+      - name: Configurar registro de historial de comandos en bash de SUSE o Debian/Ubuntu
+        lineinfile:
+          path: /etc/bash.bashrc
+          state: present
+          regexp: '^\. /scripts/history-log.sh'
+          line: '. /scripts/history-log.sh'
+        when:
+          os_vendor == 'sles' or
+          os_vendor == 'kali' or
+          ansible_os_family == "Debian"
+
+      - name: Configurar registro de historial de comandos en bash de RedHat/CentOS/Oracle
+        lineinfile:
+          path: /etc/bashrc
+          state: present
+          regexp: '^\. /scripts/history-log.sh'
+          line: '. /scripts/history-log.sh'
+        when:
+          ansible_os_family == "RedHat" or 
+          os_vendor == 'amazon'

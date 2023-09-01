@@ -1,0 +1,4 @@
+---
+- name: remove agent automox in Linux
+  when: ansible_system == "Linux"
+  ansible.builtin.include_tasks: os_linux.yml 

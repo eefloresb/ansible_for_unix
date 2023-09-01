@@ -1,0 +1,30 @@
+---
+- name: stopped service of remote server    
+  service: 
+    name: amagent
+    state: stopped 
+
+- name: deregister amagent in sever 
+  command: /opt/amagent/amagent --deregister 
+  ignore_errors: true
+
+- name: remove in RedHat 
+  when: 
+    - ansible_os_system == "RedHat"
+  yum: 
+        name: amagent 
+        state: absent 
+
+- name: remove in SLES
+  when:
+    - ansible_os_system == "SLES"
+  zypper: 
+      name: amagent 
+      state: absent 
+
+- name: remove in Debian 
+  when:
+    - ansible_os_system = "Debian"
+  apt:
+    name: amagent 
+    state: absent

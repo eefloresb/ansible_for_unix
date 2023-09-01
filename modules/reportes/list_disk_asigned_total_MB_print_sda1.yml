@@ -1,0 +1,29 @@
+---
+ - hosts: all 
+   tasks:
+  
+   # reject the value what init with loop and dm
+      - ansible.builtin.set_fact:
+          my_devices: "{{ ansible_devices.keys() | select('match','^sd(.*)$') | list }}"
+    
+      - debug: 
+         msg: "{% for dev in my_devices %}
+              {{ dev }}: {{ ansible_devices[dev].size }}
+              {% endfor %}"
+
+      - set_fact:
+          my_devs: "{{ my_devs|default([]) + [ ansible_mounts |selectattr('device','match',my_regex) | list | json_query(my_query) ] | first }}"
+        loop: "{{ my_devices }}"
+        vars:
+          my_regex: '^(.*){{item}}(.*)$'
+          my_query: "[].[device,size_total,size_available]"
+
+      - debug: 
+          var: my_devs 
+
+      - debug: 
+          msg: "dev: {{item.0}}
+                  size[MB]: {{ (item.1|int / 1000000) | int }}
+                  free[MB]: {{ (item.2|int / 1000000) | int }}"
+        loop: "{{ my_devs }}"
+            

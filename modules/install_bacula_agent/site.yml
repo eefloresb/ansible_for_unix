@@ -1,0 +1,10 @@
+---
+    - hosts: all
+      become: true
+      gather_facts: true
+      vars:
+        client: '{{client|default("Canvia")}}'
+      tasks:
+        - name: intall agent windows/linux/solaris/aix
+          include_role:
+            name: install_bacula_agent

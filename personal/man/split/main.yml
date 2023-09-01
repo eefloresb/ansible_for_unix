@@ -1,0 +1,44 @@
+---
+ - hosts: localhost
+   connection: local 
+   vars:
+      mygroups:
+        group_name: 
+          - ["node1.in.labs.corp.netin","node2.in.labs.corp.netin"]
+
+      names: [ {
+        "first": "Paul",
+        "last": "Thompson",
+        "mobile": "+1-234-31245543",
+        "ctc": "100000",
+        "address": {
+          "city": "LasVegas",
+          "country": "USA"
+                  }
+                },
+                {
+        "first": "Sarav",
+        "last": "AK",
+        "mobile": "+919876543210",
+        "ctc": "200000",
+        "address": {
+          "city": "Chennai",
+          "country": "India"
+                   }
+            } ]
+   tasks:
+    
+    - set_fact: 
+        nodes: "{{ mygroups.group_name.0 | map('split','.') }}"
+
+    - set_fact:
+        nodes: "{{ mygroups.group_name.0|map('split','.')|map('first') }}"
+
+    - debug:
+        var: nodes 
+
+    - set_fact:
+        result: "{{ names | map(attribute='address') | map(attribute='city') }}" 
+
+    - debug: 
+        var: result

@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: true
+  environment:
+     http_proxy: http://127.0.0.1:3128
+     https_proxy: http://127.0.0.1:3128
+  vars:
+    disabled: false
+    ip_proxy: "127.0.0.1:3128"
+  tasks:
+
+    - name: Define global vars
+      set_fact:
+            proxy_env:
+              http_proxy: "{{  ip_proxy | default(omit) }}"
+              https_proxy: "{{  ip_proxy | default(omit) }}"
+
+    - include_role: 
+        name: ./ansible_os_basevars
+
+    - name: Execute role to generate report of package update
+      include_role: 
+        name: ./ansible_os_report
+
+        

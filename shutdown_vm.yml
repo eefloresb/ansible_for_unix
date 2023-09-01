@@ -1,0 +1,47 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: true
+  tasks: 
+
+   - name: Gather minimum OS facts
+     ansible.builtin.setup:
+      filter:
+       - ansible_system
+       - ansible_hostname
+     ignore_errors: true
+
+   - name: Captura datos a nivel de os_system
+     ansible.builtin.raw: |
+      uname
+     register: os_value
+     when: ansible_system is not defined
+     changed_when: os_value.rc != 0
+
+   - name: Eliminar cadena de una variable
+     ansible.builtin.set_fact:
+      os_value: "{{ os_value.stdout | trim | replace('\r', '') | replace('\n', '') }}"
+     when:
+      - os_value is defined
+      - ansible_system is not defined
+
+   - name: Check if Python is installed
+     when:
+      - os_value == "AIX"
+      - os_value is defined
+     ansible.builtin.raw: command -v python || echo "not_installed"
+     register: python_check
+     changed_when: false
+
+   - name: up values to OS 
+     ansible.builtin.include_role:
+      name: ansible_os_basevars
+
+   - name: take photo to remote server
+     ansible.builtin.include_role:
+      name: ansible_take_photo
+    
+   - name: shutdown servers 
+     community.general.shutdown:
+      delay: 60
+     

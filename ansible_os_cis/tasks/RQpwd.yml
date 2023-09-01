@@ -1,0 +1,224 @@
+---
+- name: R001 - PWDRQ
+  lineinfile:
+    path: "{{ pathlgn }}"
+    regexp: 'PASS_MAX_DAYS'
+    line: 'PASS_MAX_DAYS   {{ pass_max_days }}'
+
+- name: Query R001
+  shell: 'cat {{ pathlgn }} | grep PASS_MAX_DAYS'
+  register: R001
+
+- name: R002 - PWDRQ
+  shell: "awk -F: '{if (length($2) > 10) print $1}' /etc/shadow"
+  register: users
+
+- name: Clear Show Users
+  debug:
+    msg: "{{ users.stdout_lines }}"
+
+- name: Make Change R002
+  command:  chage -M {{ num_shadow_4 }} -I 30 {{ item }}
+  with_items: "{{ users.stdout_lines }}"
+
+- name: Query R003.1
+  shell: 'cat {{ pathpwq }} | grep minlen'
+  register: minlen
+
+- name: Make changes R003.1
+  replace:
+    path: "{{ pathpwq }}"
+    regexp: '{{ minlen.stdout }}'
+    replace: 'minlen = {{ num_minlen }}'
+
+- name: Query R003.2
+  shell: 'cat {{ pathpwq }} | grep dcredit'
+  register: dcredit
+
+- name: Make changes R003.2
+  replace:
+    path: "{{ pathpwq }}"
+    regexp: '{{ dcredit.stdout }}'
+    replace: 'dcredit = {{ num_dcredit }}'
+
+- name: Query R003.3
+  shell: 'cat {{ pathpwq }} | grep ucredit'
+  register: ucredit
+
+- name: Make changes R003.3
+  replace:
+    path: "{{ pathpwq }}"
+    regexp: '{{ ucredit.stdout }}'
+    replace: 'ucredit = {{ num_ucredit }}'
+
+- name: Query R003.4
+  shell: 'cat {{ pathpwq }} | grep lcredit'
+  register: lcredit
+
+- name: Clear R003.4
+  debug:
+    msg: "{{ lcredit.stdout }}"
+
+- name: Make changes R003.4
+  replace:
+    path: "{{ pathpwq }}"
+    regexp: '{{ lcredit.stdout }}'
+    replace: 'lcredit = {{ num_lcredit }}'
+
+- name: Query R003.5
+  shell: 'cat {{ pathpwq }} | grep ocredit'
+  register: ocredit
+
+- name: Clear R003.5
+  debug:
+    msg: "{{ ocredit.stdout }}"
+
+- name: Make changes R003.5
+  replace:
+    path: "{{ pathpwq }}"
+    regexp: '{{ ocredit.stdout }}'
+    replace: 'ocredit = {{ num_ocredit }}'
+
+#new
+- name: Query R003.6
+  shell: 'cat {{ pathpwq }} | grep minclass'
+  register: minclass
+
+- name: Make changes R003.6
+  replace:
+    path: "{{ pathpwq }}"
+    regexp: '{{ minclass.stdout }}'
+    replace: 'minclass = 2'
+
+- name: R004 - PWDRQ
+  shell: "awk -F: '{if (length($2) == 0) print $1}' /etc/shadow"
+  register: userssp
+
+- name: Clear Show Users
+  debug:
+    msg: "{{ userssp.stdout_lines }}"
+
+- name: R006 - PWDRQ
+  lineinfile:
+    path: "{{ pathlgn }}"
+    regexp: 'PASS_MIN_DAYS'
+    line: 'PASS_MIN_DAYS   {{ pass_min_days }}'
+
+- name: Query R006
+  shell: 'cat {{ pathlgn }} | grep PASS_MIN_DAYS'
+  register: R006
+
+- name: R007 - PWDRQ
+  shell: "awk -F: '{if (length($2) > 10) print $1}' /etc/shadow"
+  register: users7
+
+- name: Make Change R007
+  command:  chage -m {{ num_shadow_2 }} {{ item }}
+  with_items: "{{ users7.stdout_lines }}"
+
+- name: Query R008 (Redhat)
+  pamd:
+    name: system-auth
+    type: password
+    control: sufficient
+    module_path: pam_unix.so
+    module_arguments: 'sha512 shadow nullok try_first_pass use_authtok remember=7'
+    state: updated
+
+- name: R025 - PWDRQ
+  shell: |
+    if [ $(rpm -qa | grep 'vsftpd' | wc -l) -ne 0 ];
+    then echo "OK" 
+    else echo "FAIL" 
+    fi
+  register: rpm25
+  failed_when: rpm25.rc != 1 and rpm25.rc != 0
+
+- name: Make changes R025 (Para usuarios locales (autenticados))
+  lineinfile:
+    path: /etc/vsftpd/vsftpd.conf
+    regexp: '(^anonymous_enable.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+  when: rpm25.stdout == "OK"
+
+- name: Query R025 (Redhat)
+  shell: 'cat /etc/vsftpd/vsftpd.conf | grep "local_enable"'
+  register: vsftpd25
+  when: rpm25.stdout == "OK"
+
+- name: Make changes R025
+  replace:
+    path: /etc/vsftpd/vsftpd.conf
+    regexp: '{{ vsftpd25.stdout }}'
+    replace: 'local_enable=YES'
+  when: rpm25.stdout == "OK"
+
+- name: Query R025.2 (Redhat)
+  shell: 'cat /etc/vsftpd/vsftpd.conf | grep "write_enable=.*" | head -n 1'
+  register: vsftpd252
+  when: rpm25.stdout == "OK"
+
+- name: Make changes R025.2
+  replace:
+    path: /etc/vsftpd/vsftpd.conf
+    regexp: '{{ vsftpd252.stdout }}'
+    replace: 'write_enable=YES'
+  when: rpm25.stdout == "OK"
+
+- name: Make changes
+  lineinfile:
+    path: /etc/vsftpd/vsftpd.conf
+    regexp: '(^anon_upload_enable.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+  when: rpm25.stdout == "OK"
+
+- name: Make changes
+  lineinfile:
+    path: /etc/vsftpd/vsftpd.conf
+    regexp: '(^anon_mkdir_write_enable.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+  when: rpm25.stdout == "OK"
+
+- name: Query1
+  shell: "cat /etc/default/useradd | grep -i INACTIVE"
+  register: INACTIVE
+
+- name: Make changes
+  replace:
+    path: "/etc/default/useradd"
+    regexp: '{{ INACTIVE.stdout }}'
+    replace: 'INACTIVE=30'
+
+- name: Add a line
+  lineinfile:
+    path: /etc/profile
+    line: TMOUT=120
+
+- name: Query1
+  shell: "cat /etc/profile | grep -i 'umask 02.*'"
+  register: umask
+
+- name: Make changes
+  replace:
+    path: "/etc/profile"
+    regexp: '{{ umask.stdout }}'
+    replace: '    umask 027'
+
+- name: Query1
+  shell: "source /etc/profile"
+
+- name: Query1
+  shell: "grep pam_wheel.so /etc/pam.d/su"
+  register: pam_wheel
+
+- name: Query1
+  shell: "echo {{ item }} | sed -e 's/^.//'"
+  with_items:
+     - "{{ pam_wheel.stdout_lines }}"
+...

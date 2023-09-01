@@ -1,0 +1,3 @@
+---
+dest_dir: "~/data/{{ client | default('CANVIA')}}"
+dest_remote_dir: "{{dest_dir}}/report_assesment.csv"

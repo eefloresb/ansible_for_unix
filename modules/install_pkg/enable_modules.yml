@@ -1,0 +1,8 @@
+---
+- name: Enable Percona repo
+  ansible.builtin.command: "{{ item }}"
+  register: percona_release
+  changed_when: percona_release.rc != 0
+  loop:
+    - percona-release setup ps57
+    - percona-release enable tools

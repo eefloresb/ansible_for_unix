@@ -1,0 +1,17 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: true
+  tasks: 
+
+  - name: capture value from application 
+    shell: | 
+      rpm -qa | grep omsagent
+    register:
+      omsagent_find
+
+  - name: remove package when it exists
+    when: omsagent_find.rc == 0
+    yum: 
+      name: "{{ omsagent_find.stdout }}"
+      state: absent

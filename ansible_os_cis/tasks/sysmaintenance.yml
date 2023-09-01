@@ -1,0 +1,312 @@
+---
+- name: 6.1.1 Audit system file permissions (Not Scored)
+  shell: rpm -Va --nomtime --nosize --nomd5 --nolinkto | wc -l
+  register: sys_permissions
+  failed_when: sys_permissions.stdout == ""
+
+- name: 6.1.2 Ensure permissions 644 are configured
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - /etc/passwd
+    - /etc/group
+
+- name: Ensure permissions 600 are configured
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - /etc/passwd-
+    - /etc/group-
+
+- name: Ensure permissions 640 are configured
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0640'
+  loop:
+    - /etc/gshadow-
+    - /etc/shadow
+    - /etc/gshadow
+
+- name: Ensure no files or directories exist (Scored)
+  shell: |
+    df --local -P | awk '{if (NR!=1) print $6}' | xargs -I '{}' find '{}' -xdev -type f -perm -0002 -print 2>/dev/null | wc -l
+    df --local -P | awk '{if (NR!=1) print $6}' | xargs -I '{}' find '{}' -xdev -nouser -print 2>/dev/null | wc -l
+    df --local -P | awk '{if (NR!=1) print $6}' | xargs -I '{}' find '{}' -xdev -nogroup -print 2>/dev/null | wc -l
+  register: no_file_exist
+  failed_when: no_file_exist.stdout != "0\n0\n0"
+  ignore_errors: true
+
+- name: Identify any accounts without passwords
+  shell: | 
+    awk -F: '($2 == "!!" ) { print $1 }' /etc/shadow
+  register: accounts_not_password
+  changed_when: False
+
+- name: Lock any accounts without passwords
+  command: "passwd -lf {{ item }}"
+  loop: "{{ accounts_not_password.stdout_lines }}"
+  when: accounts_not_password.stdout_lines is defined
+
+- name: 6.2.1 Ensure password fields are not empty (Scored)
+  shell: |
+    awk -F: '($2 == "" ) { print $1 " does not have a password "}' /etc/shadow
+  register: passwords_not_empty 
+  failed_when: passwords_not_empty.stdout != ""
+
+- name: 6.2.3 Ensure root PATH Integrity
+  shell: |
+    if [ "`echo $PATH | grep :: `" != "" ]; then
+      echo "Empty Directory in PATH (::)"
+    fi
+    if [ "`echo $PATH | grep :$`" != "" ]; then
+      echo "Trailing : in PATH"
+    fi
+    set -- $p
+    while [ "$1" != "" ]; do
+      if [ "$1" = "." ]; then
+        echo "PATH contains ."
+        shift
+        continue
+      fi
+      if [ -d $1 ]; then
+        dirperm=`ls -ldH $1 | cut -f1 -d" "`
+        if [ `echo $dirperm | cut -c6 ` != "-" ]; then
+          echo "Group Write permission set on directory $1"
+        fi
+        if [ `echo $dirperm | cut -c9 ` != "-" ]; then
+          echo "Other Write permission set on directory $1"
+        fi
+        dirown=`ls -ldH $1 | awk '{print $3}'`
+        if [ "$dirown" != "root" ] ; then
+          echo $1 is not owned by root
+        fi
+      else
+        echo $1 is not a directory
+      fi
+      shift
+    done
+  register: root_path_integrity
+  failed_when: root_path_integrity.stdout != ""
+
+- name: Ensure no legacy '+' entries exist in /etc/passwd
+  command: sed -i '/^+/ d' /etc/passwd
+  changed_when: no
+  failed_when: no
+
+- name: "Ensure no legacy '+' entries exist in /etc/shadow"
+  command: sed -i '/^+/ d' /etc/shadow
+  changed_when: no
+  failed_when: no
+
+- name: "Ensure no legacy '+' entries exist in /etc/group"
+  command: sed -i '/^+/ d' /etc/group
+  changed_when: no
+  failed_when: no
+
+- name: "PRELIM | Gather UID 0 accounts other than root"
+  shell: "cat /etc/passwd | awk -F: '($3 == 0 && $1 != \"root\") {i++;print $1 } END {exit i}'"
+  register: uid_zero_accounts_except_root
+  changed_when: no
+  check_mode: no
+  
+- name: "Ensure root is the only UID 0 account"
+  command: passwd -l {{ item }}
+  changed_when: no
+  failed_when: no
+  with_items: "{{ uid_zero_accounts_except_root.stdout_lines }}"
+  when: uid_zero_accounts_except_root.rc
+
+- name: Ensure users home directories permissions are 750 or more restrictive
+  shell: |
+    for dir in `cat /etc/passwd | egrep -v '(root|halt|sync|shutdown)' | awk -F: '($7 !="/sbin/nologin") { print $6 }'`; do
+      dirperm=`ls -ld $dir | cut -f1 -d" "`
+      if [ `echo $dirperm | cut -c6 ` != "-" ]; then
+        echo "Group Write permission set on directory $dir"
+      fi
+      if [ `echo $dirperm | cut -c8 ` != "-" ]; then
+        echo "Other Read permission set on directory $dir"
+      fi
+      if [ `echo $dirperm | cut -c9 ` != "-" ]; then
+        echo "Other Write permission set on directory $dir"
+      fi
+      if [ `echo $dirperm | cut -c10 ` != "-" ]; then
+        echo "Other Execute permission set on directory $dir"
+      fi
+    done
+  register: home_dir_750
+  failed_when: home_dir_750.stdout != ""
+  ignore_errors: yes
+
+- name: Ensure users own their home directories
+  shell: |
+    grep -E -v '^(halt|sync|shutdown)' /etc/passwd | awk -F: '($7 != "'"$(which nologin)"'" && $7 != "/sbin/nologin") { print $1 " " $6 }' | while read user dir; do
+    if [ ! -d "$dir" ]; then
+    echo "The home directory ($dir) of user $user does not exist."
+    else
+    owner=$(stat -L -c "%U" "$dir")
+    if [ "$owner" != "$user" ]; then
+    echo "The home directory ($dir) of user $user is owned by $owner."
+    fi
+    fi
+    done | wc -l
+  register: user_own_home
+  failed_when: user_own_home.stdout != "0"
+  ignore_errors: true
+
+
+- name: Ensure users' dot files are not group or world writable
+  shell: |
+    for dir in `cat /etc/passwd | egrep -v '(root|sync|halt|shutdown)' | awk -F: '($7 != "/sbin/nologin") { print $6 }'`; do
+      for file in $dir/.[A-Za-z0-9]*; do
+        if [ ! -h "$file" -a -f "$file" ]; then
+          fileperm=`ls -ld $file | cut -f1 -d" "`
+          if [ `echo $fileperm | cut -c6 ` != "-" ]; then
+            echo "Group Write permission set on file $file"
+          fi
+          if [ `echo $fileperm | cut -c9 ` != "-" ]; then
+            echo "Other Write permission set on file $file"
+          fi
+        fi 
+      done
+    done
+  register: dot_files
+  failed_when: dot_files.stdout != ""
+
+- name: "List users accounts"
+  command: "awk -F: '{print $1}' /etc/passwd"
+  register: users
+  changed_when: no
+  check_mode: no
+
+- name: "Ensure no users have .forward files"
+  file:
+    state: absent
+    dest: "~{{ item }}/.forward"
+  with_items: "{{ users.stdout_lines }}"
+
+- name: "Ensure no users have .netrc files"
+  file:
+    state: absent
+    dest: "~{{ item }}/.netrc"
+  with_items: "{{ users.stdout_lines }}"
+
+- name: Ensure users' .netrc Files are not group or world accessible (Scored)
+  shell: |
+    grep -E -v '^(root|halt|sync|shutdown)' /etc/passwd | awk -F: '($7 != "'"$(which nologin)"'" && $7 != "/sbin/nologin") { print $1 " " $6 }' | while read user dir; do
+    if [ ! -d "$dir" ]; then
+    echo "The home directory ($dir) of user $user does not exist."
+    else
+    for file in $dir/.netrc; do
+    if [ ! -h "$file" -a -f "$file" ]; then
+    fileperm=$(ls -ld $file | cut -f1 -d" ")
+    if [ $(echo $fileperm | cut -c5) != "-" ]; then
+    echo "Group Read set on $file"
+    fi
+    if [ $(echo $fileperm | cut -c6) != "-" ]; then
+    echo "Group Write set on $file"
+    fi
+    if [ $(echo $fileperm | cut -c7) != "-" ]; then
+    echo "Group Execute set on $file"
+    fi
+    if [ $(echo $fileperm | cut -c8) != "-" ]; then
+    echo "Other Read set on $file"
+    fi
+    if [ $(echo $fileperm | cut -c9) != "-" ]; then
+    echo "Other Write set on $file"
+    fi
+    if [ $(echo $fileperm | cut -c10) != "-" ]; then
+    echo "Other Execute set on $file"
+    fi
+    fi
+    done
+    fi
+    done | wc -l
+  register: netrc_not_accessible
+  failed_when: netrc_not_accessible.stdout != "0"
+  ignore_errors: true
+
+- name: Ensure no users have .rhosts files
+  shell: |
+    for dir in `cat /etc/passwd | egrep -v '(root|halt|sync|shutdown)' | awk -F: '($7 !="/sbin/nologin") { print $6 }'`; do
+      for file in $dir/.rhosts; do
+        if [ ! -h "$file" -a -f "$file" ]; then
+          echo ".rhosts file in $dir"
+        fi
+      done
+    done
+  register: rhosts_files
+  failed_when: rhosts_files.stdout != ""
+
+- name: Ensure all groups in /etc/passwd exist in /etc/group
+  shell: |
+    for i in $(cut -s -d: -f4 /etc/passwd | sort -u ); do
+      grep -q -P "^.*?:[^:]*:$i:" /etc/group
+      if [ $? -ne 0 ]; then
+      echo "Group $i is referenced by /etc/passwd but does not exist in /etc/group"
+      fi
+    done
+  register: all_groups
+  failed_when: all_groups.stdout != ""
+
+- name: Ensure no duplicate UIDs exist
+  shell: |
+    cut -f3 -d":" /etc/passwd | sort -n | uniq -c | while read x ; do
+    [ -z "$x" ] && break
+    set - $x
+    if [ $1 -gt 1 ]; then
+    users=$(awk -F: '($3 == n) { print $1 }' n=$2 /etc/passwd | xargs)
+    echo "Duplicate UID ($2): $users"
+    fi
+    done | wc -l
+  register: no_duplicate_UID
+  failed_when: no_duplicate_UID.stdout != "0"
+
+- name: Ensure no duplicate GIDs exist
+  shell: |
+    cut -d: -f3 /etc/group | sort | uniq -d | while read x ; do
+    echo "Duplicate GID ($x) in /etc/group"
+    done | wc -l
+  register: no_duplicate_GID
+  failed_when: no_duplicate_GID.stdout != "0"
+
+- name: Ensure no duplicate user names exist
+  shell: |
+    cut -d: -f1 /etc/passwd | sort | uniq -d | while read x ; do
+    echo "Duplicate login name ${x} in /etc/passwd"
+    done | wc -l
+  register: no_duplicate_user
+  failed_when: no_duplicate_user.stdout != "0"
+
+- name: Ensure no duplicate group names exist
+  shell: |
+    cut -d: -f1 /etc/group | sort | uniq -d | while read x ; do
+    echo "Duplicate group name ${x} in /etc/group"
+    done | wc -l
+  register: no_duplicate_group
+  failed_when: no_duplicate_group.stdout != "0"
+
+- name: Ensure all users' home directories exist
+  shell: |
+    cat /etc/passwd | awk -F: '{ print $1 " " $3 " " $6 }' | while read user uid dir; do
+    if [ $uid -ge 1000 -a ! -d "$dir" -a $user != "nfsnobody" ]; then
+      echo "The home directory ($dir) of user $user does not exist."
+    fi
+    done
+  register: all_user_home
+  failed_when: all_user_home.stdout != ""
+  ignore_errors: true
+
+- name: Ensure permissions 600 are configured
+  file:
+    path: /etc/shadow-
+    owner: root
+    group: root
+    mode: '0600'

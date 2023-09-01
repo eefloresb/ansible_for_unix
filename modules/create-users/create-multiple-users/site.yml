@@ -1,0 +1,31 @@
+--- 
+- hosts: all
+  become: true
+  gather_facts: true 
+  tasks:
+
+    - name: include var from file 
+      include_vars: 
+        file: vars.yml
+      
+    - name: create group in SO 
+      group:
+        name: "{{ item.group }}"
+        state: present
+      with_items:
+        - "{{ generic_users }}"
+
+    - name: create users remotes in SO 
+      user:
+        name: "{{ item.user }}"
+        comment: "{{ item.fullname }}"
+        group: "{{ item.group }}"
+        password: "{{ item.password | password_hash('sha512') }}"
+        create_home: true 
+        home: /home/{{ item.user }}
+        shell: /bin/bash
+        update_password: on_create
+      with_items:
+        - "{{ generic_users }}"
+      loop_control:
+        label: "{{ item.user }} - {{ item.fullname }}"

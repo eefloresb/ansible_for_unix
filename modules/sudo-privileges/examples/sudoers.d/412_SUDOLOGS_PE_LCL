@@ -1,0 +1,17 @@
+# Begin PE SUDOLOGS standard template Ver 1.0  Date 2015-06-18  * Master * Refer 06222015-approved- Begin #
+# Description: PE SUDOLOGS logs for sudo path
+# Software products and versions
+# Supported OS platforms: ALL
+# local functional ID
+# local path changes
+# local OS groups for the Master
+# self serve access permitted for all sub templates
+#
+# Version control
+# v1.0   - vasina@pe.ibm.com - initial PE version
+#
+# Defaults specification
+Defaults logfile = /var/log/sudo.log
+######### End Defaults specification #############
+
+# End PE SUDOLOGS standard template Ver 1.0   Date 2015-06-18 * Master * Refer 06222015-approved- End #

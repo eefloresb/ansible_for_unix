@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    pkg_monitor: 
+      - name: "perl-Sys-Syslog"
+      - name: "perl-IO-Compress"
+  tasks: 
+
+   - name: register redhat validate 
+     ansible.builtin.include_role: 
+      name: ansible_os_register
+    
+   - name: install pkages monitoring
+     ansible.builtin.include_role:
+      name: ansible_pkg_monitoring/

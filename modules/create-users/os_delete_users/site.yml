@@ -1,0 +1,8 @@
+---
+- hosts: all
+  vars:
+    remove_directory: true
+  tasks:
+    
+    - include_role: 
+        name: deploy

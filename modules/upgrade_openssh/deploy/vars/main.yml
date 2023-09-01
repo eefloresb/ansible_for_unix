@@ -1,0 +1,11 @@
+package_for_install: 
+  - build-essential
+  - zlib1g-dev 
+  - libssl-dev
+  - libpam0g-dev
+  - libselinux1-dev
+  - libkrb5-dev
+
+openssh_build_dir: /tmp/openssh
+openssh_url: https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-8.9p1.tar.gz
+openssh_build_opts:  --with-kerberos5 --with-md5-passwords --with-pam --with-selinux --with-privsep-path=/var/lib/sshd/ --sysconfdir=/etc/ssh

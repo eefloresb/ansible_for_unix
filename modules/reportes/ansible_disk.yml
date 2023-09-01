@@ -1,0 +1,9 @@
+---
+ - hosts: all
+   become: true
+   gather_facts: true
+   tasks:
+        
+        - name: Output first disk size
+          debug:
+            var: ansible_devices

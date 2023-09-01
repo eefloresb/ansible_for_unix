@@ -1,0 +1,96 @@
+---
+- name: Parchado de Servidores UNIX/Windows
+  hosts: all
+  become: true
+  gather_facts: true
+  strategy: free
+  vars:
+   disabled: false
+   remove_ip:
+   ip_proxy:
+   install_pkg: true
+   sanity_reboot: false
+   preview_sanity_reboot: true
+  tasks:
+   - name: Gather minimum OS facts
+     ansible.builtin.setup:
+      filter:
+       - ansible_system
+       - ansible_hostname
+       - ansible_distribution
+       - ansible_python_version
+       - ansible_virtualization_role
+       - ansible_system_vendor
+       - ansible_product_name
+       - ansible_virtualization_type
+       - ansible_product_version
+       - ansible_python_interpreter
+       - ansible_os_family
+       - ansible_default_ipv4
+     ignore_errors: true
+
+   #- name: Pause stop by execute reboot
+   #  when: preview_sanity_reboot
+   #  ansible.builtin.pause:
+   #   prompt: "are you continue"
+   #   echo: yes
+
+   #- name: Shutdown servers
+   #  when: preview_sanity_reboot
+   #  ansible.builtin.reboot:
+   #   reboot_timeout: 600
+
+   - name: Configure os base vars
+     ansible.builtin.include_role:
+      name: ansible_os_basevars
+
+   - name: Upload password values
+     ansible.builtin.include_tasks: password.yml
+
+   - name: Subscription Manager register for  RHEL - SLES
+     ansible.builtin.include_role:
+      name: ansible_os_register
+
+   - name: Execute role to generate report of package update
+     ansible.builtin.include_role:
+      name: ansible_os_report
+
+   - name: Captura datos a nivel de os_system
+     ansible.builtin.raw: |
+      uname
+     register: os_value
+     when: ansible_system is not defined
+     changed_when: os_value.rc != 0
+
+   - name: Eliminar cadena de una variable
+     ansible.builtin.set_fact:
+      os_value: "{{ os_value.stdout | trim | replace('\r', '') | replace('\n', '') }}"
+     when:
+      - os_value is defined
+      - ansible_system is not defined
+
+   - name: Check if Python is installed
+     when:
+      - os_value == "AIX"
+      - os_value is defined
+     ansible.builtin.raw: command -v python || echo "not_installed"
+     register: python_check
+     changed_when: false
+
+   - name: Take photo
+     ansible.builtin.include_role:
+      name: ansible_take_photo
+
+   - name: Update servers
+     ansible.builtin.include_role:
+      name: ansible_os_update
+
+   #- name: Pause stop by execute reboot
+   #  when: sanity_reboot == true
+   #  ansible.builtin.pause:
+   #   prompt: "are you continue"
+   #   echo: yes
+
+   - name: shutdown servers
+     ansible.builtin.reboot:
+      reboot_timeout: 300

@@ -1,0 +1,12 @@
+---
+- name: Copiar RPM lpar2rrd-agent
+  copy: src=/data/software/Linux/{{lpar2rrd_agent_rpm_linux}} dest=/tmp
+
+- name: Instalar RPM lpar2rrd-agent
+  zypper: name=/tmp/{{lpar2rrd_agent_rpm_linux}} state=latest disable_gpg_check=yes
+
+- shell: grep -w lpar2rrd /etc/passwd | cut -d ":" -f 4
+  register: primary_group
+
+- name: Configurar crontab de lpar2rrd
+  template: src=template/crontab-lpar2rrd dest=/var/spool/cron/tabs/lpar2rrd owner=lpar2rrd group={{primary_group.stdout}} mode=0600

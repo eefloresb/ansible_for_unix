@@ -1,0 +1,49 @@
+- name: Playbook main
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    proxy: ""
+    install_pkg: true
+    client: "Canvia"
+    repos:
+      baseurl: "https://repo.percona.com/yum/percona-release-latest.noarch.rpm"
+    package:
+      - percona-xtrabackup-24
+      - qpress
+  tasks:
+    - name: Load values by default
+      ansible.builtin.include_role:
+        name: ../../ansible_os_basevars
+
+    - name: Include task password.yml
+      when: ( ansible_distribution == "RedHat" or ansible_distribution == "SLES" or ansible_distribution == "SLES_SAP")
+      ansible.builtin.include_tasks:
+        file: ../../password.yml
+
+    - name: Asignar serial to family RedHat
+      when: ( ansible_distribution == "RedHat" or ansible_distribution == "SLES" or ansible_distribution == "SLES_SAP")
+      ansible.builtin.include_role:
+        name: ../../ansible_os_register
+
+    - name: Assigned repositories to install package
+      when: repos.baseurl is not none
+      ansible.builtin.yum:
+        name: "{{ repos.baseurl }}"
+        state: present
+        disable_gpg_check: true
+      environment:
+        http_proxy: "{{ proxy | default(omit) }}"
+        https_proxy: "{{ proxy | default(omit) }}"
+
+    - name: Include modules to install
+      ansible.builtin.include_tasks: ./enable_modules.yml
+
+    - name: Install package
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ package }}"
+      environment:
+        http_proxy: "{{ proxy | default(omit) }}"
+        https_proxy: "{{ proxy | default(omit) }}"

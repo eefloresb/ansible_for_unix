@@ -1,0 +1,214 @@
+---
+# tasks file for wordpress
+
+- name: install packages 
+  yum: 
+    name: "{{item}}"
+    state: present 
+  loop: 
+    - "{{mariadb_package}}"
+    - "{{apache_packages}}"
+
+- name: setup custom log location 
+  file: 
+    path: "/var/log/mysqld.log" 
+    mode: '0644' 
+    owner: mysql 
+    group: mysql 
+    state: touch 
+
+- name: ensure service start  initially 
+  service:
+    name: "{{mariadb_service}}"
+    state: started 
+    enabled: true 
+
+- name: update root password for localhost 
+  mysql-user: 
+    name: root
+    host: "localhost" 
+    password: "{{mysql_root_password}}"
+    state: present 
+    check_implicit_admin: true
+    login_user: root 
+    login_host: localhost
+    login_password: "{{mysql_root_password}}"
+  when: ansible_hostname != 'localhost'
+
+- name: update root password for all hosts 
+  mysql-user: 
+    name: root
+    host: "{{item}}"
+    password: "{{mysql_root_password}}"
+    state: present 
+    login_user: "root"
+    login_host: "localhost"
+    login_password: "{{mysql_root_password}}"
+  loop: 
+    - "127.0.0.1" 
+    - "::1"
+    - "{{ansible_fqdn}}"
+    - "{{ansible_hostname}}"
+  when: ansible_hostname != "localhost"
+
+
+- name: remove anonymouse users
+  mysql_user:
+    name: "*"
+    host: "{{item}}"
+    state: absent
+    login_user: "root"
+    login_password: "{{mysql_root_password}}" 
+  loop: 
+    - "localhost"
+    - "{{ansible_fqdn}}"
+    - "{{ansible_hostname}}"
+
+- name: remove empty root password
+  mysql_user: 
+    name: "root"
+    host: "*"
+    state: absent  
+    login_user: root 
+    login_password: "{{mysql_root_password}}"
+
+
+- name: remove the test database 
+  mysql_db: 
+    name: test 
+    state: absent
+    login_user: root 
+    login_password: "{{mysql_root_password}}"
+
+- name: stop service 
+  service: 
+    name: "{{mariadb_service}}"
+    state: "stopped"
+
+- name: list ib_logfile
+  shell: ls -l /var/lib/mysql/ib_logfile?
+  register: logfiles
+  changed_when: false
+
+- name: remove ib_logfile 
+  file: 
+    path: "{{item}}"
+    state: absent
+    force: true
+  loop:
+    - "{{logfiles.stdout_lines}}"
+
+- name: start service 
+  service: 
+    name: "{{mariadb_service}}"
+    state: started 
+  enable: true
+
+
+- name: create Mysql Database for wordpress
+  mysql_db: 
+    name: "{{item}}"
+    state: present 
+    login_user: root 
+    login_password: "{{mysql_root_password}}" 
+  loop:
+    - "{{db_wordpress_name}}"
+
+- name: create wordpress user 
+  mysql_user:
+    name: "{{db_wordpress_username}}"
+    password: "{{db_wordpress_password}}"
+    priv: "{{item.db}}.*:{{item.privs}}"
+    append_privs: true 
+    state: present 
+    login_user: root 
+    login_password: "{{mysql_root_password}}" 
+  loop:  
+    - db: "{{db_wordpress_name}}"
+      privs: 'ALL'
+
+- name: enable apache in the firewall 
+  firewalld:
+    service: http
+    permanent: true 
+    inmediate: true 
+    state: true
+      
+- name: get wordpress 
+  get_url: 
+    url: https://wordpress..org/latest.tar.gz
+    dest: "/tmp/wordpress-{{wordpress_version}}.tar.gz"
+
+- name: wordpress | extract archive 
+  unarchive:
+      src: "/tmp/wordpress-{{wordpress_version}}.tar.gz"
+      dest: "/tmp/"
+      copy: false
+
+- name: WordPress | move extract directory to {{ wordpress_install_dir }}
+  shell: "cp -a /tmp/wordpress {{wordpress_install_dir}}" 
+
+- name: Create un log directory 
+  file:
+    path: "{{ wordpress_install_dir }}/wp_content/uploads"
+    state: directory
+
+- name: remove sample config file 
+  file: 
+    path: "{{wordpress_install_dir}}/wp-config-samble.php"
+    state: absent 
+
+- name: fetch random salts for WordPress config 
+  command: curl http://api.wordpress.org/secret-key/1.1/salt/
+  register: wp_salt
+
+- name: fix ownership 
+  shell: chown -R apache:apache {{ wordpress_install_dir }}
+
+- name: copy wp-config.php 
+  template:
+    src: wp-config.j2 
+    dest: "{{wordpress_install_dir}}/wp-config.php"
+
+- name: restore files context 
+  shell: "restoreconf -R {{wordpress_install_dir}}"
+
+- name: start and enable http service
+  service:
+    name: httpd 
+    state: started
+    enabled: true 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

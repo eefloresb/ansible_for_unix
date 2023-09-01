@@ -1,0 +1,8 @@
+---
+- hosts: all 
+  tasks: 
+  
+    - name: stopped firewalld from remote server is variable firewalld_result true 
+      firewalld:
+        state: stopped 
+        enabled: false 

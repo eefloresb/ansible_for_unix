@@ -1,0 +1,9 @@
+---
+- name: Crear directorio script
+  ansible.builtin.file:
+   path: /scripts
+   state: directory
+   mode: '0755'
+
+- name: Configurar en servidor remoto
+  ansible.builtin.include_tasks: os_{{ ansible_system }}.yml

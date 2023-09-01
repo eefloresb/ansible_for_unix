@@ -1,0 +1,27 @@
+---
+- hosts: all
+  tasks: 
+
+    - set_fact:
+        ansible_mounts_list:
+              drive_letter: "{{ item.mount }}"
+              filesystem: "{{ item.fstype }}"
+              free_harddisk_space: "{{ item.size_available | human_readable(unit='G') | replace(' GB', '')}}"
+              size: "{{ item.size_total |  human_readable(unit='G') | replace(' GB', '')}}"
+              unique_disk_id: "{{ item.uuid }}"
+              volume_name: "{{ item.device }}"
+      loop: "{{ ansible_mounts }}"
+      register: ansible_mounts_list_result
+      when: 
+         - '"N/A" not in item.uuid' # ignoring NFS mounts
+         - '"CD" not in item.uuid' # ignoring CDROM
+
+    - name: show value declared 
+      debug: 
+        var: ansible_mounts_list_result
+
+    - name: "show result" 
+      debug: 
+        msg: "{{ item }}"
+      loop: "{{ ansible_mounts_list_result | json_query('results[*].ansible_facts.ansible_mounts_list.volume_name') }}"
+

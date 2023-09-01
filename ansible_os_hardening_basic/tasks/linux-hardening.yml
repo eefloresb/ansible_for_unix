@@ -1,0 +1,80 @@
+---
+- name: Ajustes SSH
+  block:
+   - name: Validar si la linea existe
+     ansible.builtin.lineinfile:
+      path: /etc/ssh/sshd_config
+      regexp: "^#?[bB]anner.*"
+      state: absent
+     check_mode: yes
+     register: line_ssh_check
+
+   - ansible.builtin.debug:
+      var: line_ssh_check
+
+   - name: Configurar template de banner SSH
+     when: line_ssh_check.changed 
+     ansible.builtin.template:
+      src: templates/ssh_banner.txt.j2
+      dest: /etc/ssh/banner.txt
+ 
+   - name: Configurar SSH - Banner
+     when: line_ssh_check.changed 
+     ansible.builtin.lineinfile:
+       path: /etc/ssh/sshd_config
+       regexp: '^Banner.*'
+       line: 'Banner /etc/ssh/banner.txt'
+     notify: reload_sshd
+
+- name: Habilitar Secondary Logging
+  block:
+
+      - name: Crear directorio de historial de comandos
+        ansible.builtin.file:
+          path: /var/log/history
+          mode: '01777'
+          state: directory
+
+      - name: Asegurarse que exista directorio de scripts
+        ansible.builtin.file:
+          path: /scripts
+          mode: 0755
+          state: directory
+          owner: root
+          group: root
+
+      - name: Copiar scripts de registro de historial de comandos
+        ansible.builtin.template:
+          src: "{{ item }}"
+          mode: 0755
+          dest: /scripts
+        with_items:
+          - files/history-log.sh
+          - files/compress-history-log.sh
+
+      - name: Configurar cron para comprimir logs de historial de comandos
+        ansible.builtin.template:
+          src: templates/compress-history-log.cron
+          dest: /etc/cron.d
+          mode: 0644
+
+      - name: Configurar registro de historial de comandos en bash de SUSE o Debian/Ubuntu
+        ansible.builtin.lineinfile:
+          path: /etc/bash.bashrc
+          state: present
+          regexp: '^\. /scripts/history-log.sh'
+          line: '. /scripts/history-log.sh'
+        when:
+          os_vendor == 'sles' or
+          os_vendor == 'kali' or
+          ansible_os_family == "Debian"
+
+      - name: Configurar registro de historial de comandos en bash de RedHat/CentOS/Oracle
+        ansible.builtin.lineinfile:
+          path: /etc/bashrc
+          state: present
+          regexp: '^\. /scripts/history-log.sh'
+          line: '. /scripts/history-log.sh'
+        when:
+          ansible_os_family == "RedHat" or 
+          os_vendor == 'amazon'

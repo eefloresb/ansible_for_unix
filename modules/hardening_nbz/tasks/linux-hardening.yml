@@ -1,0 +1,64 @@
+---
+- name: Hardening de cuentas de usuario
+  block:
+
+        - name: Configurar duracion maxima de clave
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_MAX_DAYS).*$'
+            replace: '\1\t{{ maxpassage }}'
+
+        - name: Configurar duracion minima de clave 
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_MIN_DAYS).*$'
+            replace: '\1\t{{ minpassage }}'
+
+        - name: Configurar longitud minima de clave
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_MIN_LEN).*$'
+            replace: '\1\t{{ minpasslen }}'
+
+        - name: Configurar dias de advertencia por expiracion de clave
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_WARN_AGE).*$'
+            replace: '\1\t{{ passwarnage }}'
+
+        - name: Hardening en RHEL/CentOS / Oracle Versiones >=7
+          when:
+            ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7
+          block:
+            - name: Configurar complejidad de claves de usuarios RedHat/CentOS/Oracle
+              shell: |
+                authconfig --passminlen={{ minpasslen }} --enablerequpper --enablereqlower --enablereqdigit --enablereqother --passmaxrepeat=3 --passmaxclassrepeat={{ passmaxclassrepeat }} --update
+                authconfig --enablefaillock --faillockargs="deny={{ lockoutbadcount }} unlock_time={{ lockoutduration*60 }} audit even_deny_root" --updateall
+
+            - name: Forzar las restricciones de clave tambien para root
+              replace:
+                path: "{{ item }}"
+                regexp: '(password[^\n]*requisite[^\n]*pam_pwquality.so[^\n]*authtok_type=)\n'
+                replace: '\1 enforce_for_root\n'
+              with_items:
+                - /etc/pam.d/system-auth
+                - /etc/pam.d/password-auth
+
+            - name: Evitar reutilizacion de ultimas claves de usuarios
+              lineinfile:
+                path: "{{ item }}"
+                regexp: "password.*requisite.*pam_pwhistory.so.*remember={{ passhistsize }}.*use_authtok"
+                insertafter: "password.*requisite.*pam_pwquality.so"
+                line: "password    requisite     pam_pwhistory.so remember={{ passhistsize }} use_authtok"
+                state: present
+              with_items:
+                - /etc/pam.d/system-auth
+                - /etc/pam.d/password-auth
+
+        - name: Hardening en Debian/Ubuntu
+          when:
+            ansible_os_family == "Debian"
+          block:
+            - name: Bloquear la contraseña con más de 3 intentos 
+              lineinfile: 
+                regexp: ""

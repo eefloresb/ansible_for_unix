@@ -1,0 +1,20 @@
+---
+ - name: crear directorio remoto 
+   ansible.builtin.file:
+    path: /scripts
+    state: directory
+    owner: root 
+    group: root
+    mode: 0755
+
+ - name: copiar archivo template en servidor remoto
+   ansible.builtin.template:
+    src: take_photo_v2.sh 
+    dest: /scripts/take_photo.sh
+    owner: root 
+    group: root 
+    mode: '0755'
+
+ - name: cargar variables de un archivo
+   ansible.builtin.set_fact:
+    key_inventory: loopback('file','~/data/{{client}}/inventory')

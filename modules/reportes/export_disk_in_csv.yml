@@ -1,0 +1,31 @@
+- name: "Extraer los discos en csv"
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "capture facts to save in file"
+      setup:
+        gather_subset:
+          - distribution
+          - mounts
+
+    - name: "Show the ansible_distribution value"
+      debug:
+        var: ansible_distribution
+
+    - name: "Show the ansible_mounts value"
+      debug:
+        var: ansible_mounts
+
+    - name: "save data in localhost"
+      copy:
+        dest: /tmp/ansible_df_all.csv
+        content: |
+          hostname,filesystem,mountpoint
+          {% for hostname in ansible_play_hosts %}
+          {% for mount in hostvars[hostname]['ansible_mounts'] %}
+          {{ hostname }},{{ mount.device }},{{ mount.mount }}
+          {% endfor %}
+          {% endfor %}
+        mode: "0644"
+      run_once: true
+      delegate_to: localhost

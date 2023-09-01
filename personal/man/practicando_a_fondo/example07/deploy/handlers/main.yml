@@ -1,0 +1,11 @@
+---
+# handlers file for deploy
+- name: test nginx configuration 
+  command: nginx -t 
+  listen: reload nginx
+
+- name: reload nginx service
+  service: 
+    name: nginx 
+    state: reloaded 
+  listen: reload nginx

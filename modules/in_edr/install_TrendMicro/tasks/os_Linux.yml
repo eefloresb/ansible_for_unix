@@ -1,0 +1,16 @@
+---
+- name: install package {{ ansible_os_family}}
+  include_tasks: install_{{ansible_os_family}}.yml
+
+- name: Instalar keygen to service
+  shell: |
+    /opt/ds_agent/dsa_control -a dsm://agents.deepsecurity.trendmicro.com:443/ "tenantID:{{ tenantIDn }}" "token:{{ token }}" "policyid:233" "groupid:166"
+
+#    - name: Set your CID on the sensor, substituting <CID> with your CID
+#      when: TokenFalcon is defined
+#      command: sudo /opt/CrowdStrike/falconctl -s --cid={{TokenFalcon}}
+
+- name: Output Strin check Falcon
+  when: check_falcon.rc == 0
+  debug:
+    msg: "status OK - Install correct service"

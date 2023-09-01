@@ -1,0 +1,56 @@
+---
+- name: install vnceserver in remote machine
+  when: ansible_os_family == "RedHat"
+  block:
+      - name: check package cache
+        yum: 
+          update_cache: true
+      
+      - name: install vnc server rpms 
+        yum: 
+          name: "{{item}}"
+          state: present 
+        loop: "{{packages}}"
+      
+      - name: file to configure the required displays 
+        lineinfile:
+          path: /etc/sysconfig/vncservers
+          regexp: '^VNCSERVERS=\"1:root"' 
+          line: 'VNCSERVERS=\"1:root 2:{{item}}\"'
+        loop: "{{users}}"
+        notify: restart vncserver 
+      
+      - name: vnconfig directory 
+        file: 
+          path: "/home/{{item}}/.vnc/"
+          state: directory
+          recurse: true
+      
+      - name: Set VNC password for VNC user 
+        shell: |
+          set -o pipefail 
+          echo "{{password}}" | vncpasswd -f > /home/{{item}}/.vnc/passwd
+        args:
+          executable: /bin/bash 
+          creates: /home/{{item}}/.vnc/passwd
+        loop: "{{users}}" 
+      
+      - name: set correct permission for 
+        file: 
+          path: /home/{{item}}/.vnc/passwd
+          owner: "{{user}}"
+          group: "{{user | default(omit)}}"
+          mode: 0600
+        loop: "{{users}}"
+        loop_control:  
+          loop_var: user 
+      
+      - name: copy xstartup file to remote user 
+        copy:
+          src: "{{RUTADIR}}/bash/xstartup.sh" 
+          dest: "/home/{{item}}/.vnc/xstartup"
+          mode: 755
+          owner: "{{item}}" 
+          group: users 
+        loop: "{{users}}"
+      

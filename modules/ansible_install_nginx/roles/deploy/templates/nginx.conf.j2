@@ -1,0 +1,46 @@
+{{ ansible_managed | comment() }}
+
+user nginx;
+worker_process auto;
+error_log /var/log/nginx/error_log;
+pid /run/nginx.pid;
+
+{% for module in nginx_modules %}
+  include {{module}};
+{% endfor %}
+
+events {
+  worker_connections {{ nginx_worker_connectios }};
+}
+
+http {
+  log_format main '$remote_addr - $remte_user [$time_local] "$request"'
+                  '$status $body_bytes_sent "$http_referer"'
+                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+  access_log /var/log/nginx/access.log main 
+
+  server_tokens {{ nginx_server_tokens }};
+  sendfile  on;
+  tcp_nopush on;
+  tcp_nodelay on; 
+  keepalive_timeout 65; 
+  types_hash_max_size 2048;
+
+  fastcgi_buffering off;
+  fastcgi_read_timeout 3600;
+  fastcgi_send_timeout 3600; 
+
+  client_max_body_size {{ nginx_client_max_body_size }};
+
+  gzip on;
+  gzip_disable "msie6"; 
+  gzip_types {{ nginx_gzip_types | join (' ') }}
+  
+  include   /etc/nginx/mime.types; 
+  default_type  application/octet-stream; 
+
+  include /etc/nginx/conf.d/*.conf;
+}
+
+

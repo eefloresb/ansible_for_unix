@@ -1,0 +1,12 @@
+---
+- hosts: all
+  vars:
+    client: Canvia
+    grupos:
+      - name: administradores 
+  tasks:
+
+  - include_vars: password.yml 
+
+  - include_role: 
+      name: account_create

@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    disabled: false
+    remove_ip: 
+    ip_proxy: "127.0.0.1:3128" 
+    install_pkg: True
+    client: ""
+  tasks:
+
+    - name: Define global vars
+      set_fact:
+            proxy_env:
+              http_proxy: "{{  ip_proxy | default(omit) }}"
+              https_proxy: "{{  ip_proxy | default(omit) }}"
+              ftp_proxy: "{{  ip_proxy | default(omit) }}"
+
+    - name: assigned proxy values 
+      when: ip_proxy is defined
+      shell: | 
+          export https_proxy=http://localhost:3128
+          export http_proxy=http://localhost:3128
+
+    - include_role:
+        name: ansible_os_basevars
+
+    - name: up values for subscription 
+      include_tasks: password.yml 
+  
+    - include_role:
+        name: ansible_os_register
+      vars:
+        os_register_state: present

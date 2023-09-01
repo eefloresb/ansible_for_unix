@@ -1,0 +1,6 @@
+ - name: copy template from local 
+   template:
+      src: ../files/resolv.conf.j2
+      dest: /etc/resolv.conf 
+      mode: 0644
+      backup: true

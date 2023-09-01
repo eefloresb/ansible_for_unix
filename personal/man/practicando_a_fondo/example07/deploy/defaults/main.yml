@@ -1,0 +1,57 @@
+---
+# defaults file for deploy
+nginx_worker_connections: 1024
+nginx_client_max_body_size: 1m 
+nginx_ipv6: False
+
+nginx_server_tokens: on 
+nginx_modules:
+    - /usr/share/nginx/modules/mod-http-geoip.conf 
+    - /usr/share/nginx/modules/mod-http-image-filter.conf
+    - /usr/share/nginx/modules/mod-http-perl.conf
+    - /usr/share/nginx/modules/mod-http-image-xslt-filter.conf
+    - /usr/share/nginx/modules/mod-mail.con 
+    - /usr/share/nginx/modules/mod-stream.conf 
+
+nginx_modules_packages: 
+    - nginx-module-geoip
+    - nginx-module-image-filter
+    - nginx-module-njs
+    - nginx-module-perl
+    - nginx-module-xslt
+
+nginx_modules_library: 
+    - ngx_http_geoip_module.so
+    - ngx_http_image_filter_module.so
+    - ngx_http_perl_module.so
+    - ngx_http_js_module.so
+    - ngx_http_xslt_filter_module.so
+    - ngx_stream_geoip_module.so
+    - ngx_stream_js_module.so
+
+nginx_default_root: /var/www/html
+nginx_gzip_types: 
+  - text/xml 
+  - text/plain
+  - text/css
+  - text/javascript 
+  - application/json
+  - application/x-javascript 
+  - application/javascript
+  - application/xml 
+  - application/xml+rss 
+  - application/xhtml+xml 
+  - application/rss+xml 
+
+
+
+
+
+
+
+
+
+
+
+
+

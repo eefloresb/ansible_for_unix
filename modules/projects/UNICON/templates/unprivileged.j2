@@ -1,0 +1,22 @@
+Defaults:{{item.user}} !fqdn
+Defaults:{{item.user}} !requiretty
+{{item.user}} ALL = (ALL) NOPASSWD: NETWORKING, SEGURIDAD, SERVICES, STORAGE, SHOWCONTENT, HARDWARE
+Defaults secure_path = /sbin/:/bin/:/usr/sbin:/usr/bin
+
+## Networking
+Cmnd_Alias NETWORKING = /sbin/route
+
+## Seguridad 
+Cmnd_Alias SEGURIDAD = /usr/sbin/iptables, /usr/bin/firewall-cmd, /usr/sbin/sestatus, /usr/sbin/iptables-save
+
+## Services
+Cmnd_Alias SERVICES = /usr/bin/systemctl, /sbin/service, /usr/sbin/chkconfig
+
+## Storage
+Cmnd_Alias STORAGE = /sbin/multipath, /usr/sbin/showmount, /usr/sbin/pvs, /usr/sbin/vgs, /usr/sbin/lvs, /usr/sbin/pvdisplay, /usr/sbin/vgdisplay, /usr/sbin/lvdisplay
+
+## Hardware 
+Cmnd_Alias HARDWARE = /usr/sbin/dmidecode, /bin/lsscsi, /sbin/lssci, /usr/bin/lsscsi
+
+## Show content 
+Cmnd_Alias SHOWCONTENT = /usr/bin/cat, /usr/bin/ls, /usr/bin/crontab, /usr/bin/ps

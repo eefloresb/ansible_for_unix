@@ -1,0 +1,70 @@
+---
+- name: update the repository 
+  apt: 
+    name: "*"
+    state: present 
+
+- name: install dependences to compile package
+  apt:
+      name: "{{ item }}"
+      state: present 
+  loop: "{{ package_for_install }}"
+
+- name: create directory to download openssh
+  file:
+    path: "{{ openssh_build_dir }}" 
+    recurse: true
+    state: directory 
+    owner: root
+    group: sys
+    mode: '0700'
+
+- name: download package openssh-8.9p1.tar.gz 
+  ansible.builtin.get_url: 
+    url: "{{openssh_url}}"
+    dest: /tmp/openssh-8.9p1.tar.gz 
+    mode: '0440'
+
+- name: extract file openssh-8.9p1.tar.gz 
+  ansible.builtin.unarchive: 
+    src: /tmp/openssh-8.9p1.tar.gz
+    dest: "{{ openssh_build_dir }}"
+    remote_src: yes
+    creates: "{{ openssh_build_dir }}/configure"
+    extra_opts: [--strip-components=1]
+
+- name: pause
+  ansible.builtin.pause:
+    prompt: "enter a secret"
+    echo: no
+
+- name: configure script to openssh 
+  ansible.builtin.command: ./configure {{openssh_build_opts}}
+  args:
+    chdir: "{{openssh_build_dir}}"
+    creates: "{{openssh_build_dir}}/Makefile"
+  register: script_result 
+
+- name: show result to script compile 
+  debug:
+      msg: "{{script_result.stdout_lines}}"
+
+- name: compile openssh 
+  when: script_result.changed 
+  make:
+    chdir: "{{openssh_build_dir}}"
+  register: make_result
+
+- name: show the result compilation 
+  debug:
+    msg: "{{make_result.stdout_lines}}"
+  
+- name: Install the binaries compiled in openssh 
+  make:
+    chdir: "{{openssh_build_dir}}"
+    target: install 
+  register: make_install_result
+
+- name: Show tha binaries compile to openssh 
+  debug: 
+    msg: "{{make_install_result.stdout_lines}}" 

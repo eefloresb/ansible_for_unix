@@ -1,0 +1,11 @@
+# generar archivos de inventario
+# generar cron 
+---
+ - hosts: all
+   become: true
+   gather_facts: true
+   tasks:
+     
+     - name: Configurar rol
+       ansible.builtin.include_role:
+        name: build_photo

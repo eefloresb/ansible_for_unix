@@ -1,0 +1,8 @@
+package_katello: "katello-ca-consumer-latest.noarch.rpm"
+rhsm_baseurl: "https://lprhsatellite.lapositiva.com.pe/pub/"
+enable_activationkey: "{{activationkey|default('RHEL-7-PRD')}}"
+packages_rhs:
+  - katello-host-tools
+  - katello-host-tools-tracer
+  - katello-agent
+clientreg: "Canvia"

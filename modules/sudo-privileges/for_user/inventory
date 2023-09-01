@@ -1,0 +1,9 @@
+###### host ip declaration
+[all]
+192.168.56.15
+
+
+
+###### Client to scanning photo
+[all:vars]
+client="UNICON"

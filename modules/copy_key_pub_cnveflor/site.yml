@@ -1,0 +1,32 @@
+---
+- name: Playbook global
+  hosts: all
+  gather_facts: false
+  become: true
+  vars:
+    usuarios:
+      - cnveflor
+  tasks:
+
+      - name: Mostrar variable 
+        ansible.builtin.debug:
+          msg: "Usuarios {{ item }}"
+        loop: "{{ usuarios }}"
+
+      - name: Create directory
+        ansible.builtin.file:
+          path: "/home/canvia/{{ item }}/.ssh"
+          mode: '0755'
+          state: directory
+          owner: "{{ item }}"
+          group: cnvadmin
+        loop: '{{ usuarios }}'
+
+      - name: Copy file pub
+        ansible.builtin.copy:
+          src: ./files/{{ item }}.pub
+          dest: /home/canvia/{{ item }}/.ssh/authorized_keys
+          mode: '0600'
+          owner: "{{ item }}"
+          group: cnvadmin
+        loop: '{{ usuarios }}'

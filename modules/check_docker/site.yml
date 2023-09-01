@@ -1,0 +1,63 @@
+---
+ - hosts: localhost
+   become: false
+   connection: local
+   vars:
+     dest_dir: "~/data/{{ client | default('CANVIA')}}"
+     dest_remote_dir: "~/data/{{ client | default('CANVIA')}}/report_assesment.csv"
+   tasks:
+     - name: create directory
+       file:
+        path: "{{ dest_dir }}"
+        state: directory
+
+     - name: create file report in .csv
+       copy:
+        dest: "{{dest_remote_dir}}"
+        content: |
+          hostname,ipaddress,interface,architecture,Uptime,Os Family,Distribution,Version,Docker,Docker Version 
+
+ - hosts: all
+   gather_facts: true
+   become: true
+   vars:
+     dest_remote_dir: "~/data/{{ client | default('CANVIA')}}/report_assesment.csv"
+   tasks:
+
+     - name: register hostname and value assigned
+       set_fact:
+        xhostname: "{{ ansible_hostname }}"
+
+     - name: register ip in value
+       set_fact:
+        xipaddress: "{{ ansible_default_ipv4.address }}"
+
+     - name: register architecture in value
+       set_fact:
+          xarchitecture: "{{ansible_architecture}}"
+
+     - name: register family the server
+       set_fact:
+          xosfamily: "{{ ansible_os_family }}"
+
+     - name: register the distribution
+       set_fact:
+          xdistribution: "{{ ansible_distribution }}"
+
+     - name: register of process to docker in to value
+       shell: |
+        ps -fea|grep docker|grep -v grep 
+       register: register_docker
+
+     - name: assigned_value to docker
+       ansible.builtin.set_fact: 
+        xdocker: "{{register_docker.stdout if register_docker.rc == 0 else 'No cuenta con docker instalado' }}"
+
+
+     - name: register values captured of remote machines
+       shell: |
+          echo "{{xhostname}},{{xipaddress}},{{xaddress}},{{xarchitecture}},{{xdate}},{{ ansible_uptime_seconds // 86400 }},{{xosfamily}},{{xdistribution}},{{ xdocker }}" >> {{ dest_remote_dir }}
+       become: false
+       delegate_to: localhost
+        
+        

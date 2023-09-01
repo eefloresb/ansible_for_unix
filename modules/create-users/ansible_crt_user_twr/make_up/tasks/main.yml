@@ -1,0 +1,33 @@
+---
+
+  - name: Create group in remote server
+    group: 
+      name: "{{user.group}}" 
+      state: present
+    loop: "{{ usuarios }}"
+    loop_control:  
+      loop_var: user
+      label: "{{user.user}} - {{user.group}}"
+  
+  - name: create user in remote server 
+    user:
+      name: "{{ user.user }}"
+      group: "{{ user.group}}"
+      create_home: yes
+      password: "{{ user.password | password_hash('sha512') }}"
+      comment: "{{ user.comment }}}"
+      update_password: always 
+      state: present 
+      system: false
+    loop: "{{ usuarios }}"
+    loop_control: 
+      label: "{{user.user}} - {{user.comment}}"
+      loop_var: user 
+
+  - name: crear directorio script
+    file:
+      path: /scripts
+      state: directory
+      mode: 0755
+
+  - include_tasks: os_{{ansible_system}}.yml

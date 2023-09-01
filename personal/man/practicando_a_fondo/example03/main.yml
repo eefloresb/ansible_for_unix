@@ -1,0 +1,13 @@
+---
+- hosts: grupo2 
+  become: true
+  tasks: 
+    - name: create file 
+      copy: 
+        content: "123"
+        dest: /root/123.txt 
+      register: file
+
+    - name: debug
+      debug:
+        var: file

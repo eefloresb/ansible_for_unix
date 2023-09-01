@@ -1,0 +1,91 @@
+# Begin PE 4_OPERACIONES_PE standard template Ver 1.0  Date 2014-11-19  * Master * Refer XXXX  Begin #
+# Description
+# Software products and versions
+# Supported OS platforms: ALL
+# local functional ID
+# local path changes
+# local OS groups for the Master
+# self serve access permitted for all sub templates
+#
+# Version control (note: version number indicated will be chosen to
+# align with the corresponding global 'paired' template)
+#------------------------------------------------------------------------
+# v1.0   - vasina@pe.ibm.com - initial PE version
+# Replace sample group names with real group names for your account
+
+User_Alias      IBMPE_OPERACIONES_USER = %ibmopepe
+
+Host_Alias IBMPE_OPERACIONES_HOSTS = ALL # in this case, we want this defined on all hosts, indicate subsets as appropriate.
+
+# TWS commands (IBM TWS scripts)
+#---------- Operation Commands --------------#
+Cmnd_Alias IBMPE_OPERACIONES = /usr/local/bin/opactiva*.sh, \
+                                /usr/local/bin/opdesactiva*.sh, \
+                                /usr/bin/tail * /tmp/*.log, \
+                                /usr/bin/cat /tmp/*.log, \
+                                /usr/bin/tail * /tmp/*.txt, \
+                                /usr/bin/cat /tmp/*.txt, \
+                                /usr/tivoli/tsm/client/ba/bin64/backup*.sh, \
+                                /usr/local/bin/mantenimiento.sh
+#--------- End Operation Commands --------------#
+
+IBMPE_OPERACIONES_USER IBMPE_OPERACIONES_HOSTS = IBMPE_OPERACIONES
+
+# Note: No overrides needed in * Maintenance * section. #
+
+# End   PE 4_OPERACIONES_PE standard template Ver 1.0   Date 2014-11-19 * Master * Refer XXXXX End #
+[root@isilbeis sudoers.d]# cat /usr/local/bin/mantenimiento.sh
+cat: /usr/local/bin/mantenimiento.sh: No such file or directory
+[root@isilbeis sudoers.d]# cat 4_TWS_PE
+# Begin PE 4_TWS_PE standard template Ver 1.0  Date 2014-11-19  * Master * Refer XXXX  Begin #
+# Description
+# Software products and versions
+# Supported OS platforms: ALL
+# local functional ID
+# local path changes
+# local OS groups for the Master
+# self serve access permitted for all sub templates
+#
+# Version control (note: version number indicated will be chosen to
+# align with the corresponding global 'paired' template)
+#------------------------------------------------------------------------
+# v1.0   - vasina@pe.ibm.com - initial PE version
+# Replace sample group names with real group names for your account
+
+User_Alias      IBMPE_TWS_USER = %ibmopepe
+
+Host_Alias IBMPE_TWS_HOSTS = ALL # in this case, we want this defined on all hosts, indicate subsets as appropriate.
+
+# TWS commands (IBM TWS scripts)
+#---------- Operation Commands --------------#
+Cmnd_Alias IBMPE_TWS = /usr/local/bin/cargaTWS.sh, \
+                                /usr/local/bin/*tws*.sh *, \
+                                /usr/local/bin/*TWS*.sh *, \
+                                /usr/local/bin/TWS/*tws*.sh *, \
+                                /usr/local/bin/TWS/*TWS*.sh *, \
+                                /usr/bin/tail * /usr/local/bin/TWS/*.log, \
+                                /usr/bin/cat /usr/local/bin/TWS/*.log | more, \
+                                /usr/tivoli/tsm/client/ba/bin/backup*TWS*.sh, \
+                                /usr/tivoli/tsm/client/ba/bin/backup*tws*.sh, \
+                                /opt/IBM/TWA/PARCHESWIN/getcronograma.sh /Scripts/TWS/CRONOGRAMAS /opt/IBM/TWA/PARCHESWIN/CRONOGRAMAS PARCHESWIN20140909.txt, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_01A, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_01A, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_01B, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_01C, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_01D, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_02, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_03, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_04A, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_04B, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_04C, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_04D, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_05, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_06, \
+                                /opt/IBM/TWA/UNIQUE/promptctl.sh PROM_07
+#--------- End Operation Commands --------------#
+
+IBMPE_TWS_USER IBMPE_TWS_HOSTS = IBMPE_TWS
+
+# Note: No overrides needed in * Maintenance * section. #
+
+# End   PE 4_TWS_PE standard template Ver 1.0   Date 2014-11-19 * Master * Refer XXXXX End #

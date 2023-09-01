@@ -1,0 +1,7 @@
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: create user cnvcecom
+      ansible.builtin.include_role:
+        name: ansible_os_users

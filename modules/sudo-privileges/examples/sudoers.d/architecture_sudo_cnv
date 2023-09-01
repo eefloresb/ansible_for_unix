@@ -1,0 +1,8 @@
+# Define user in alias 
+User_Alias CNVPE_OPERACIONES_USER = cnvoperador
+Host_Alias CNVPE_OPERACIONES_HOSTS = ALL
+
+#---------------- Operation Commands ----------------#
+Cmnd_Alias CNVPE_OPERACIONES = /usr/local/bin/check*.sh
+#---------------- End Operation Commands ----------------#
+CNVPE_OPERACIONES_USER CNVPE_OPERACIONES_HOSTS = CNVPE_OPERACIONES

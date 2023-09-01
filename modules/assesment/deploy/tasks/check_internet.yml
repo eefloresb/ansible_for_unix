@@ -1,0 +1,11 @@
+---
+- name: Check internet in remote equipment
+  failed_when: 1 == 2
+  ansible.builtin.uri:
+   url: https://www.redhat.com/en
+  register:
+   get_url
+
+- name: Assigned value to check internet
+  ansible.builtin.set_fact:
+   get_conection_www: '{{ "witch access to internet" if get_url.status == 200 else " without access to internet" }}'

@@ -1,0 +1,18 @@
+--- 
+- name: Instalar bacula Client y Storage en {{ansible_distribution}}
+  block:
+
+     - name: Importar la llave en {{ansible_os_family}}
+       apt_key:
+         file: "{{bacula_key.dest}}"
+         state: present
+
+     - name: copy repository in 
+       template:
+         src: Bacula-Community.j2
+         dest: /etc/apt/sources.list.d/Bacula-Community.list
+
+     - name: install bacula client 
+       apt:
+         name: bacula-client="{{bacula_version}}"
+         update_cache: true

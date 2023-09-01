@@ -1,0 +1,13 @@
+---
+- hosts: all 
+  tasks: 
+  - set_fact:
+      list_of_disks=""
+
+  - set_fact: 
+      list_of_disks: "{{ list_of_disks | regex_replace('^, ','') }}, {{ item.device }}"
+    with_items: "{{ ansible_facts.mounts }}"
+    when: "'/dev/' in item.device"
+
+  - debug:
+      msg: "{{ list_of_disks }}"

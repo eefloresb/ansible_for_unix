@@ -1,0 +1,26 @@
+---
+nginx_worker_connections: 1024
+nginx_client_max_body_size: 1m 
+nginx_ipv6: False
+nginx_server_tokens: "on"
+nginx_modules: 
+  - /usr/share/nginx/modules/mod-http-geoip.conf
+  - /usr/share/nginx/modules/mod-http-image-filter.conf
+  - /usr/share/nginx/modules/mod-http-perl.conf
+  - /usr/share/nginx/modules/mod-http-xslt-filter.conf
+  - /usr/share/nginx/modules/mod-mail.conf
+  - /usr/share/nginx/modules/mod-stream.conf
+nginx_default_root: /var/www/html 
+nginx_default_conf: True
+nginx_gzip_types: 
+  - text/xml 
+  - text/plain
+  - text/css
+  - text/javascript
+  - application/json
+  - application/x-javascript
+  - application/javascript 
+  - application/xml 
+  - application/xml+rss
+  - application/xhtml+xml 
+  - application/rss+xml 

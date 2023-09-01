@@ -1,0 +1,3 @@
+Defaults:cnvcecom !fqdn
+Defaults:cnvcecom !requiretty
+cnvcecom ALL= NOPASSWD: /sbin/shutdown -h now, /sbin/shutdown -r now, /usr/local/bin/check_cpu, /usr/local/bin/check_mem_ram, /usr/local/bin/check_mem_swap, /usr/local/bin/check_disk, /usr/bin/systemctl stop ds_agent, /usr/bin/systemctl start ds_agent, /usr/bin/systemctl start pandora, /usr/bin/systemctl stop pandora, /usr/bin/systemctl start metricbeat, /usr/bin/systemctl stop metricbeat

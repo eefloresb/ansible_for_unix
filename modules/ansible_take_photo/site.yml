@@ -1,0 +1,8 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+    - name: Add rol to execute remote program
+      ansible.builtin.include_role:
+        name: deploy 

@@ -1,0 +1,3 @@
+---
+- name: Remover expiracion de cuenta a gmdareng (chage)
+  command: chage -M 999999 gmdareng

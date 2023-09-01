@@ -1,0 +1,42 @@
+---
+- hosts: localhost
+  connection: local 
+  vars: 
+   emails:  
+    - 'hello@gritfy.com'
+    - 'steve@google.com'
+    - 'mark@ibm.com'
+    - 'dave@meta.com'
+   usernames : []
+  tasks:
+      - name: print only domain Names from Email IDs with split('@')
+        debug: 
+          msg: "{{ item | split('@') }}"
+        loop: "{{emails}}" 
+
+      - name: print only domain Names from Email IDs with | last 
+        debug: 
+          msg: "{{ item | split('@') | last }}"
+        loop: "{{emails}}" 
+
+      - name: print only domain names from Email IDs with split map('split','@')
+        debug: 
+          msg: "{{ emails | map('split','@') }}"
+
+
+      - name: print only domain names from Email IDs with split | flatten  
+        debug: 
+          msg: "{{ emails | map('split','@') | flatten }}"
+        
+      
+      - name: print only domain names from Email IDs with split | select('match','.+\\..+$')
+        debug: 
+          msg: "{{ emails | map('split','@') | flatten | select('match','.+\\..+$') }}" 
+
+      - name: print only domain names from email IDs with split 
+        set_fact: 
+              usernames: "{{usernames + [ item | split(':') | first ] }}"
+        loop: "{{ lookup('file','/etc/passwd').splitlines() | select('match','^(?!#)')}}" 
+        
+      - debug: 
+          var: usernames

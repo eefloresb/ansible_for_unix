@@ -1,0 +1,56 @@
+---
+- name: check install the rpm automox install
+  failed_when: 1 == 2
+  when: os_vendor is defined and (os_vendor in ['rhel','centos','oracle','sles'])
+  shell: | 
+      rpm -qa|grep amagent 
+  register: find_package_rhel
+
+- name: check install the deb automox install
+  failed_when: 1 == 2
+  when: os_vendor is defined and (os_vendor in ['debian','ubuntu'])
+  shell: | 
+      dpkg -l|grep amagent
+  register: find_package_debian
+
+- set_fact:
+    package: '{{ find_package_rhel.rc }}'
+  ignore_errors: true
+
+- set_fact:
+    package: '{{ find_package_debian.rc }}'
+  ignore_errors: true
+
+- name: stopped package amagent installed 
+  when: package == "0"
+  service: 
+      name: amagent
+      state: stopped
+
+- name: deregister amagent in server remote 
+  when: package == "0"
+  command: /opt/amagent/amagent --deregister 
+  ignore_errors: true
+
+- name: Remove agent from OS to Debian/RedHat/SuSe
+  when: package == "0"
+  package:
+      name: amagent
+      state: absent  
+
+-  when: uninstall == false
+   block: 
+    - name: download package to install automox in OS    
+      when: 
+      shell: |
+        curl -sS https://console.automox.com/downloadInstaller?accesskey={{ YOURORGANIZATIONKEY }} | sudo bash
+      register:
+          install_amagent
+
+    - name: start the agent service 
+      when: 
+        - install_amagent.rc != '0' 
+      service:
+        name: amagent 
+        state: started
+        enabled: true

@@ -1,0 +1,61 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    disabled: false
+    remove_ip: ""
+    ip_proxy: "http://127.0.0.1:3128"
+    install_pkg: True
+    client: ""
+  tasks:
+
+#    - name: Define global vars
+#      set_fact:
+#            proxy_env:
+#              http_proxy: "{{  ip_proxy | default(omit) }}"
+#              https_proxy: "{{  ip_proxy | default(omit) }}"
+#              ftp_proxy: "{{  ip_proxy | default(omit) }}"
+#
+#
+#    - name: assigned proxy values 
+#      shell: | 
+#          export https_proxy=http://localhost:3128
+#          export http_proxy=http://localhost:3128
+#
+    - include_role:
+        name: ansible_os_basevars
+
+    - name: up values for subscription 
+      include_tasks: password.yml 
+  
+    - include_role:
+        name: ansible_os_register
+      vars:
+        os_register_state: present
+
+#    - name: personalice so vagrant with my users 
+#      include_role:
+#         name: ansible_os_defaultvg
+  
+#    - name: create users systems and generic
+#      include_role:
+#        name: ansible_os_users
+#  
+#    - name: configure base line 
+#      include_role: 
+#        name: ansible_os_baseline
+#
+#    - name: configure tools to monitoring 
+#      include_role: 
+#        name: ansible_os_monitoring 
+#
+#    - name: apply hardening to remote server 
+#      include_role: 
+#        name: ansible_os_hardening
+#
+  #  - include_role:
+  #      name: os_line_register_vagrant
+  #    when: disabled == 'true'
+  #    vars:
+  #      os_register_state: absent

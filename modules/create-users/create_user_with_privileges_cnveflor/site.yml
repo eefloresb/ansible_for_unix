@@ -1,0 +1,14 @@
+---
+- hosts: all
+  vars:
+    client: Canvia
+    grupos:
+      - name: cnvadmin
+        fullname: grupos de canvia
+  tasks:
+
+  - name: Include user for remote server
+    ansible.builtin.include_vars: password.yml
+
+  - include_role: 
+      name: account_create

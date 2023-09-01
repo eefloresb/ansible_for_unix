@@ -1,0 +1,46 @@
+---
+- name: Ensure services are not installed
+  yum:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ service_uninstall }}"
+
+- name: Verify chrony
+  yum:
+    name: chrony
+    state: present
+
+#2.2.1.2 Ensure chrony is configured
+- name: Options include chronyd
+  lineinfile:
+    path: /etc/sysconfig/chronyd
+    regexp: '^OPTIONS'
+    line: OPTIONS="-u chrony"
+    owner: root
+    group: root
+    mode: '0644'
+    state: present
+
+- name: Uninstall the 'X Window System' package group
+  block:
+    - yum:
+        name: "'@X Window System'"
+        state: absent
+    - command: 'yum remove xorg-x11* -y'
+  ignore_errors: yes
+
+- name: Mail transfer agent in mode local-only
+  shell: |
+    ss -lntu | grep -E ':25\s' | grep -E -v '\s(127.0.0.1|::1):25\s'
+  register: mailtransfer
+  ignore_errors: yes
+  failed_when: mailtransfer.stdout != ""
+
+- name: Disable services
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+  loop: "{{ service }}"
+  register: services
+  ignore_errors: yes
+  failed_when: (services.changed == 'true' or services.changed == 'false')

@@ -1,0 +1,17 @@
+---
+  - name: check package installed 
+    command: which bacula
+    register: check_bacula
+    ignore_errors: true
+
+  - name: importar gpg key
+    get_url:
+      url: "{{url_bacula_key}}"
+      dest: /tmp/Bacula-4096-Distribution-Verification-key.asc
+      validate_certs: False 
+    register: bacula_key
+
+  - name: install package {{ ansible_os_family}}
+    when: check_bacula.rc != 0
+    include_tasks: install_{{ansible_os_family}}.yml
+    handlers: init bacula

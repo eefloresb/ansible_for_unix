@@ -1,0 +1,13 @@
+---
+- name: install nginx in redhat family
+  when: ansible_os_family == "RedHat"
+  include_tasks: os_linux_rhel.yml
+
+- name: install in sles family 
+  when: os_vendor == "sles"
+  include_tasks: os_linux_sles.yml 
+
+- name: install package nginx 
+  package:
+    name: nginx
+    state: present

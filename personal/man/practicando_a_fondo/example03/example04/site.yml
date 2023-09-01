@@ -1,0 +1,16 @@
+---
+ - hosts: grupo2 
+   become: true
+   tasks: 
+    - name: verified file 
+      stat:
+        path: /root/123.txt 
+      register: file 
+
+    - debug: 
+        var: file
+  
+    - name: wheater file 
+      shell: echo "123" > /root/AAABBB.TXT 
+      when: file.stat.mode == '0755'
+

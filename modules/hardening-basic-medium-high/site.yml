@@ -1,0 +1,99 @@
+---
+ - hosts: all
+   vars:
+    xdate: "{{ansible_date_time}}"
+    xhost: "{{ansible_hostname}}"
+    xhour: "{{ansible_date_time}}"
+    xbkdir: "/root/hardening/backup"
+    xlog: "{{xbkdir}}/hardening_{{ansible_hostname}}.log" 
+    tasks:
+  
+       - name: copy content
+         copy: 
+          dest: "{{xlog}}"
+          content: | 
+            "Hardening Server: {{ansible_hostname}}"
+            "Date: {{xdate}}"
+         delegate_to: localhost
+
+       - name: 1.1.1 Deshabilitar el montado de filesystems Cramfs si no van a ser utilizados
+         lineinfile:
+            path: /etc/modprobe.d/cramfs.conf
+            line: "install cramfs /bin/true"
+            create: true
+
+       - shell: | 
+            rmmod cramfs 2>/dev/null
+         register: x111
+
+       - name: 1.1.2 Deshabilitar el montado de filesystems squashfs si no van a ser utilizados
+         lineinfile: 
+           path: /etc/modprobe.d/squashfs.conf
+           line: "install squashfs /bin/true" 
+           create: true
+
+       - shell: | 
+            rmmod squashfs 2>/dev/null
+         register: x112 
+
+       - name: 1.1.3 Deshabilitar el montado de filesystems udf si no van a ser utilizados
+         lineinfile: 
+            path: "/etc/modprobe.d/udf.conf"
+            line: install udf /bin/true
+            create: true
+  
+       - shell: | 
+          rmmod udf 2>/dev/null
+         register: x113  
+
+       - name: 1.5.1 Ensure core dumps are restricted
+         shell: | 
+          cp -p /etc/security/limits.conf {{xbkdir}}
+          cp -p /etc/sysctl.conf {{xbkdir}}
+          cp -p /etc/systemd/coredump.conf {{xbkdir}}
+          sysctl -w fs.suid_dumpable=0 2>/dev/null
+
+       - lineinfile:
+            path: /etc/security/limits.conf
+            regexp: '\* hard core 0'
+            line: '\* hard core 0'
+
+       - lineinfile: 
+            path: /etc/sysctl.conf
+            regexp: "fs.suid_dumpable.*"
+            line: "fs.suid_dumpable=0"
+
+       - lineinfile:  
+            path: /etc/systemd/coredump.conf 
+            regexp: "{{item}}"
+            line: "{{item}}"
+         loop:
+            - storage=none
+            -  ProcessSizeMax=0
+
+       - systemd: 
+          daemon_reload: true
+
+       - name: 1.5.3 Ensure address space layout randomization
+         copy: 
+            src: "/etc/issue"
+            dest: "{{xbkdir}}/issue" 
+      
+       - template:
+            src: ./templates/issue.j2
+            dest: /etc/issue
+         notify: restart_sshd 
+
+       - name: 1.9 Moved or login is configured
+         shell: 
+            systemctl stop gdm 2>/dev/null
+            systemctl disable gdm 2>/dev/null
+            systemctl status gdm  2>/dev/null
+      
+       - name: 2.1.1 Ensure xinetd is not installed 
+         shell: | 
+            systemctl stop xinetd 2>/dev/null
+            systemctl disable xinetd 2>/dev/null
+            yum remove xinetd 2>/dev/null
+
+       - name: 2.2 Special Purpose Services

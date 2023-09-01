@@ -1,0 +1,17 @@
+---
+ - hosts: all 
+   become: true
+   gather_facts: true
+   tasks: 
+
+   - name: up values to OS 
+     ansible.builtin.include_role:
+      name: ansible_os_basevars
+
+   - name: take photo to remote server
+     ansible.builtin.include_role:
+      name: ansible_take_photo
+    
+   - name: shutdown servers 
+     ansible.builtin.reboot:
+      reboot_timeout: 300

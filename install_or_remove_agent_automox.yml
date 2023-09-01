@@ -1,0 +1,13 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: true
+  tasks: 
+
+  - name: Load values from OS 
+    ansible.builtin.include_role: 
+      name: ansible_os_basevars
+  
+  - name: install package agent for debian/SLES/RedHat 
+    ansible.builtin.include_role: 
+      name: ansible_agent_automox

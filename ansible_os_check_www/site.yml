@@ -1,0 +1,64 @@
+--- 
+  - hosts: all
+    become: false 
+    gather_facts: true
+    tasks:
+
+     - name: check the url RedHat in case this is REDHAT 
+       when: ansible_os_family == "RedHat"
+       block:
+           - name: Check the config internet
+             when:  ansible_distribution == "RedHat"
+             ansible.builtin.uri:
+              url: https://www.redhat.com/en
+              return_content: no
+              status_code: 200
+              method: GET
+             register: get_return
+
+           - name: Check the config internet
+             when:  ansible_distribution == "CentOS"
+             ansible.builtin.uri:
+              url: https://www.redhat.com/en
+              return_content: no
+              status_code: 200
+              method: GET
+             register: get_return
+
+     - name: check the url SuSe in case this is SLES/SLES-SAP
+       when: ansible_os_family == "Suse"
+       ansible.builtin.uri:
+        url: https://scc.suse.com
+        return_content: no
+        status_code: 200
+        method: GET
+       register: get_return
+
+     - name: check the url Debian in case this is Debian/Ubuntu
+       block:
+        - name: Check the config internet
+          when:  ansible_distribution == "Debian"
+          ansible.builtin.uri:
+           url: https://www.redhat.com/en
+           return_content: no
+           status_code: 200
+           method: GET
+          register: get_return
+             
+        - name: Check the config internet
+          when:  ansible_distribution == "Ubuntu"
+          ansible.builtin.uri:
+           url: https://www.redhat.com/en
+           return_content: no
+           status_code: 200
+           method: GET
+          register: get_return
+       when: ansible_facts['os_family'] == 'Debian'
+
+     - name: Mostrar resultados 
+       debug:
+          var: get_return
+
+     - name: validar el retorno de la pagina
+       ansible.builtin.debug:
+        msg: "the {{ansible_os_family}} Access family access the web - {{result_status.status}}"

@@ -1,0 +1,83 @@
+# Begin Global UAT TOOL ID Admin for Linux standard template - Ver 1.0.0 Date 2015-10-10  * Master * Refer NA15117080 Begin #
+# Software products and versions: UAT Brazil Tool - http://uat.br.ibm.com
+# Supported OS platforms: Linux
+# Local functional ID: uatagnt
+# Local OS groups for the Master: uatgroup 
+#
+# Version control
+#-------------------------------------------------------------------------
+# V1.0 - amlucas@br.ibm.com - Template was created and approved to be deployed
+##
+## NA notes:  This template was 'promoted' to global from NA.  As such, this V1   
+##   template is considered 'functionally equivalent' to the old 208_UATtLIN_NA
+##   template V 1.3.  At this time, there is no particular requirement to
+##   upgrade from the old, but be aware that all future references to this
+##   template will be against the new GLB name.
+#-------------------------------------------------------------------------
+#
+#===========================================================================
+
+# The group uatgroup should exist on this server. This is part of the procedure to deploy UAT.
+User_Alias IBM_LIN_UAT_TOOL_BAU = %uatgroup
+
+# Indicate list of appropriate hosts, or ALL.
+Host_Alias IBM_LIN_UAT_HOSTS = ALL
+
+# --------------Do not change anything below this line ------------------
+# ibm / approved / standard / local
+Cmnd_Alias IBM_LIN_UAT_BAU_CMDS = /bin/cat /etc/local/etc/sudoers, \
+                /bin/cat /etc/local/sudoers, \
+                /bin/cat /etc/shadow, \
+                /bin/cat /etc/ssh/sshd_config, \
+                /bin/cat /etc/sudoers, \
+                /bin/cat /syslocal/config/common/sudo/etc/sudoers, \
+                /bin/cat /var/log/messages, \
+                /bin/cat /var/log/sudo.log, \
+                /bin/cat /var/log/secure, \
+                /usr/bin/cat /etc/local/etc/sudoers, \
+                /usr/bin/cat /etc/local/sudoers, \
+                /usr/bin/cat /etc/shadow, \
+                /usr/bin/cat /etc/ssh/sshd_config, \
+                /usr/bin/cat /etc/sudoers, \
+                /usr/bin/cat /syslocal/config/common/sudo/etc/sudoers, \
+                /usr/bin/cat /var/log/messages, \
+                /usr/bin/cat /var/log/sudo.log, \
+                /usr/bin/cat /var/log/secure, \
+                /usr/bin/who, \
+                /bin/who, \
+                /usr/bin/chage, \
+                /usr/bin/chmod [0-7][0-7][0145] /home/*, \
+                /bin/chmod [0-7][0-7][0145] /home/*, \
+                !/bin/chmod [1-7][0-7][0-7][0-7] /home/*, \
+                !/usr/bin/chmod [1-7][0-7][0-7][0-7] /home/*, \
+                /usr/bin/faillog, \
+                /usr/bin/gpasswd, \
+                /usr/bin/ls, \
+                /bin/ls, \
+                /usr/bin/passwd, \
+                /usr/sbin/chpasswd, \
+                /usr/sbin/faillog, \
+                /usr/sbin/groupadd, \
+                /usr/sbin/groupdel, \
+                /usr/sbin/groupmod, \
+                /sbin/groupmod, \
+                /usr/sbin/useradd, \
+                /usr/sbin/userdel, \
+                /usr/sbin/usermod, \
+                /usr/bin/rm -rf /home/*, \
+                /bin/rm -rf /home/*, \
+                /usr/bin/rm -r /home/*, \
+                /bin/rm -r /home/*, \
+                /usr/bin/rm /home/*, \
+                /bin/rm /home/*, \
+                /usr/local/bin/uatscripts/uatoracle.sh, \
+                /usr/local/bin/uatscripts/uatdb2.sh, \
+                /usr/local/bin/uatscripts/uatsap.sh, \
+                /usr/local/bin/uatscripts/uathyperion.sh, \
+                /usr/bin/find, \
+                /bin/find
+
+IBM_LIN_UAT_TOOL_BAU IBM_LIN_UAT_HOSTS = (root) NOPASSWD: IBM_LIN_UAT_BAU_CMDS,IBM_CHMOD_NEG, \
+        IBM_FIND_NEG,IBM_RM_NEG
+
+# End Global UAT TOOL ID Admin for Linux standard template - Ver 1.0.0 Date 2015-10-10  * Master * Refer NA15117080 End #

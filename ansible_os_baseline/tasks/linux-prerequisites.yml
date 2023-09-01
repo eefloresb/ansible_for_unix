@@ -1,0 +1,13 @@
+---
+- name: install missing packages
+  when:
+   - os_vendor == 'sles'
+   - os_release.split('.')[0] == '12'
+  raw: zypper install -y python-xml gettext-runtime
+
+- name: remove packages gettext-runtime-mini sles 12
+  when:
+    - os_vendor == 'sles'
+    - os_release.split('.')[0] == '12'
+  raw: zypper --non-interactive remove gettext-runtime-mini
+  ignore_errors: true

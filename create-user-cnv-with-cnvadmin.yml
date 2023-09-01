@@ -1,0 +1,25 @@
+---
+ - hosts: all
+   gather_facts: true
+   become: true
+   tasks:
+
+   - name: cargar párametros a nivel variables 
+     ansible.builtin.include_role:
+      name: ansible_os_basevars 
+
+   #- name: instalar paquetes mínimos de administración
+   #  ansible.builtin.include_role:
+   #   name: ansible_os_baseline
+      
+   - name: crear usuarios en servidor remoto 
+     ansible.builtin.include_role:
+      name: ansible_os_users
+
+   - name: Hardening basico a nivel de servidores 
+     ansible.builtin.include_role:
+      name: ansible_os_hardening_basic
+  
+   - name: Monitoring basico a nivel de servidores 
+     ansible.builtin.include_role:
+      name: ansible_os_monitoring_basic 

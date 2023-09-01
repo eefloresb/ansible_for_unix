@@ -1,0 +1,29 @@
+---
+- hosts: all 
+  become: true
+  tasks:
+    - name: include usuarios values 
+      include_vars: files/usuarios.yml
+
+    - name: delete user remote server {{ansible_hostname}}
+      user:
+        name: "{{user.name}}"
+        state: absent 
+        remove: true
+      loop: "{{usuarios}}"
+      loop_control:
+        loop_var: "user"
+        label: "delete {{user.name}} in remote server {{ansible_hostname}}"
+
+    - name: remove user from sudo 
+      lineinfile:
+        path: /etc/sudoers 
+        state: absent 
+        regexp: '^{{user.name}}.*ALL=.*'
+        validate: /usr/sbin/visudo -cf %s
+        backup: true 
+      loop: "{{usuarios}}"
+      loop_control:
+        loop_var: "user"
+        label: "remover {{user.name}} from sudo file" 
+      

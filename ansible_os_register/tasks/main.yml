@@ -1,0 +1,4 @@
+---
+# tasks file for deploy
+- name: "apply register subscription fot system operating"
+  include_tasks: linux-register.yml    

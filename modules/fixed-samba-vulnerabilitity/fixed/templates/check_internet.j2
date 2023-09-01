@@ -1,0 +1,41 @@
+_internet_connect(){
+    server=$1
+    if host -t A redhat.com $server &>/dev/null; then
+        echo "OK"
+    else
+        echo "Failed"
+    fi
+}
+
+_name_server(){
+    if cat /etc/resolv.conf|grep nameserver &>/dev/null; then
+      for i in `grep nameserver /etc/resolv.conf | awk '{print $2}'`; do
+        OK=$(_internet_connect $i)
+        if [[ $OK == "OK" ]]; then
+            echo "Sucess"
+	    break
+        fi
+       done
+    else
+        echo "Failed"
+    fi
+}
+
+_check_download_packages(){
+    if curl -I https://www.redhat.com/en &>/dev/null; then
+        echo "Sucess"
+    else
+        echo "Failed"
+    fi
+}
+
+_check_return_value(){
+    xdns=$(_name_server)
+    xweb=$(_check_download_packages)
+    if [[ $xdns == $xweb ]]; then
+        echo "Sucess"
+    else
+	echo "Failed"
+    fi
+}
+_check_return_value

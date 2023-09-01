@@ -1,0 +1,24 @@
+---
+- name: Include PwdRQ
+  include_tasks: RQpwd.yml
+
+- name: Include AplRQ
+  include_tasks: RQAplication.yml
+
+- name: Include NetRQ
+  include_tasks: RQNetwork.yml
+  
+- name: Include System Operative (Initial setup)
+  include_tasks: so.yml
+
+- name : Include security category
+  include_tasks: security.yml
+
+- name:  Include services category
+  include_tasks: services.yml
+
+- name: Include system maintenance
+  include_tasks: sysmaintenance.yml
+
+- name: Include AudRQ
+  include_tasks: RQAudit.yml

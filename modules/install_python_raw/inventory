@@ -1,0 +1,6 @@
+[all]
+10.131.8.73
+
+[all:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -p 22 -W %h:%p -i ~/.ssh/pivot_rsa -q gmdadmin@bacula.canvia.com -o StrictHostKeyChecking=no" -o StrictHostKeyChecking=no'
+client="Isil"

@@ -1,0 +1,23 @@
+---
+- name: create groups in remote server
+  group: 
+    name: "{{ item }}"
+    state: present
+  loop:
+      - grupoA
+      - grupoB 
+
+- name: create users from group values 
+  user: 
+    name: "{{item}}"
+    state: present 
+    group: grupoA
+  loop: 
+      "{{ grupoA }}"  
+
+- name: create users from group values 
+  user: 
+    name: "{{item}}"
+    state: present 
+    group: grupoB
+  loop: "{{ grupoB }}"  

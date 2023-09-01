@@ -1,0 +1,11 @@
+---
+- name: Collect information
+  become: yes
+  hosts: all
+
+  tasks:
+  - name: use template from labs/hw.j2
+    template:
+      src: hw.j2
+      dest: /tmp/hw.{{ ansible_facts.hostname }}.txt
+      mode: '0600'

@@ -1,0 +1,161 @@
+root@isilbeis ~]# cat /etc/sudoers
+# Begin Global sudoers standard template Ver 8.4 Date 2015-04-01 * Master * Refer NA15106012 Begin #
+# Description Standard sudoers template
+#
+# Version control
+#
+# See changelog on Global sudo wiki http://ibm.biz/GsudoStandardAlias for previous changes
+#
+# Updates in this version:
+#
+# April 2015 Update V 8.4
+# Moved standard negation entries to independent template.  Added #include
+# Moved standard alias entries to independent template.  Added #include
+# Moved standard SA entries to independent template.  Added #include
+# Added line ## IBM Team include statements precede this comment - for S-TRAN
+## NA notes:  
+##   This file resyncronizes NA with the Global sample file.
+##    Note that the 'global' version of this file V 8.4 is the
+##    'next release' after the V 8.3NA.
+##   The following notes below highlight the deltas to the previous 
+##    NA reviewed version.
+##    Your  team may continue to use the old standard content (8.1NA);
+##    however, automation that will be deployed in 3Q 2015 and
+##    changes to standard templates will require use of the negations
+##    as defined in V 8.4.  Start making updates as soon as practical.
+##    Alert:  If you have any negations using the [\:space\:], you will
+##    need to replace them with the negations in the 'new' 
+##    010_STD_NEG_GLB template.
+##   
+##   With 8.4, Global has introduced a 'new' template for the SA entry. 
+##    This is 'closer' to the typical NA approach, which used
+##    a 'template' for the standard SA entry.  The 'new' global template 
+##    is called:
+##     010_STD_SA_GLB_V2.0.0.txt  this file is 'equivalent' to the NA template
+##     201_SystemAdmin_NA  v1.2.2   Date 2014-07-15
+##    The content between these two files is identical, and it is permissible
+##    to continue to use 201_SystemAdmin_NA v1.2.2; however,
+##    going forward the template will be reference in this file and standard
+##    documentation the 'new' global name of:  010_STD_SA_GLB
+##    As noted in the global comments below, teams which wish to 'inline'
+##    the new templates are permitted to do so, but please consider moving
+##    to the new #include approach as when the automation rolls out, it will
+##    reduce the amount of manual labor.
+## End NA notes.  
+#------------------------------------------------------------------------------
+#
+# Sudo implementation team instruction:
+#   This special template is NOT to be # included.  Instead, this template
+#   has content which must, for functional purposes, be 'spread over' the 
+#   entire span of the /etc/sudoers file.  For instance, the
+#      Defaults env_file=/etc/sudo.env 
+#   line should be 'early' in the file, while the line:
+#      ALL ALL=!SUDOSUDO
+#   needs to be after the last 'additive' sudo entry to ensure all sudo entries
+#   are appropriately protected.
+#==============================================================================
+# Defaults
+#==============================================================================
+#
+# The following entries are required if you allow users to run 
+# smit / smitty on AIX:
+#
+#       For sudo 1.7.0 and up, include the following entries in the 
+#       /etc/sudo.env file:
+#               SMIT_SHELL=n
+#               SMIT_SEMI_COLON=n
+#               SMIT_QUOTE=n
+#       and define sudo environment file within /etc/sudoers (or included
+#       file) via: 
+#
+Defaults env_file=/etc/sudo.env  # Includes the sudo environment file 
+#
+#
+#------------------------------------------------------------------------------
+#
+# The following entry is only required if you are using a secondary logging 
+# method which cannot capture commands issued in shell outs.
+# This will help ensure that commands with shell outs are 
+# appropriately controled:
+#
+Defaults!IBM_SHELLESCAPE_ALL  noexec
+#
+# CAUTION: This affects all entries; ensure your customer is aware this is being 
+# added on first implementation, and appropriate testing is done.
+#
+#------------------------------------------------------------------------------
+#
+#
+#==============================================================================
+# include files
+#==============================================================================
+# Include the Middleware templates relevant for the server 
+#
+#    Note: Sudo syntax for include is "#include /dir/file", to 'uncomment' 
+#    these sample lines, change from
+#       ##include /etc/sudoers.d/1xx_{application}_GLB  entries if desired>
+#    to
+#       #include /etc/sudoers.d/1xx_{application}_GLB  entries if desired>
+#
+# While it is permissible to 'inline' the following three templates, 
+# we are setting the 'default' usage to use the #include structure:
+#include /etc/sudoers.d/010_STD_NEG_GLB
+#include /etc/sudoers.d/010_STD_ALIAS_GLB
+#include /etc/sudoers.d/010_STD_SA_GLB
+#
+# Global template
+# The next is needed for by the S-TRAN tool
+#
+## IBM Team include statements precede this comment
+#
+#
+##include /etc/sudoers.d/1xx_{application}_GLB
+#include /etc/sudoers.d/104_MANIAMLinux_GLB
+#include /etc/sudoers.d/123_AE_GLB
+#include /etc/sudoers.d/124_UAT_LINUX_GLB
+#
+# GEO specific adjustments to GLB template, or GEO template with no 
+# corresponding GLB template                     
+#
+##include /etc/sudoers.d/2xx_{application}_{GEO name}
+#
+# IMT specific adjustments to GLB or GEO template, or IMT template with no 
+#  corresponding  GLB or GEO template
+#
+##include /etc/sudoers.d/3xx_{application}_{IMT name}
+#
+#  Account specific adjustments to GLB, GEO, or IMT template
+#
+##include /etc/sudoers.d/4xx_{application}_ADJ
+#
+# Local Account specific entries - no corresponding  GLB, GEO, or IMT template
+#
+##include /etc/sudoers.d/4xx_{application}_LCL
+#include /etc/sudoers.d/412_SUDOLOGS_PE_LCL
+#
+# Customer entries if needed
+#
+##include /etc/sudoers.d/8xx_{customer_application}_CUST
+#
+#
+# If server specific commands are needed include them here
+#
+##include /etc/sudoers.d/9xx_sudoers_%h
+# or
+##include /etc/sudoers.d/9xx_sudoers.local
+#
+#include /etc/sudoers.d/116_TWS_GLB
+#include /etc/sudoers.d/4_OPERACIONES_PE
+#include /etc/sudoers.d/4_TWS_PE
+# 
+# The following line must be after the last 'additive' line in this file,
+# only negations' should follow this:
+#
+ALL ALL=!SUDOSUDO
+#
+# End Global sudoers standard template Ver 8.4 Date 2015-04-01 * Master * Refer NA15106012 End #
+
+# Permisos usuarios admin ISIL
+isiladmin        ALL=(ALL)       PASSWD: ALL
+gmdadmin         ALL=(ALL)       NOPASSWD: ALL
+cnvmnt          ALL=(ALL)       NOPASSWD: ALL

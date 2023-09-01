@@ -1,0 +1,72 @@
+
+---
+    - name: remote task 
+      raw: echo remote server 
+
+    - name: local scp 
+      local_action: command scp ./files/who_is_admin_hpx.sh {{inventory_host}}:/scripts/
+
+    - name: execute file script 
+      raw: | 
+          chmod 755 /scripts/who_is_admin_hpx.sh
+          /scripts/who_is_admin_hpx.sh
+      register: 
+        out_report
+
+    - name: obtain the ip the remote server 
+      raw: | 
+        ipaddr=$(netstat -in|grep -v 127.0.0.1|head -n 2|tail -n 1|awk -F " " '{print $4}')
+        echo $ipaddr
+      register: ip_out 
+
+    - name: save the ip address
+      delegate_to: localhost
+      set_fact:
+          xipaddress: "{{ ip_out.stdout }}"
+
+    - name: save the hostname in value 
+      raw: | 
+        hostname 
+      register: hostname_out
+
+    - name: save the ip address
+      delegate_to: localhost
+      set_fact:
+          xipaddress: "{{ ip_out.stdout }}"
+
+    - name: define hostname system 
+      delegate_to: localhost
+      set_fact: 
+        xhostname: "{{hostname_out.stdout}}"
+
+    - name: define ansible_system
+      delegate_to: localhost
+      set_fact: 
+        xhostname: "HP-UX" 
+        
+    - name: define xosfamily system 
+      delegate_to: localhost
+      set_fact: 
+        xhostname: "HP-UX"
+
+    - name: define version from xosfamily
+      raw: |  
+          uname -r 
+      register:
+        version_out
+
+    - name: assigned the version Os to value 
+      delegate_to: localhost
+      set_fact: 
+        xdistribution: "{{version_out.out}}"
+
+
+    - name: Guadar archivos de manera local para 
+      delegate_to: localhost
+      shell: |
+          echo "{{xipaddress}},{{xhostname}},{{ansible_system}},{{xosfamily}},{{xdistribution}}" >> {{ansible_host}}_1.csv
+
+    - name: save the out_report 
+      delegate_to: localhost 
+      shell: | 
+        echo {{out_report.stdout}} >> {{ansible_host}}_2.csv

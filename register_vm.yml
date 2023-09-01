@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks: 
+
+  - name: load values to remote server 
+    ansible.builtin.include_role:
+      name: ansible_os_basevars
+
+  - name: load values from password.yml 
+    ansible.builtin.include_tasks: password.yml
+
+  - name: Register Server remote 
+    ansible.builtin.include_role:
+      name: ansible_os_register
+    

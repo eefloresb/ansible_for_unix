@@ -1,0 +1,10 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - include_role:
+        name: deploy 
+      vars:
+        days: 30
+

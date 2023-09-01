@@ -1,0 +1,35 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  vars: 
+    xday: "22"
+    xhour: "22"
+    routeLog: "/var/log/"
+  tasks: 
+
+    - name: obtain month to server
+      shell: |
+        date +%h
+      register: get_month
+
+    - name: obtaain hostname the server remote 
+      shell: |
+        hostname
+      register: get_hostname
+
+    - name: assigned the mont to value 
+      ansible.builtin.set_fact:
+        xmonth: "{{ get_month.stdout }}"
+
+    - name: find the value in rsyslog 
+      shell: | 
+        grep -REn "(^{{xmonth}}[[:blank:]]*{{xday}}[[:blank:]]*{{xhour}}:[0-9][0-9]:[0-9][0-9])" {{routeLog}}
+      register:
+        log_find
+
+    - ansible.builtin.copy:
+        content: |
+          "{{log_find.stdout}}"
+        dest: /tmp/{{get_hostname.stdout}}.txt 
+      delegate_to: localhost 

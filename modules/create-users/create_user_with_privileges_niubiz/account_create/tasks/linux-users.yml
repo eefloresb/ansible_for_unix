@@ -1,0 +1,33 @@
+---
+- name: create group 
+  group: 
+    name: "{{item.name}}"
+    state: present
+  loop: "{{ grupos }}"
+
+- name: create user 
+  user:
+    name: "{{item.user}}"
+    comment: "{{item.fullname}}"
+    group: "{{'administradores' if item.admin == True else 'users'}}"
+    password: "{{item.password | password_hash('sha512')}}"
+    shell: /bin/bash
+    update_password: on_create
+  loop: "{{ usuarios }}"
+  loop_control: 
+    label: "{{ item.user }} - {{ item.fullname }}"
+
+- name: this file sudoers is exists 
+  file:
+    state: directory
+    path: /etc/sudoers.d
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Configurar sudo para usuarios administradores
+  lineinfile:
+    path: /etc/sudoers   
+    regexp: '^%administradores.*'
+    line: '%administradores ALL=(ALL) ALL'
+    validate: '/usr/sbin/visudo -cf %s'

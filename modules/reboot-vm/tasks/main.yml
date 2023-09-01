@@ -1,0 +1,21 @@
+- name: load values by default
+  ansible.builtin.include_role:
+    name: ../../ansible_os_basevars
+
+- name: take the photo preview in remote server
+  ansible.builtin.include_role:
+    name: ../../../ansible_take_photo
+
+- name: Pause stop by execute reboot
+  pause:
+    prompt: "are you continue"
+    echo: yes
+
+- name: sanity reboot on server
+  when: sanity_reboot == "true"
+  reboot:
+    reboot_timeout: 300
+
+- name: reboot the server
+  reboot:
+    reboot_timeout: 300

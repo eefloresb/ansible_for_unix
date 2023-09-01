@@ -1,0 +1,32 @@
+---
+- hosts: all 
+  vars:
+    IP_SERVER_SIEM: 192.168.9.205
+    LOG_FILE: /etc/rsyslog.conf
+  tasks:
+
+  - name: check service rsyslog in remote server 
+    ansible.builtin.systemd: 
+      name: "rsyslog"
+    register: rsyslog_status
+
+  - ansible.builtin.debug: 
+     var: rsyslog_status.status.Result
+
+  - name: searching for a $IP in rsyslog.conf 
+    ansible.builtin.lineinfile:
+      path: /etc/rsyslog.conf
+      regexp: "{{IP_SERVER_SIEM}}"
+    check_mode: yes
+    register: presence_status
+    failed_when: presence_status is changed
+  
+  - ansible.builtin.debug: 
+     var: presence_status  
+
+  - name: check remote port to 192.168.9.205 to 514/tcp 
+    command: nc -z {{IP_SERVER_SIEM}} 514
+    register: nc_result 
+
+  - ansible.builtin.debug:
+     msg: "{{ 'connect remote server port 514' if nc_result.rc == 0 else 'dont connect server' }}"

@@ -1,0 +1,11 @@
+---
+- name: Check registred RedHat
+  ansible.builtin.shell: |
+    set -o pipefail
+    subscription-manager list |grep -iE ^status\:[[:blank:]]+|tr -d " " | awk -F ":" '{print $2}'
+  register: subscription_status
+  changed_when: subscription_status.rc != 0
+
+- name: Assgined value tu register
+  ansible.builtin.set_fact:
+   os_subscription: '{{ "Registered" if subscription_status.stdout == "Subscribed" else "Not Registered" }}'

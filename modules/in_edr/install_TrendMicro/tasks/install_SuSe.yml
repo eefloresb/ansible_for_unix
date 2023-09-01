@@ -1,0 +1,12 @@
+---
+    - name: copy file installer to /usr/local/src/
+      copy:
+        src: files/{{file_installer}}.suse{{ansible_distribution_major_version}}.{{ansible_machine}}.rpm
+        dest: /usr/local/src/
+
+    - name: install when redhat family
+      block:
+      - name: Install in Suse {{ansible_distribution_major_version}}
+        zypper:
+          name: /usr/local/src/{{file_installer}}-{{version_falcon}}.suse{{ansible_distribution_major_version}}.{{ansible_machine}}.rpm
+          state: present

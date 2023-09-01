@@ -1,0 +1,13 @@
+---
+ - hosts: all
+   become: true
+   gather_facts: true
+   tasks:
+
+    - name: assigned values in OS
+      ansible.builtin.include_role:
+        name: ../../ansible_os_basevars
+
+    - name: enable and create user by tower 
+      ansible.builtin.include_role:
+        name: ansible_crt_user_twr

@@ -1,0 +1,3 @@
+Defaults:edwinflores !fqdn
+Defaults:edwinflores !requiretty
+%cnvadmin ALL=(ALL) NOPASSWD: ALL

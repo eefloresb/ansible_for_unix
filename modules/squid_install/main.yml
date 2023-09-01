@@ -1,0 +1,30 @@
+---
+- hosts: all 
+  become: true
+  tasks:
+    - name: install squid in remote server for Debian family
+      when: ansible_ditribution == "Debian"
+      apt:
+        name: squid 
+        state: present 
+        update_cache: true
+
+    - name: install squid in remote server for RedHat family
+      when: ansible_ditribution == "RedHat"
+      dnf:
+        name: squid 
+        state: present
+        update_cache: true
+
+    - name: copy configuration in remote server 
+      copy:
+        src: ./files/squid.conf.j2 
+        dest: /etc/squid/squid.conf 
+        owner: root 
+        group: root
+
+    - name: stop squid service 
+      service: 
+        name: squid 
+        state: restarted
+    

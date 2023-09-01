@@ -1,0 +1,14 @@
+---
+- name: generate report packaget update for os_release(SLES)
+  block:
+    - name: copy script remote server for report for os_release (sles)
+      copy: 
+        src: ./scripts/bash/sles_report.sh 
+        dest: /scripts/sles_report.sh 
+        owner: root
+        group: root 
+        mode: '755'
+
+    - name: execute script in remote server 
+      command: /scripts/./sles_report.sh 
+      register: os_report_result

@@ -1,0 +1,56 @@
+# Begin Global ID Admin Linux standard template Ver 1.2.3  Date 2014-11-25 * Master * Refer NA14177024 Begin #
+# Description Linux Manual ID admin 
+# Software products and versions
+# Supported OS platforms
+# local functional ID
+# local path changes
+# local OS groups for the Master MANIAM
+# self serve access permitted for all sub templates except Special for groups ABC, DEF and MNO only
+#
+# Version control
+# V1.2 - jekri@dk.ibm.com - updated template layout with command aliases
+#
+# V1.2.1 - jekri@dk.ibm.com - minor update, the invalid character "-" replaced with "_" in the User_Alias NAMES
+#
+# V1.2.2 - jekri@dk.ibm.com - minor update, changed placeholders to standard
+## NA notes V1.2.2:  This is a standardization update to:NA 129_ManIAMLinux_GLB
+## The filename has been changed, we recommend you convert your filename
+##    and #include now.  Your  team may continue to use the old 
+##    name; however, automation that will be deployed in 1Q 2015 will
+##    force a move to the new global name.
+##    REMINDER:  When you change the template name, be certain to change
+##       in the #include statement, and remove the old file.
+#
+# V1.2.3 - jekri@dk.ibm.com - minor update, corrected path to chage command
+# -     /usr/sbin/chage, \
+# +     /usr/bin/chage, \
+## NA notes V1.2.3:  read carefully the NA notes V1.2.2.
+##    The V1.2.3 updates are functional only, no security impact.
+#
+#=====================================================================================
+#
+# Replace sample group names with real group names for your account
+# 
+User_Alias      IBM_MANIAM_LINUX_BAU = %ibmiampe 
+#
+Host_Alias      MANIAM_LINUX_HOSTS = ALL # in this case, we want this defined on all hosts, indicate subsets as appropriate.
+#
+# --------------Do not change anything below this line, excepting to replace <:path *> content with local pathing. ------------------
+#
+Cmnd_Alias IBM_MANIAM_LINUX_BAU_CMDS = \
+        /usr/bin/passwd, !/usr/bin/passwd * root, \
+        /usr/sbin/useradd, \
+        /usr/sbin/usermod, !/usr/sbin/usermod * root, \
+        /usr/sbin/userdel, !/usr/sbin/userdel root, \
+        /usr/bin/chage, \
+        /usr/sbin/groupadd, \
+        /usr/sbin/groupmod, \
+        /usr/sbin/groupdel, \
+        /usr/bin/logins, \
+        /usr/bin/faillog, \
+        /sbin/pam_tally 
+#       <:local_path>/iam_acct_provision.sh
+
+IBM_MANIAM_LINUX_BAU MANIAM_LINUX_HOSTS = IBM_MANIAM_LINUX_BAU_CMDS
+
+# End  Global ID Admin Linux standard template Ver 1.2.3  Date 2014-11-25 *Master * Refer NA14177024 End #

@@ -1,0 +1,16 @@
+---
+- name: Install agent bacula in {{ansible_system}} 
+  when: ansible_system == "Linux"
+  include_tasks: os_{{ansible_system}}.yml
+
+- name: Install agent in {{ansible_system}} 
+  when: ansible_system == "SunOS"
+  include_tasks: os_{{ansible_system}}.yml
+
+- name: Install agent in {{ansible_system}}
+  when: ansible_system == "AIX"
+  include_tasks: os_{{ansible_system}}.yml
+
+- name: Install agent in {{ansible_system}}
+  when: ansible_system == "Windows"
+  include_tasks: os_{{ansible_system}}.yml

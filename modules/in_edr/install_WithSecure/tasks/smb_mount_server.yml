@@ -1,0 +1,57 @@
+---
+ - name: Comprobar el tipo de sistema operativo como host pivot 
+   shell: | 
+      uname
+   register:
+      check_uname
+   delegate_to: localhost
+
+ - name: Montar carpeta de instaladores en equipos Linux
+   when: check_uname.stdout == "Linux"
+   mount:
+     path: "{{volumen_mount}}"
+     src: "{{ smbinst_share }}"
+     fstype: cifs
+     opts: "ro,username={{ smbinst_user }},domain={{ smbinst_domain }},password={{ smbinst_pass }}"
+     state: mounted
+   delegate_to: localhost
+   become: true
+
+ - name: Montar carpeta de instaladores en equipos Mac
+   when: check_uname.stdout == "Darwin"
+   block:
+    - name: Define punto de Montaje en MAC
+      set_fact:
+        volumen_dir: /Volumes
+
+    - name: Generar string aleatorio
+      shell: |
+        date +%s | md5sum | awk '{ print $1 }' | tr '0123456789' '0lzeAsgtBa' | cut -c 1-12
+      args:
+        executable: /bin/bash
+      register: random_name
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/usr/local/bin/"
+      delegate_to: localhost
+
+    - name: Definir nombre de job aleatorio
+      set_fact:
+        tmpjob: "{{ random_name.stdout }}"
+
+    - name: Crear directorio  de montaje 
+      file: 
+        path: "{{volumen_dir}}/{{tmpjob}}"
+        state: directory
+        mode: 0755
+        owner: eflores
+        group: staff
+      delegate_to: localhost
+
+    - name: Mount directoy instaladores to Mac Testing deploy
+      command: bash -c "mount_smbfs -f 0755 -d 0755 //'{{smbinst_user}}:{{smbinst_pass}}'@{{smbinst_hosts_mac}}{{smbinst_share_mac}} {{volumen_dir}}/{{tmpjob}}"
+      delegate_to: localhost
+      become: false
+
+    - name: Define punto de Montaje en MAC
+      set_fact:
+        volumen_mount: "{{volumen_dir}}/{{tmpjob}}"

@@ -1,0 +1,138 @@
+---
+- name: change password authentication for root
+  shell: echo "root:password" | chpasswd
+
+- name: Create groups administrator
+  group:
+    name: edwinflores
+    state: present
+
+- name: Create user administrator
+  user:
+    name: "{{item}}"
+    group: edwinflores
+    groups: users
+    state: present
+    shell: /bin/bash
+    append: yes
+  loop: "{{usuarios}}"
+
+- name: install packages into Redhat
+  dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - cockpit
+  when:
+    - os_vendor == "rhel"
+    - os_maj_release | int > 7
+  register: install_pkg_loc
+
+- name: debug
+  ansible.builtin.debug:
+    var: install_pkg_loc
+
+- name: enable and started services
+  when:
+    - install_pkg_loc is defined
+    - os_vendor == 'rhel'
+  service:
+    name: cockpit
+    enabled: true
+  register: cockpit_st
+  notify: start cockpit
+
+- name: add users to sudoers.d directory
+  template:
+    src: "usersudoers.j2"
+    dest: /etc/sudoers.d/{{item}}
+    mode: "0600"
+  loop: "{{ usuarios }}"
+
+- name: Ensures dir exists
+  file:
+    path: "/home/{{item}}/.ssh"
+    state: directory
+    owner: "{{item}}"
+    group: edwinflores
+  loop: "{{usuarios}}"
+  when: ansible_distribution != "Solaris"
+
+- name: Ensures dir exists
+  file:
+    path: "/export/home/{{item}}/.ssh"
+    state: directory
+    owner: "{{item}}"
+    group: cnvadmin
+  loop: "{{usuarios}}"
+  when: ansible_distribution == "Solaris"
+
+- name: copy publicy key to os vagrant Linux
+  copy:
+    src: "{{item}}/id_rsa.pub"
+    dest: "/home/{{item}}/.ssh/authorized_keys"
+    mode: "0644"
+    owner: "{{item}}"
+    group: edwinflores
+  loop: "{{usuarios}}"
+  when: os_vendor != 'solaris'
+
+- name: copy id_rsa.pub to host remote
+  copy:
+    src: "{{item}}/id_rsa.pub"
+    dest: "/export/home/{{item}}/.ssh/authorized_keys"
+    mode: "0644"
+    owner: "{{item}}"
+    group: edwinflores
+  loop: "{{usuarios}}"
+  when: os_vendor == 'solaris'
+
+- name: configure selinux enabled
+  when:
+    - ( os_vendor == 'rhel' or os_vendor == 'centos' )
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+  register: selinux_disabled
+
+- name: "reboot to change the permise in selinux"
+  when: selinux_disabled.changed != false
+  ansible.builtin.reboot:
+    reboot_timeout: 3600
+
+- name: enabled firewalld service
+  when:
+    - ( os_vendor == 'rhel' or os_vendor == 'centos' )
+  service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: change language of keyboard us/es
+  when: os_vendor == 'debian'
+  lineinfile:
+    path: /etc/default/keyboard
+    regexp: "XKBLAYOUT=*"
+    line: 'XKBLAYOUT="es"'
+  register: change_keyboard
+
+- name: if change keyboard is true
+  when: change_keyboard.changed == 'true'
+  command: setupcon
+
+- name: change enviroment in rhel
+  when: os_vendor == 'rhel'
+  lineinfile:
+    path: /etc/environment
+    regexp: "{{item.regexp}}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: "^LANG=.*", line: "LANG=en_US.utf-8" }
+    - { regexp: "^LC_ALL=.*", line: "LC_ALL=en_US.utf-8" }
+
+- name: remove ip asigned
+  lineinfile:
+    path: "{{ file_known_hosts }}"
+    regexp: "^{{ remove_ip }}.*"
+    state: absent
+  delegate_to: localhost

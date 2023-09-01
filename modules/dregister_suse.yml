@@ -1,0 +1,16 @@
+---
+ - hosts: all
+   become: true
+   tasks:
+
+    - name: Remove register de SuSe
+      when: 
+        - ansible_distribution == "SLES" 
+        - ansible_distribution_major_version | int > = 12
+      ansible.builtin.shell: |
+        SUSEConnect –de-register
+        SUSEConnect –cleanup
+        rm -f /etc/SUSEConnect
+        rm -rf /etc/zypp/credentials.d/*
+        rm -rf /etc/zypp/repos.d/*
+        rm -f /etc/zypp/services.d/*
