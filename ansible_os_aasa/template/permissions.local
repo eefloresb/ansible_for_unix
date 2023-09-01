@@ -1,0 +1,69 @@
+#
+# /etc/permissions.local
+#
+# After editing this file run
+#	chkstat --system --set
+# to apply the changes.
+#
+# This file is used by chkstat (and indirectly by various RPM package scripts)
+# to check or set the modes and ownerships of files and directories in
+# the installation.
+#
+# In particular, this file will not be touched during an upgrade of the
+# installation. It is designed to be a placeholder for local
+# additions by the administrator of the system to reflect filemodes
+# of locally installed packages or to override file permissions as
+# shipped with the distribution.
+#
+# Format:
+# <file> <owner>:<group> <permission>
+#
+# Please see the file /etc/permissions for general usage hints of the
+# /etc/permissions* files.
+# Please remember that logfiles might be modified by the logfile
+# rotation facilities (e.g. logrotate) so settings entered here might
+# be overridden. Also devices files (/dev/*) are not static but
+# managed via udev so this file can't be used to modify device
+# permissions either.
+#
+
+#
+# suexec is only secure if the document root doesn't contain files
+# writeable by wwwrun. Make sure you have a safe server setup
+# before setting the setuid bit! See also
+# https://bugzilla.novell.com/show_bug.cgi?id=263789
+# http://httpd.apache.org/docs/trunk/suexec.html
+#
+#/usr/sbin/suexec2            root:root       4755
+#/usr/sbin/suexec             root:root       4755
+
+# setuid bit on Xorg is only needed if no display manager, ie startx
+# is used. Beware of CVE-2010-2240.
+#
+#/usr/bin/Xorg                 root:root       4711
+#
+# named uuidd -> SAP requirement
+#
+/usr/sbin/uuidd			uuidd:uuidd	6755
+/etc/at.allow			root:root	0400
+/etc/bash.bashrc		root:root	0444
+/etc/csh.cshrc			root:root	0444
+/etc/csh.login			root:root	0444
+/etc/shadow			root:root	0400
+/etc/rsyslog.conf		root:root	0400
+/etc/crontab			root:root	0400
+/etc/cron.d			root:root	0700
+/etc/cron.hourly		root:root	0700
+/etc/cron.daily			root:root	0700
+/etc/cron.weekly		root:root	0700
+/etc/cron.monthly		root:root	0700
+/etc/login.defs			root:root	0400
+/etc/security/access.conf	root:root	0400
+/etc/sysctl.conf		root:root	0400
+/etc/X11/xdm/Xservers		root:root	0444
+/root				root:root	0700
+/root/.cshrc			root:root	0400
+/root/.bashrc			root:root	0400
+/root/.bash_profile		root:root	0400
+/var/log/boot.log		root:root	0640
+/var/log/sa			root:root	0770

@@ -1,0 +1,39 @@
+---
+- name: Install libraries in remote server 
+  when: 
+   - ansible_os_family == "Debian"
+  block:
+
+  - name: install in Debian 10 and 18.04 
+    when: 
+      - ansible_distribution_major_version | int == 10
+      - ansible_distribution_major_version | int == 18
+    apt:
+      name: "{{item}}"
+      state: present
+    with_items:
+       - libfuse2
+       - libcurl4
+       - python
+
+  - name: install in Debian 11 and 20.04 
+    when: 
+      - ansible_distribution_major_version | int == 11
+      - ansible_distribution_major_version | int == 20
+    apt:
+      name: "{{item}}"
+      state: present
+    with_items:
+       - libfuse2
+       - libcurl4
+       - python3
+
+  - name: install in ubuntu 22.4
+    when: 
+      - ansible_distribution_major_version | int == 22
+    apt:
+      name: "{{item}}"
+      state: present
+    with_items:
+       - libcurl4
+       - python3

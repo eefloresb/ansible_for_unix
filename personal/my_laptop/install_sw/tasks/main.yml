@@ -1,0 +1,257 @@
+---
+- name: Restart the time ntp
+  when: 1 == 2
+  ansible.builtin.service:
+    name: "systemd-timesyncd"
+    state: restarted
+
+- name: Kill process apt
+  when: 1 == 2
+  ansible.builtin.command:
+    cmd: pkill -f apt
+  register: cmd_kill
+  changed_when: cmd_kill.rc != 0
+
+# Assigned values to architecture
+- name: Capture deb-architecture of Operating System
+  ansible.builtin.command: dpkg --print-architecture
+  register: dpkg_architecture
+  changed_when: dpkg_architecture.rc != 0
+
+# Create directories
+- name: Create directory for /etc/apt/keyring
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+# include task to configure repositories
+- name: Configure repositories
+  ansible.builtin.include_tasks:
+    file: configure_repo.yml
+
+- name: Run the equivalent of "apt-get update"
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install package extras
+  ansible.builtin.include_tasks:
+    file: install_programs.yml
+
+- name: Start services
+  ansible.builtin.service:
+    name: ufw
+    state: started
+    enabled: true
+
+- name: Allow rules
+  community.general.ufw:
+    rule: allow
+    name: openssh
+
+- name: Change shell to my user
+  ansible.builtin.shell: |
+    set -o pipefail
+    usermod -s /usr/bin/fish "{{ item.user }}"
+  register: user_fish
+  changed_when: user_fish.rc != 0
+  loop: "{{ usuarios }}"
+  args:
+    executable: /bin/bash
+
+- name: Block to configuration repo
+  become: false
+  block:
+
+    - name: Configure git in localhost
+      ansible.builtin.shell: |
+       set -o pipefail
+       git config --global user.email "{{ git_user_email }}"
+       git config --global user.name "{{ git_user_name }}"
+      register: configure_git
+      changed_when: configure_git.rc != 0
+      args:
+        executable: /bin/bash
+
+    - name: Create ~/.local/share/fonts
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "~/.local/share/fonts"
+
+    - name: Download hacker font
+      ansible.builtin.unarchive:
+        src: "{{ hk_font_url }}"
+        dest: ~/.local/share/fonts/
+        remote_src: true
+
+    - name: Configure the hacker nerd fonts
+      ansible.builtin.shell: |
+        set -o pipefail
+        curl -s "{{ tflint_url }}" | bash
+        cd ~/.local/share/fonts && curl -fLO "{{ droid_font_url }}"
+      register: nerd_fonts
+      changed_when: nerd_fonts.rc != 0
+      args:
+        chdir: /tmp
+        executable: /bin/bash
+
+    - name: Update cache of fonts
+      ansible.builtin.shell: |
+       set -o pipefail
+       fc-cache -f -v
+      register: fc_cache
+      changed_when: fc_cache.rc != 0
+      args:
+        executable: /bin/bash
+
+    - name: Clone a repo in the separate directoryfisher install craftzdog
+      ansible.builtin.git:
+        repo: https://github.com/craftzdog/dotfiles-public.git
+        dest: /tmp/ansible-examples
+        update: false
+        version: master
+
+    - name: Copy the directories from remote server
+      ansible.builtin.copy:
+        src: /tmp/ansible-examples/.config/
+        dest: ~/.config/.
+        mode: '0755'
+
+#   - name: Move los directories from examples
+#     ansible.builtin.shell: |
+#      set -o pipefail
+#      cp -rfv * ~/.config/.
+#     register: copy_configuration
+#     changed_when: copy_configuration.rc !=0
+#     args:
+#       chdir: /tmp/ansibles-examples/
+#       executable: /bin/bash
+
+    - name: Clone a repo the packer nvim in my local
+      ansible.builtin.git:
+        repo: https://github.com/wbthomason/packer.nvim
+        dest: "{{ item.home }}/.local/share/nvim/site/pack/packer/start/packer.nvim"
+        update: false
+        version: master
+      loop: "{{ usuarios }}"
+
+    - name: Execute the packer install for plugins
+      ansible.builtin.raw: |
+        nvim --headless -c 'redir >> /tmp/nvim.log' -c 'autocmd User PackerComplete quitall' -c PackerSync
+      register: packer
+      changed_when: packer.rc != 0
+
+    - name: Execute the packer install for plugins
+      ansible.builtin.raw: |
+        nvim --headless -c 'redir >> /tmp/nvim.log' -c 'autocmd User PackerComplete quitall' -c PackerInstall
+      register: packer
+      changed_when: packer.rc != 0
+
+    - name: Execute the packer install for plugins
+      ansible.builtin.raw: |
+        nvim --headless -c 'redir >> /tmp/nvim.log' -c 'MasonUpdate' -c 'quitall'
+      register: packer
+      changed_when: packer.rc != 0
+
+    - name: Change config the fish to exa
+      ansible.builtin.lineinfile:
+        path: "{{ item.home }}/.config/fish/config-linux.fish"
+        regexp: '^alias ll*'
+        line: 'alias ll "exa -l -g --icons -a -s modified -h"'
+        state: present
+      loop: "{{ usuarios }}"
+
+    - name: Install plugins for nvim
+      community.general.npm:
+        name: "{{ item }}"
+        path: /home/eflores/
+        global: false
+      loop: '{{ npm_packages }}'
+
+    - name: Install plugins for nvim with sudo
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+      loop: '{{ npm_packages_sudo }}'
+      become: true
+
+    - name: Install packages complements for nvim
+      ansible.builtin.pip:
+        name: '{{ item }}'
+        executable: pip3
+      loop: '{{ pip_packages }}'
+
+    - name: Copy template the init.lua
+      ansible.builtin.template:
+        src: init.j2
+        dest: "/home/{{ item.user }}/.config/nvim/init.lua"
+        owner: "{{ item.user }}"
+        mode: '0644'
+      loop: "{{ usuarios }}"
+
+    - name: Copy file config-linux.fish in remote server
+      ansible.builtin.template:
+        src: config-linux.j2
+        dest: "/home/{{ item.user }}/.config/fish/config-linux.fish"
+        mode: "0755"
+      loop: "{{ usuarios }}"
+
+    - name: Install fisher
+      ansible.builtin.shell: |
+        set -o pipefail
+        curl -sL {{ fisher_url }} | source && fisher install jorgebucaran/fisher
+      register: fisher_std
+      changed_when: fisher_std.rc != 0
+      args:
+        executable: /usr/bin/fish
+
+    - name: Install z by fisher
+      ansible.builtin.shell: |
+        fisher install {{ item }}
+      register: fisher_std
+      changed_when: fisher_std.rc != 0
+      loop:
+        - "{{ fisher_packages }}"
+      args:
+        executable: /usr/bin/fish
+
+    - name: Add collection community general
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install "{{ item }}"
+      register: community_general
+      changed_when: community_general.rc != 0
+      loop:
+        - ansible.posix
+        - community.general
+
+    - name: Install neovim with gem
+      ansible.builtin.command:
+        cmd: gem install neovim
+      register: gem_packages
+      changed_when: gem_packages.rc != 0
+      become: true
+
+    - name: Execute the packer install for plugins
+      ansible.builtin.raw: |
+        nvim --headless -c 'redir >> /tmp/nvim.log' -c 'autocmd User PackerComplete quitall' -c PackerSync
+      register: packer
+      changed_when: packer.rc != 0
+
+    - name: Execute the packer install for plugins
+      ansible.builtin.raw: |
+        nvim --headless -c 'redir >> /tmp/nvim.log' -c 'autocmd User PackerComplete quitall' -c PackerInstall
+      register: packer
+      changed_when: packer.rc != 0
+
+    - name: Execute the packer install for plugins
+      ansible.builtin.raw: |
+        nvim --headless -c 'redir >> /tmp/nvim.log' -c 'MasonUpdate' -c 'quitall'
+      register: packer
+      changed_when: packer.rc != 0
+
+- name: Include the configure programs
+  ansible.builtin.include_tasks:
+    file: configure_repo.yml

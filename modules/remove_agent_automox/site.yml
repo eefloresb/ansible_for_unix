@@ -1,0 +1,7 @@
+---
+- hosts: all 
+  tasks: 
+  
+  - name: remove package agent for debian/SLES/RedHat 
+    ansible.builtin.include_role: 
+      name: deploy

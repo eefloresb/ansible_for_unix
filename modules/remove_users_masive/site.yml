@@ -1,0 +1,10 @@
+ - hosts: all 
+   become: true
+   gather_facts: false 
+   tasks:
+
+   - name: remove user from server remote 
+     ansible.builtin.user:
+      name: ext_hcaballero
+      state: absent 
+      force: false

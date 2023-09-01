@@ -1,0 +1,45 @@
+---
+- hosts: localhost 
+  connection: local 
+  tasks:
+
+  - set_fact: 
+      prueba: "{{ lookup('file','./texto.txt')}}" 
+
+  - debug:
+      msg: "{{prueba}}"
+
+  - name: display all cluster names 
+    debug: 
+       var: item 
+    loop: "{{ prueba | json_query('domain_definition.domain.cluster[*].name')  }}"
+
+  - name: Display all server names 
+    debug:
+      var: item 
+    loop: "{{ prueba | json_query('domain_definition.domain.server[*].name') }}"  
+
+  - name: display all ports from cluster 1 
+    debug: 
+      var: item
+    loop: "{{ prueba | json_query('domain_definition.domain.server[?cluster==`cluster1`].port') }}"
+
+  - name: display all ports from cluster 1 
+    debug:
+      var: item 
+    loop: "{{ prueba | json_query(server_name_cluster1_query) }}"
+    vars: 
+      server_name_cluster1_query: "domain_definition.domain.server[?cluster=='cluster1'].port" 
+
+  - name: display all port from cluster1 as a string 
+    debug:
+      msg: "{{prueba | json_query('domain_definition.domain.server[?cluster==`cluster1`].port') | join(', ')}}"
+
+  - name: display all server ports and names from cluster1
+    debug:
+        var: item 
+    loop: "{{ prueba | json_query('domain_definition.domain.server[?cluster==`cluster2`].{name: name, port: port}') }}"
+
+  - name: display all ports from cluster1 
+    debug:
+      msg: "{{ prueba | to_json | from_json | json_query('domain_definition.domain.server[?contains(name,`server1`)].port') }}"

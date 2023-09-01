@@ -1,0 +1,24 @@
+---
+- name: Install generic rhel software to amazon
+  package:
+    name: "{{ linux_generic_rhel_packages }}"
+    state: present
+  environment:
+    http_proxy: "{{ proxy | default(omit) }}"
+    https_proxy: "{{ proxy | default(omit) }}"
+
+- name: Install generic amazon software to amazon
+  package:
+    name: "{{ linux_generic_amazon_packages }}"
+    state: present
+  environment:
+    http_proxy: "{{ proxy | default(omit) }}"
+    https_proxy: "{{ proxy | default(omit) }}"
+
+- name: Remover software innecesario
+  yum:
+    name: libvirt-daemon
+    state: absent
+  environment:
+    http_proxy: "{{ proxy | default(omit) }}"
+    https_proxy: "{{ proxy | default(omit) }}"

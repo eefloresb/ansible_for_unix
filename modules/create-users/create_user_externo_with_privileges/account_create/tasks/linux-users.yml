@@ -1,0 +1,55 @@
+---
+- name: create group 
+  group: 
+    name: "{{item.name}}"
+    state: present
+  loop: "{{ grupos }}"
+
+- name: create user 
+  user:
+    name: "{{item.user}}"
+    comment: "{{item.fullname}}"
+    group: "{{ client if item.admin == True else 'users'}}"
+    password: "{{item.password | password_hash('sha512')}}"
+    shell: /bin/bash
+    update_password: on_create
+  loop: "{{ usuarios }}"
+  loop_control: 
+    label: "{{ item.user }} - {{ item.fullname }}"
+
+- name: Deshabilitar expiracion de clave para usuarios especiales
+  command: chage -M 9999999 {{ item.user }}
+  when: item.passneverexpires == True
+  loop: "{{ usuarios }}"
+  loop_control:
+    label: "{{ item.user }} - {{ item.fullname }}"
+
+- name: this file sudoers is exists 
+  file:
+    state: directory
+    path: /etc/sudoers.d
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Configurar sudo para usuarios administradores
+  template:
+    src: usuario.j2 
+    dest: /etc/sudoers.d/{{item.user}}
+    mode: 0640
+    validate: '/usr/sbin/visudo -cf %s'
+  when: item.admin == True
+  loop: "{{ usuarios }}" 
+
+- name: Delete user exist 
+  user:  
+      name: "{{item}}"
+      state: absent
+  loop:
+    - limexp_jlopez
+    - limexp_coes
+
+- name: remove group 
+  ansible.builtin.group:
+    name: limaexpresa
+    state: absent

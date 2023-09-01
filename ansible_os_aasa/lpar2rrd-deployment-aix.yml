@@ -1,0 +1,9 @@
+---
+- name: Copiar RPM lpar2rrd-agent
+  copy: src=/data/software/AIX/{{lpar2rrd_agent_rpm_aix}} dest=/tmp
+
+- name: Instalar RPM lpar2rrd-agent
+  yum: name=/tmp/{{lpar2rrd_agent_rpm_aix}} state=present update_cache=no disablerepo=*
+
+- name: Configurar crontab de lpar2rrd
+  template: src=template/crontab-lpar2rrd dest=/var/spool/cron/crontabs/lpar2rrd owner=lpar2rrd group=cron mode=0600

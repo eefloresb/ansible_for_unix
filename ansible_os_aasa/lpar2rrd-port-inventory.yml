@@ -1,0 +1,24 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    outfile: lpar2rrd-port-inventory.csv
+  tasks:
+    - name: Borrar localmente el archivo de reporte
+      local_action:
+        module: file
+        path: output/{{outfile}}
+        state: absent
+
+    - name: Probar conectividad al puerto 8162
+      wait_for:
+        host: lpar2rrd
+        port: 8162
+        timeout: 2
+      register: portcheck
+      ignore_errors: yes
+
+    - name: Generar reporte
+      shell: echo "{{ansible_hostname}},{{ansible_host}},{{portcheck.failed}}" >> output/{{outfile}}
+      delegate_to: localhost

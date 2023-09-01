@@ -1,0 +1,42 @@
+---
+ - name: remove the subscription of RedHat
+   shell: | 
+    subscription-manager remove --all
+    subscription-manager unregister
+    subscription-manager clean
+
+ - name: mv the repo packages 
+   shell: |
+    if [[ ! -d backup ]]; then 
+      mkdir backup 
+    fi
+    sleep 1
+    ls -C1 | grep -v backup | while read line; do
+        mv -v $line backup/
+    done 
+   args:
+      chdir: /etc/yum.repos.d/
+
+ - name: download katello from redhat satellite
+   yum:
+    name: "{{rhsm_baseurl}}{{package_katello}}"
+    state: present
+    validate_certs: false
+    disable_gpg_check: false
+
+ - name: subscribe the server the machine in satellite server
+   shell:
+    subscription-manager register --org="{{clientreg}}" --activationkey="{{enable_activationkey}}"
+
+ - name: update packages with yum update 
+   shell:
+    yum update --assumeno
+   ignore_errors: true
+
+ - name: install packages to monitoring
+   yum:
+    name: "{{ item }}"
+    state: present
+   loop:
+      - "{{ packages_rhs }}"
+   notify: restart katello

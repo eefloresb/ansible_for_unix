@@ -1,0 +1,35 @@
+---
+- name: Install libraries in remote server 
+  when: 
+   - ansible_os_family == "RedHat"
+  block:
+
+  - name: install in Redhat family 7
+    when: ansible_distribution_major_version | int == 7
+    yum: 
+      name: "{{item}}"
+      state: present 
+    with_items: 
+      - fuse-libs
+      - libcurl
+      - python
+
+  - name: install in Redhat family 8
+    when: ansible_distribution_major_version | int == 8
+    yum: 
+      name: "{{item}}"
+      state: present 
+    with_items: 
+      - fuse-libs
+      - libcurl
+      - python36
+  
+  - name: install in Redhat family 9
+    when: ansible_distribution_major_version | int == 9
+    yum: 
+      name: "{{item}}"
+      state: present 
+    with_items: 
+      - libcurl
+      - python3
+

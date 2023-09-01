@@ -1,0 +1,60 @@
+---
+ - hosts: localhost
+   become: false
+   connection: local
+   vars:
+     dest_dir: "~/data/{{ client | default('CANVIA')}}"
+     dest_remote_dir: "~/data/{{ client | default('CANVIA')}}/inventario_kernel_distrbución.csv"
+   tasks:
+     - name: create directory
+       file:
+        path: "{{ dest_dir }}"
+        state: directory
+
+     - name: create file report in .csv
+       copy:
+        dest: "{{dest_remote_dir}}"
+        content: |
+          hostname,ipaddress,Os Family,Distribution,Version,Kernel,architecture
+
+ - hosts: all
+   gather_facts: true
+   become: true
+   vars:
+     dest_remote_dir: "~/data/{{ client | default('CANVIA')}}/inventario_kernel_distrbución.csv"
+   tasks:
+
+     - name: register hostname and value assigned
+       set_fact:
+        xhostname: "{{ ansible_hostname }}"
+
+     - name: register ip in value
+       set_fact:
+        xipaddress: "{{ ansible_default_ipv4.address }}"
+
+     - name: register family the server
+       set_fact:
+          xosfamily: "{{ ansible_os_family }}"
+
+     - name: register the distribution
+       set_fact:
+          xdistribution: "{{ ansible_distribution }}"
+
+     - name: register the distribution version
+       set_fact:
+          xvdistribution: "{{ansible_distribution_version}}"
+
+     - name: register the kernel 
+       shell: | 
+          uname -r 
+       register: reg_kernel
+
+     - name: assigned value to kernel set fact 
+       set_fact:
+          ansible_kernel: "{{ reg_kernel.stdout }}"
+
+     - name: register values captured of remote machines
+       shell: |
+          echo "{{xhostname}},{{xipaddress}},{{xosfamily}},{{xdistribution}},{{xvdistribution}},{{ansible_kernel}},{{xarchitecture}}" >> {{ dest_remote_dir }}
+       become: false
+       delegate_to: localhost

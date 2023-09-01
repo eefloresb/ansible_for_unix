@@ -1,0 +1,44 @@
+---
+ - hosts: all 
+   become: true
+   gather_facts: true
+   tasks:
+#
+#    - name: backup archive configuration 
+#      archive:
+#        path: /etc/
+#        dest: '/tmp/etc.tar.gz'
+#        format: gz 
+#
+#    - name: copy file in src server 
+#      ansible.builtin.fetch:
+#        src: /tmp/etc.tar.gz
+#        dest: /tmp/{{ansible_hostname}}/etc.tar.gz 
+#        flat: yes
+#
+#    - name: repositories capture 
+#      copy:
+#        content: 'package,version,repo'
+#        dest: /tmp/{{ansible_hostname}}.csv
+#      delegate_to: localhost
+
+    - name: capture data to repo Redhat family
+      when: ansible_distribution == "RedHat"
+      shell: | 
+        yum list installed 2>&1|grep -E ".*\.(x86_64|ppcle|i386)[[:blank:]]+.*" | while read package version repos; do echo $package,$version,$repos; done
+      register:
+        output_repos 
+
+    - name: capture data to repo Debian family 
+      when: ansible_distribution == "Debian"
+      shell: | 
+
+      register:
+        output_repos
+
+    - ansible.builtin.copy:
+        dest: /tmp/repositories.csv 
+        content: | 
+          package,version,repo
+          {{ output_repos.stdout }}
+      delegate_to: localhost

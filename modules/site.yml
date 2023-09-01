@@ -1,0 +1,123 @@
+--- 
+ - hosts: localhost
+   connection: local  
+   become: true   
+   vars:
+     report_file: reporte.csv
+   tasks:
+    - name: Crear nuevo archivo de reporte
+      local_action:
+        module: copy
+        dest: "{{ report_file }}"
+        content: |
+          "Hostname","IP principal","Sistema operativo","Arquitectura","Version de kernel","Cores","Memoria (MB)","Swap (MB)","Dias encendido","Todas las IPs"
+
+ - hosts: all 
+   become: true   
+   tasks:
+
+    - name: create backup of remote server
+      ansible.builtin.fetch:
+        src: /tmp/"{{item}}"
+        dest: /tmp/prefix-{{ inventory_hostname  }}
+        flat: yes
+      loop:
+        - /etc/sysctl.conf
+        - /etc/login.defs
+        - /etc/security/pwquality.conf
+        - /etc/ssh/sshd_config
+        - /etc/sysconfig/sshd
+        - /etc/pam.d/su
+        - /etc/pam.d/system-auth
+        - /etc/audit/auditd.conf
+        - /etc/audit/rules.d/audit.rules
+        - /etc/systemd/journald.conf
+
+    - name: capture owner/group from files sysctl
+      ansible.builtin.stat:
+        path: /etc/sysctl.conf
+        get_attributes: true
+      register:
+        get_attributes_sysctl_conf
+
+    - name: capture owner/group from login.defs file 
+      ansible.builtin.stat:
+        path: /etc/login.defs
+        get_attributes: true
+      register:
+        get_attributes_login_defs
+
+    - name: capture owner/group from pwquality.conf file
+      ansible.builtin.stat:
+        path: /etc/security/pwquality.conf
+        get_attributes: true
+      register:
+        get_attributes_pwquality_conf
+
+    - name: capture owner/group from sshd_config file 
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd_config
+        get_attributes: true
+      register:
+        get_attributes_sshd_config
+
+    - name: capture owner/group from sshd_config file 
+      ansible.builtin.stat:
+        path: /etc/ssh/sshd
+        get_attributes: true
+      register:
+        get_attributes_sshd
+        
+    - name: capture owner/group from sshd_config file 
+      ansible.builtin.stat:
+        path: /etc/pam.d/su
+        get_attributes: true
+      register:
+        get_attributes_su
+
+    - name: capture owner/group from system-auth 
+      ansible.builtin.stat:
+        path: /etc/pam.d/system-auth
+        get_attributes: true
+      register:
+        get_attributes_system_auth
+      
+    - name: capture owner/group from files 
+      ansible.builtin.stat:
+        path: /etc/audit/auditd.conf
+        get_attributes: true
+      register:
+        get_attributes_auditd_conf
+
+    - name: capture owner/group from files 
+      ansible.builtin.stat:
+        path: /etc/audit/rules.d/audit.rules
+        get_attributes: true
+      register:
+        get_attributes_audit_rules
+    
+    - name: capture owner/group from files 
+      ansible.builtin.stat:
+        path: /etc/systemd/journald.conf
+        get_attributes: true
+      register:
+        get_attributes_journald_conf 
+
+ - hosts: all  
+   connection: local
+   vars:
+    report: "{{ansible_default_ipv4.address }}.csv"
+   tasks:
+     - name: save the value in file 
+       ansible.builtin.copy: | 
+        /etc/sysctl.conf,{{get_attributes_sysctl_conf.pw_name}},{{get_attributes_sysctl_conf.gr_name}},{{get_attributes_sysctl_conf.mode}},{{get_attributes_sysctl_conf.mimetype}}
+        /etc/login.defs,{{get_attributes_login_defs.pw_name}},{{get_attributes_login_defs.gr_name}},{{get_attributes_login_defs.mode}},{{get_attributes_login_defs.mimetype}}
+        /etc/security/pwquality.conf,{{get_attributes_pwquality_conf.pw_name}},{{get_attributes_pwquality_conf.gr_name}}{{get_attributes_pwquality_conf.mode}},{{get_attributes_pwquality_conf.mimetype}}
+        /etc/ssh/sshd_config,{{get_attributes_sshd_config.pw_name}},{{get_attributes_sshd_config.gr_name}},{{get_attributes_sshd_config.mode}},{{get_attributes_sshd_config.mimetype}}
+        /etc/ssh/sshd,{{get_attributes_sshd.pw_name}},{{get_attributes_sshd.gr_name}},{{get_attributes_sshd.mode}},{{get_attributes_sshd.mimetype}}
+        /etc/pam.d/su,{{get_attributes_su.pw_name}},{{get_attributes_su.gr_name}},{{get_attributes_su.mode}},{{get_attributes_su.mimetype}}
+        /etc/pam.d/system-auth,{{get_attributes_system_auth.pw_name}},{{get_attributes_system_auth.gr_name}},{{get_attributes_system_auth.mode}},{{get_attributes_system_auth.mimetype}}
+        /etc/audit/auditd.conf,{{get_attributes_auditd_conf.pw_name}},{{get_attributes_auditd_conf.gr_name}},{{get_attributes_auditd_conf.mode}},{{get_attributes_auditd_conf.mimetype}}
+        /etc/audit/rules.d/audit.rules,{{get_attributes_audit_rules.pw_name}},{{get_attributes_audit_rules.gr_name}},{{get_attributes_audit_rules.mode}},{{get_attributes_audit_rules.mimetype}}
+        /etc/systemd/journald.conf,{{get_attributes_journald_conf.pw_name}},{{get_attributes_journald_conf.gr_name}},{{get_attributes_journald_conf.mode}},{{get_attributes_journald_conf.mimetype}}
+      

@@ -1,0 +1,95 @@
+---
+- hosts: all
+  name: up information error to send RedHad assistent support
+  become: true
+  gather_facts: true
+  vars:
+      CASE_NUMBER: "03176922"
+      usuario: "gmdadmin"
+  tasks: 
+    
+    - name: search sos installed 
+      command: which sosreport 
+      register:
+        search_sosreport
+      failed_when: search_sosreport.rc == 2 
+
+    - name: install sos 
+      when: search_sosreport.rc != 0
+      package: 
+        name: sos 
+        state: present
+
+    - name: check dependence error without the option --skip-broken
+      command: yum update --assumeno 
+      register: 
+        check_yum_update 
+      failed_when: check_yum_update.rc == 2 
+  
+    - name: create directory with name data 
+      file: 
+        path: ./data 
+        state: directory 
+        owner: "{{usuario | default('root')}}"
+      delegate_to: localhost
+
+    - name: save to check_yum_update in file 
+      copy:
+        dest: ./data/{{ansible_hostname}}-yum-update.txt
+        content: |
+          {{ check_yum_update.stdout }}
+      delegate_to: localhost
+
+    - name: create directory to save sosreport out 
+      file: 
+        path: /root/sosreport 
+        state: directory 
+
+    - name: to send sosreport the located fixed and logs from you system  
+      command: sosreport --batch --tmp-dir=/root/sosreport 
+      register:
+        sosreport_result 
+    
+    - name: debug sosreport to analize 
+      debug: 
+        var: sosreport_result.stdout      
+
+    - name: Execute for capture the data from system rpm afected 
+      shell: tar -zcvf /root/sosreport/rpmdb-{{ansible_hostname}}-{{ansible_date_time.date}}.tar.gz /var/lib/{rpm,yum} 
+
+    - name: find sosreports after running 
+      find:
+        paths: /root/sosreport
+        patterns: "*" 
+      register:
+        sosreport_find_sosreport 
+
+    - name: fetch files the remote server 
+      fetch:
+        src: "{{item.path}}" 
+        dest: "./data/"
+        flat: true
+      loop: "{{sosreport_find_sosreport.files}}" 
+      loop_control:
+        label: "{{ item.path | basename }}" 
+      tags: web
+      when: 
+         - sosreport_find_sosreport is defined 
+         - sosreport_find_sosreport.files is defined
+
+    - name: send the case to redhat 
+      when: CASE_NUMBER != None 
+      command: redhat-support-tool addattachment -c {{CASE_NUMBER}}  /root/sosreport/sosreport*
+
+
+
+
+
+
+
+
+
+
+
+
+

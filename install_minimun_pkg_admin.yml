@@ -1,0 +1,11 @@
+---
+ - hosts: all
+   become: true
+   gather_facts: true
+   tasks:
+
+   - ansible.builtin.include_role:
+      name: ansible_os_basevars
+
+   - ansible.builtin.include_role:
+      name: ansible_os_baseline

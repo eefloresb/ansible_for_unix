@@ -1,0 +1,140 @@
+- name: make scripts directory 
+  ansible.builtin.file:
+   dest: /scripts 
+   state: directory
+   mode: 0755
+   owner: root
+
+- name: copy script check_mem to remote server 
+  ansible.builtin.copy:
+   src: files/check_mem_used.j2 
+   dest: /scripts/check_mem_used.sh 
+   owner: root
+   mode: 0755
+
+- name: register hostname and value assigned
+  set_fact:
+   xhostname: "{{ ansible_hostname }}"
+
+- name: register ip in value
+  set_fact:
+   xipaddress: "{{ ansible_default_ipv4.address }}"
+
+- name: register gw the value
+  set_fact:
+   xgateway: "{{ ansible_default_ipv4.gateway }}"
+
+- name: register dns
+  set_fact:
+   xdns: "{{ ansible_dns.nameservers }}"
+
+- name: register network board
+  set_fact:
+   xaddress: "{{ansible_default_ipv4.interface }}"
+
+- name: register architecture in value
+  set_fact:
+     xarchitecture: "{{ansible_architecture}}"
+
+- name: calculate the date in server
+  command: date
+  register: s_date
+
+- name: register date in value
+  set_fact:
+     xdate: "{{s_date.stdout }}"
+
+- name: register family the server
+  set_fact:
+     xosfamily: "{{ ansible_os_family }}"
+
+- name: register the distribution
+  set_fact:
+     xdistribution: "{{ ansible_distribution }}"
+
+- name: check the subscription of remote servers for SuSe preview to update
+  when: ansible_distribution == 'SLES'
+  block:
+          - name: check registred Suse
+            command: SUSEConnect -s
+            register: subscription_status
+            ignore_errors: true
+
+          - set_fact:
+              os_subscription : "{{subscription_status.stdout | from_json | json_query('[*].status') | first if subscription_status.rc == 0 else 'Not Registered'}}"
+
+- name: check the subscription of remote server for RedHat preview to update
+  when: ansible_distribution == 'RedHat'
+  block:
+         - name: check registred RedHat
+           shell: subscription-manager list |grep -iE ^status\:[[:blank:]]+|tr -d " " | awk -F ":" '{print $2}'
+           register: subscription_status
+
+         - set_fact:
+             os_subscription: '{{ "Registered" if subscription_status.stdout == "Subscribed" else "Not Registered"}}'
+
+- name: register the distribution version
+  set_fact:
+     xvdistribution: "{{ansible_distribution_version}}"
+
+- name: register the mem
+  set_fact:
+     xmem: "{{ansible_memtotal_mb}}"
+
+- name: register the mem free
+  set_fact:
+     xmemfree: "{{ansible_memfree_mb}}"
+
+- name: register the swap
+  set_fact:
+     xswap: "{{ansible_swaptotal_mb}}"
+
+- name: processor count
+  set_fact:
+   xpcpu: "{{ ansible_processor_count }}"
+
+- name: number of cores
+  set_fact:
+   xcpu: "{{ansible_processor_cores}}"
+
+- name: number of virtual core
+  set_fact:
+   xvcpu: "{{ ansible_processor_vcpus }}"
+
+- name: type virtualization
+  set_fact:
+   xtvirtualization: "{{ansible_system_vendor}} - {{ansible_virtualization_type}}"
+
+- name: check internet in remote equipment
+  failed_when: 1 == 2
+  ansible.builtin.uri:
+       url: https://www.redhat.com/en
+  register:
+     get_url
+
+- name: assigned value to check internet
+  set_fact:
+    get_conection_www: '{{ "witch access to internet" if get_url.status == 200 else " without access to internet "}}'
+
+- name: avg consume cpu in % 
+  ansible.builtin.shell: |
+   top -b -n 2 | grep -iE "^%?cpu"|awk -F "," '{print $4}'|grep -Eo "[[:digit:]]+\.?[[:digit:]]*"|awk 'BEGIN{SUM+=SUM+$1}END{print 100-$SUM/NR}'
+  register: get_cpu_per
+
+- name: avg consume mem in %
+  ansible.builtin.shell: | 
+     bash /scripts/check_mem_used.sh 
+  register: get_mem_per
+
+- name: remove scripts from remote server 
+  file:
+    path: /scripts/check_mem_used.sh
+    state: absent
+   
+- name: register values captured of remote machines
+  shell: |
+     echo "{{xhostname}},{{xipaddress}},{{xgateway}},{{xaddress}},{{xarchitecture}},{{xdate}},{{ ansible_uptime_seconds // 86400 }},{{xosfamily}},\
+     {{xdistribution}},{{xvdistribution}},{{os_subscription | default('SO OpenSource')}},{{xmem}},{{xmemfree}},{{xswap}},{{xpcpu}},{{xcpu}},{{xvcpu}},\
+     {{xtvirtualization}},{{get_conection_www}},{{ "The cpu is greather than 85%"  if get_cpu_per.stdout|int > 85 else "The cpu is less than 85%"}},{{ "The mem is greather than 85%"  if get_mem_per.stdout|int > 85 else "The mem is less than 85%"}}" >> {{ dest_remote_dir }}
+  become: false
+  delegate_to: localhost

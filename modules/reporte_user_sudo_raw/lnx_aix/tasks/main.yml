@@ -1,0 +1,58 @@
+---
+    - name: make scripts directory
+      raw: | 
+       mkdir /scripts 
+       chmod 755 /scripts 
+
+    - name: capture the hostname 
+      raw: | 
+        hostname 
+      register: hostname_out
+
+    - name: register hostname and value assigned
+      set_fact:
+        xhostname: "{{ hostname_out.stdout | regex_replace('[\\r\\n]','') }}"
+
+    - name: capture the ip address in value 
+      raw: | 
+        ifconfig -a | grep -w inet | awk '{print $2}'|grep -v 127.0.0.1 |head -n 1
+      register: ip_out
+
+    - name: register ip in value
+      set_fact:
+        xipaddress: "{{ ip_out | regex_replace('[\\r\\n]','') }}"
+
+    - name: register family the server
+      set_fact:
+          xosfamily: "{{ os_name }}"
+
+    - name: copy the file get_user_sudo.sh script in remote server
+      local_action: command scp ./files/get_user_sudo.sh {{inventory_hostname}}:/scripts/
+  
+    - name: execute file script 
+      raw: | 
+          chmod 755 /scripts/get_user_sudo.sh
+          /scripts/get_user_sudo.sh
+      register: 
+        user_with_root
+
+    - name: Define variable unica 
+      set_fact: 
+          user_root: "{{ user_with_root.stdout | regex_replace('[\\r\\n]','' }}"
+
+    - name: Guadar archivos de manera local para 
+      delegate_to: localhost
+      shell: |
+        echo "{{xipaddress}},{{xhostname}},{{xosfamily}}" >> {{ansible_host}}_1.csv
+
+    - name: Guardar archivos de manera local 
+      delegate_to: localhost
+      become: false
+      shell: | 
+          echo "{{item}}" >> {{ansible_host}}_2.csv
+      with_items: "{{ user_root.split(':')}}"
+
+    - name: delete file script get_user_sudo.sh
+      file: 
+        path: /scripts/get_user_sudo.sh
+        state: absent

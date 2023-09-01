@@ -1,0 +1,187 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Deshabilitar login de root por SSH 
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        state: present
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+      notify: Reiniciar SSH 
+
+    - name: Configurar envio de logs a syslog centralizado
+      lineinfile:
+        path: /etc/rsyslog.d/remote.conf
+        state: present
+        regexp: '^\*.*172.16.108.1'
+        line: '*.* @172.16.108.1:514'
+      notify: Reiniciar Syslog 
+
+    - name: Deshabilitar Ctrl+Alt+Del en SLES 12
+      systemd: name=ctrl-alt-del.target masked=yes
+      when: ansible_lsb.description is search("SUSE.*12")
+
+    - name: Deshabilitar Ctrl+Alt+Del en SLES 11
+      replace:
+        path: /etc/inittab
+        regexp: '(^ca.*ctrlaltdel.*shutdown)'
+        replace: '#\1'
+      when: ansible_lsb.description is search("SUSE.*11")
+
+    - name: Configurar politicas de contraseñas a usuarios de GMD
+      shell: |
+        grep "^gmd" /etc/passwd | cut -d : -f 1 | grep -vE "gmdadmin" |
+        while read user
+        do
+          chage -M 90 -d 2018-06-13 $user
+        done
+
+    - name: Politicas de contraseñas por defecto para usuarios nuevos
+      replace:
+        path: /etc/login.defs
+        regexp: '(^PASS_MAX_DAYS).*$'
+        replace: '\1\t90'
+
+    - replace:
+        path: /etc/login.defs
+        regexp: '(^PASS_MIN_DAYS).*$'
+        replace: '\1\t1'
+
+    - replace:
+        path: /etc/login.defs
+        regexp: '(^PASS_WARN_AGE).*$'
+        replace: '\1\t7'
+
+    - name: Configurar 1 hora como tiempo maximo de inactividad
+      lineinfile:
+        path: /etc/profile
+        state: present
+        regexp: '^TMOUT='
+        line: 'TMOUT=3600'
+
+    - name: Configurar complejidad de contraseñas de usuarios
+      shell: pam-config -a --cracklib-minlen=8 --cracklib-lcredit=-1 --cracklib-ucredit=-1 --cracklib-dcredit=-1 --cracklib-ocredit=-1 --pwhistory-remember=6
+      when: ansible_lsb.description is search("SUSE.*12")
+
+    - name: Restringir directorio $HOME de usuarios
+      shell: grep "^gmd" /etc/passwd | cut -d ':' -f 1 | while read user ; do homedir=$(grep -w $user /etc/passwd | cut -d ':' -f 6) ; chmod -R go= $homedir ; done
+      when: ansible_lsb.description is search("SUSE.*12")
+
+    - name: Backup de archivo sysctl.conf
+      shell: cp /etc/sysctl.conf /root/sysctl.conf.$(date +%Y%m%d%H%M%S)
+
+    - name: Parametros de seguridad de red en el kernel
+      lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.default.rp_filter'
+        line: 'net.ipv4.conf.default.rp_filter = 1'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.all.rp_filter'
+        line: 'net.ipv4.conf.all.rp_filter = 1'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.default.accept_source_route'
+        line: 'net.ipv4.conf.default.accept_source_route = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.all.accept_source_route'
+        line: 'net.ipv4.conf.all.accept_source_route = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.tcp_syncookies'
+        line: 'net.ipv4.tcp_syncookies = 1'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.icmp_echo_ignore_broadcasts'
+        line: 'net.ipv4.icmp_echo_ignore_broadcasts = 1'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.icmp_ignore_bogus_error_responses'
+        line: 'net.ipv4.icmp_ignore_bogus_error_responses = 1'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.default.secure_redirects'
+        line: 'net.ipv4.conf.default.secure_redirects = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.all.secure_redirects'
+        line: 'net.ipv4.conf.all.secure_redirects = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.default.accept_redirects'
+        line: 'net.ipv4.conf.default.accept_redirects = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.all.accept_redirects'
+        line: 'net.ipv4.conf.all.accept_redirects = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.tcp_max_syn_backlog'
+        line: 'net.ipv4.tcp_max_syn_backlog = 4096'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.ip_forward'
+        line: 'net.ipv4.ip_forward = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.default.send_redirects'
+        line: 'net.ipv4.conf.default.send_redirects = 0'
+
+    - lineinfile:
+        path: /etc/sysctl.conf
+        state: present
+        regexp: '^net.ipv4.conf.all.send_redirects'
+        line: 'net.ipv4.conf.all.send_redirects = 0'
+
+    - name: Copiar templates de /etc/permissions*
+      template: src={{item}} dest=/etc mode=0644
+      with_items:
+        - template/permissions.easy
+        - template/permissions.local
+
+    - name: Guardar permisos actuales de archivos de sistema
+      shell: |
+        chkstat --warn /etc/permissions.easy > /tmp/permissions.easy_$(date +%Y%m%d%H%M%S)
+        chkstat --warn /etc/permissions.local > /tmp/permissions.local_$(date +%Y%m%d%H%M%S)
+
+    - name: Corregir permisos de archivos de sistema
+      shell: |
+        chkstat --set /etc/permissions.easy
+        chkstat --set /etc/permissions.local
+
+  handlers:
+    - name: Reiniciar SSH
+      service: name=sshd state=restarted
+
+    - name: Reiniciar Syslog
+      service: name=rsyslog state=restarted

@@ -1,0 +1,33 @@
+---
+- hosts: localhost
+  become: true
+  gather_facts: true
+  connection: local
+  vars:
+    packages: 
+      - neovim 
+      - gh 
+      - tmux 
+      - fish
+  tasks:
+
+    - name: Configurar packages 
+      apt:
+        name: "{{item}}" 
+        state: present
+      loop: "{{packages}}" 
+
+    - name: configurar fish from remote developer
+      git:
+        repo: 'https://github.com/craftzdog/dotfiles-public.git' 
+        dest: /tmp/dotfiles-public 
+
+    - name: copy files in local remote 
+      become: false 
+      copy: 
+        src: "/tmp/dotfiles-public/.config/{{item}}"
+        dest: "/home/edwinflores/.config/."
+      loop: 
+        - nvim
+        - fish 
+        - tmux 

@@ -1,0 +1,71 @@
+---
+- name: create group 
+  group: 
+    name: "{{client}}"
+    state: present
+
+- name: crear directorio script
+  file:
+    path: /scripts
+    state: directory
+    mode: 0755
+
+- name: copy script a achivo sudo 
+  template: 
+    src: change_sudo.j2
+    dest: /scripts/change_sudo.sh 
+    mode: 0755
+    owner: root
+
+- name: create user 
+  user:
+    name: "{{item.user}}"
+    comment: "{{item.fullname}}"
+    group: "{{ client if item.admin == True else 'users'}}"
+    password: "{{item.password | password_hash('sha512')}}"
+    shell: /bin/bash
+    update_password: on_create
+  loop: "{{ usuarios }}"
+  loop_control: 
+    label: "{{ item.user }} - {{ item.fullname }}"
+
+- name: Deshabilitar expiracion de clave para usuarios especiales
+  command: chage -M 9999999 {{ item.user }}
+  when: item.passneverexpires == True
+  loop: "{{ usuarios }}"
+  loop_control:
+    label: "{{ item.user }} - {{ item.fullname }}"
+
+- name: this file sudoers is exists 
+  file:
+    state: directory
+    path: /etc/sudoers.d
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Configurar sudo para usuarios administradores
+  template:
+    src: usuario.j2 
+    dest: /etc/sudoers.d/{{item.user}}
+    mode: 0640
+    validate: '/usr/sbin/visudo -cf %s'
+  when: item.admin == True
+  loop: "{{ usuarios }}" 
+
+- name: "Inicializar el servicio at"
+  failed_when: 1 == 2
+  command: which atd
+  register: atd_check
+
+- name: install package {{ ansible_os_family}}
+  when: atd_check.rc != 0
+  include_tasks: install_{{ansible_os_family}}.yml
+
+- name: "Inicializar el servicio at"
+  command: atd
+
+- name: "Rotas el permiso por usuario para un periodo de {{days}} días"
+  shell:
+    echo "bash /scripts/change_sudo.sh {{ item.user }}" | at -m now +{{days}} days
+  loop: "{{ usuarios }}"

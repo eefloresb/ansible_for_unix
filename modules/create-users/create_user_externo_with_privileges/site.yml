@@ -1,0 +1,28 @@
+---
+- hosts: all
+  vars:
+    client: "cnvadmin"
+    grupos:
+      - name: cnvadmin
+  
+  #Colocar Usuarios y Grupos para definir por el cliente
+    usuarios:
+
+     - user: cnv_jlopez
+       fullname: "Canvia /  Jose Lopez - WO0000000339671"
+       password: LmE-lnx$90EN
+       expiredpass: False 
+       passneverexpires: True
+       admin: True
+
+     - user: cnv_coes
+       fullname: "Canvia /  COES - WO0000000339671"
+       password: LmE+lNx%91ES
+       expiredpass: False 
+       passneverexpires: True
+       admin: True
+
+  tasks:
+
+  - include_role: 
+      name: account_create

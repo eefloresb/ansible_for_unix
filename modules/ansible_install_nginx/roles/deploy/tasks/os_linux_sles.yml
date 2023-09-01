@@ -1,0 +1,6 @@
+- name: install package nginx into family SuSe 
+  zypper: 
+    name: nginx 
+    repo: 'http://nginx.org/packages/sles/12'
+    state: present
+

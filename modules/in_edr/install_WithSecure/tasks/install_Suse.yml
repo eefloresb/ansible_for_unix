@@ -1,0 +1,11 @@
+
+- name: Install libraries in remote server 
+  when: 
+   - ansible_os_family == "Suse"
+  ansible.builtin.zypper:
+    name: "{{item}}"
+    state: present
+  with_items:
+    - libfuse2
+    - libcurl4
+    - python3

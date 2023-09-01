@@ -1,0 +1,44 @@
+---
+
+- name: create group for user
+  group:
+    name: "{{item.group}}"
+    state: present
+  loop: "{{user}}"
+
+- name: create user in remote machine
+  user:
+    name: "{{user.name}}"
+    comment: "{{user.comment}}"
+    shell: /bin/bash
+    group: "{{user.group | default('users') }}"
+    create_home: true
+    password: "{{ user.password | password_hash('sha512') }}"
+    update_password: on_create 
+  loop: "{{user}}"
+  loop_control:  
+    loop_var: user
+    label: "{{user.name}} - {{user.comment}}" 
+
+- name: make sure there /etc/sudoers.d
+  file:
+    state: directory
+    path: /etc/sudoers.d
+    mode: 0755
+    owner: root
+    group: root 
+
+- name: jump to root for user
+  when: user.enable_root == true
+  template:
+    backup: yes
+    src: sudoers.j2
+    dest: /etc/sudoers.d/{{user.group}}
+    mode: 0640
+    force: false
+    validate: /usr/sbin/visudo -cf %s
+  loop: "{{user}}" 
+  loop_control:
+    loop_var: user 
+    label: "{{user.name}} - {{user.comment}}"
+

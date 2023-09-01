@@ -1,0 +1,14 @@
+- name: copy script to remote server for report for os_release (RedHat)
+  block:
+
+    - name: copy script in remote server for report os_release(rhel)
+      copy:
+        src: ./scripts/bash/rhel_report.sh
+        dest: /scripts/rhel_report.sh
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: execute script in remote server for rhel
+      command: /scripts/./rhel_report.sh 
+      register: os_report_result

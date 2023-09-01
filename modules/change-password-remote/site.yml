@@ -1,0 +1,12 @@
+---
+
+- hosts: all
+  become: true
+  gather_facts: true  
+  tasks:
+      - include_role: 
+          name: deploy 
+        vars: 
+          usuario: "adcan_haguirre" 
+          password: "N1ub1zCanv1ahag20&&"
+

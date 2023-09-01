@@ -1,0 +1,12 @@
+---
+# Generar reportes
+- name: generate reports
+
+# Validar espacios a nivel del disco /usr /tmp o / 
+- name: check size disk 
+
+# Validar reinicio del SO
+- name: check sanity reboot 
+
+# Proceso Manual
+- name: check copy iso 

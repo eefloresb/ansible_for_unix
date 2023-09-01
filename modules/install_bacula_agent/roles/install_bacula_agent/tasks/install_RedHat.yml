@@ -1,0 +1,17 @@
+---
+  - name: Install bacula Client in {{ansible_distribution}} - {{ ansible_distribution_major_version }}
+    block:
+           - name: Import the key to OS
+             command: rpm --import {{bacula_key.dest}}
+             args:
+                chdir: /tmp
+
+           - name: copy repository installation
+             template:
+               src: bacula.repo.j2
+               dest: /etc/yum.repos.d/bacula.repo
+
+           - name: Install bacula client 
+             yum:
+              name: bacula-client
+              update_cache: true

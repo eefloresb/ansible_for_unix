@@ -1,0 +1,25 @@
+- hosts: grupo2 
+  become: true
+  tasks:
+    
+      - name: check file 
+        stat: 
+          path: /root/123.txt 
+        register: file 
+
+      - debug:
+          var: file
+      
+      -  block:
+         - name: create file whether not exists 
+           copy: 
+            content: "new file when not exists it\n"
+            dest: /root/4321.txt 
+           failed_when: file.stat.exists == false
+         rescue: 
+          - name: create new file whether it not exists 
+            copy: 
+             content: "blablabla"
+             dest: /root/321.txt 
+            
+        

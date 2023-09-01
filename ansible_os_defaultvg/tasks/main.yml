@@ -1,0 +1,3 @@
+---
+    - name: create users for admin OS
+      include_tasks: define_user_linux.yml

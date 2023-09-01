@@ -1,0 +1,35 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: true
+  tasks:
+
+  - name: create directory script in remote server 
+    file: 
+      path: /scripts
+      state: directory 
+      mode: '0756'
+      owner: root
+      group: root 
+
+  - name: copy script in remote server
+    copy:
+      src: ./files/awk_list.sh 
+      dest: /scripts/awk_list.sh 
+      owner: root
+      group: root
+      mode: '0755'
+
+  - name: execute script in remote server 
+    shell: /scripts/./awk_list.sh 
+    register:
+        script_result
+
+  - name: show result in report file  
+    copy: 
+      content:  
+          {{script_result.stdout}}
+      dest: ./{{ansible_hostname}}-{{ansible_default_ipv4.address}}.txt  
+      owner: edwinflores
+    delegate_to: localhost
+  

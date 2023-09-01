@@ -1,0 +1,15 @@
+---
+- name: generate report for package update for os_release(Debian)
+  block:
+
+    - name: copy script in remote server report for os_release(debian)
+      copy:
+        src: ./scripts/bash/debian_report.sh 
+        dest: /scripts/debian_report.sh 
+        owner: root
+        group: root 
+        mode: '0755'
+      
+    - name: execute script in remote server for debian 
+      command: /scripts/./debian_report.sh
+      register: os_report_result

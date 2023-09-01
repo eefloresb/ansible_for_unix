@@ -1,0 +1,58 @@
+---
+    # vars file for ansible-role-app-bacula
+    packages_for_config:
+      - libselinux-python
+  
+    packages_essential:
+      - epel-release
+      - net-tools
+      - vim
+      - wget
+      - ntpdate
+  
+    packages_for_building:
+      - gcc
+      - gcc-c++
+      - libacl-devel
+      - make
+      - mariadb-devel
+      - openssl-devel
+      - readline-devel
+      - zlib-devel
+      - python-passlib
+      - lvm2
+      - telnet
+      - python-pip
+  
+  
+    packages_for_catalog:
+      - mariadb
+      - MySQL-python
+      - openssl
+      - mariadb-server
+  
+    packages_for_gui:
+      - httpd
+      - php
+      - php-bcmath
+      - php-mbstring
+      - php-mysqlnd
+      - php-pdo
+      - php-xml
+      - php-posix
+  
+    php_mem_limit: 256M
+    timezone: America/Lima
+  
+    bacula_url: https://www.bacula.org/download/10266/
+  
+    bacula_build_dir: /tmp/bacula
+    bacula_dir_pass: dh4exBmaUEcFjv8Qmx9F
+    bacula_fd_pass: dMErlf4M8aDfByAHbzUY
+    bacula_sd_pass: EkMaI7sDLxtydFJCPkwP
+    bacula_sd_device: /bacula/File1
+    bacula_build_opts: --with-mysql --with-systemd --disable-conio --enable-readline --sysconfdir=/etc/bacula --sbindir=/usr/sbin --with-working-dir=/var/spool/bacula --with-archivedir=/var/bacula/File --with-scriptdir=/usr/libexec/bacula --with-bsrdir=/var/spool/bacula --with-logdir=/var/log/bacula --with-pid-dir=/var/run/bacula --with-dir-password="@@DIR_PASSWORD@@" --with-sd-password="@@SD_PASSWORD@@" --with-fd-password="@@FD_PASSWORD@@" --with-dir-user=bacula --with-dir-group=bacula --with-sd-user=bacula --with-sd-group=tape --with-fd-user=root --with-fd-group=root --with-sbin-perm=0755 --with-basename=bacula --with-hostname=localhost --with-plugindir=/usr/libexec/bacula/plugins
+
+    # Parametros dinamicos
+    bacula_access_key: 5e51a5597fd01
+    bacula_version: 9.6.7 

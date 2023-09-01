@@ -1,0 +1,6 @@
+---
+generic_users: 
+  - user: adm_Infra
+    fullname: "Danny	Asunción/Administrador de Proyectos	Infraestructura y Operaciones/dasuncion@centria.net	" 
+    password: "JohfuM1u"
+    group: adm_Infra

@@ -1,0 +1,70 @@
+--- 
+    - name: check resolver conf 
+      shell: | 
+        ping -c1 falcon.crowdstrike.com 
+      register:
+        check_ping
+
+    - name: dns config in resolv.conf 
+      when: 
+        check_ping.rc != 0
+      lineinfile:
+        path: /etc/resolv.conf
+        line: "nameserver {{item}}"
+        state: present
+      with_items: 
+          - "{{nameservera}}"
+          - "{{nameserverb}}"
+
+    - name: check resolver conf 
+      shell: | 
+        ping -c1 falcon.crowdstrike.com 
+      register:
+        check_dns
+
+    - name: output failed to domain falcon.crowdstrike.com
+      when:
+        check_dns.rc != 0
+      debug:
+        msg: "Contact to Support Canvia"
+      
+    - name: output check service 
+      failed_when: 1 == 2
+      shell: |
+        ps -e | grep falcon-sensor
+      register: check_falcon
+
+    - name: stop service falcon-sensor
+      when: check_falcon.rc == 0
+      service: 
+        name: falcon-sensor
+        state: stopped
+
+    - name: check rpm falcon-sensor
+      failed_when: 1 == 2
+      shell: rpm -qa | grep falcon-sensor 
+      register:
+        check_package
+
+    - name: install package {{ ansible_os_family}}
+      include_tasks: install_{{ansible_os_family}}.yml
+
+#    - name: Set your CID on the sensor, substituting <CID> with your CID
+#      when: TokenFalcon is defined
+#      command: sudo /opt/CrowdStrike/falconctl -s --cid={{TokenFalcon}}
+    
+    - name: Enable falcon-sensor Service 
+      service:
+       name: falcon-sensor
+       enabled: yes
+       state: started
+
+    - name: output check service 
+      shell: |
+        ps -e | grep falcon-sensor
+      register: check_falcon
+
+    - name: Output Strin check Falcon 
+      when: check_falcon.rc == 0
+      debug:
+        msg: "status OK - Install correct service"  

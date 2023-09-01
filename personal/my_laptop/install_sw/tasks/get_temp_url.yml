@@ -1,0 +1,42 @@
+---
+- name: Download aws-cli script
+  ansible.builtin.get_url:
+    url: "{{ aws_cli_url }}"
+    dest: /tmp/awscliv2.zip
+    mode: '0755'
+
+- name: Unzip awscli2
+  ansible.builtin.unarchive:
+    src: "/tmp/awscliv2.zip"
+    dest: /tmp/
+    remote_src: true
+
+- name: Download discord deb
+  ansible.builtin.get_url:
+    url: "{{ discord_url }}"
+    dest: /tmp/discord.deb
+    mode: '0755'
+
+- name: Download thunderbird to ubuntu
+  ansible.builtin.get_url:
+    url: "{{ thunderbird_url }}"
+    dest: /tmp/thunderbird.tar.gz
+    mode: '0644'
+
+- name: Download the app to desktop in ubuntu
+  ansible.builtin.get_url:
+    url: "{{ thun_desktop_url }}"
+    dest: /usr/share/applications
+    mode: '0644'
+
+- name: Download the gdrive to desktop ubuntu
+  ansible.builtin.get_url:
+    url: "https://github.com/glotlabs/gdrive/releases/download/3.9.0/gdrive_linux-x64.tar.gz"
+    dest: /tmp/gdrive_linux-x64.tar.gz
+    mode: '0644'
+
+- name: Gdrive_linux-x64.tar.gz
+  ansible.builtin.unarchive:
+    src: /tmp/gdrive_linux-x64.tar.gz
+    dest: /usr/local/bin
+    mode: '0755'

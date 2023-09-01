@@ -1,0 +1,56 @@
+---
+- name: create directory in remote server 
+  file: 
+    name: /scripts
+    state: directory
+
+- name: copy script in remote server
+  copy: 
+    src: "{{item}}"
+    dest: /scripts/{{item}}
+    owner: root
+    group: root
+    mode: '755'
+  loop:
+    - linux-hardening.sh 
+    - user-detail.sh 
+
+- name: execute command linux-hardening in remote server 
+  shell: | 
+    /scripts/./linux-hardening.sh
+    cat $(hostname).txt  
+  register: status_hardening
+
+- name: execute command user detail 
+  shell: | 
+    /scripts/./user-detail.sh  
+  register: user_detail
+
+- name: users in remote server > 1000
+  shell: | 
+    cat /etc/passwd | awk -F ":" 'BEGIN{ print "user,comment";} { if ($3>1000) { print $1","$5}}'
+  register: usuarios_locales
+
+- name: Save content of status_hardening 
+  copy:
+    content: |
+      {{status_hardening.stdout}}
+    dest: "{{destfolder}}/{{ansible_default_ipv4.address}}-hardening.txt" 
+  delegate_to: localhost
+  become: false 
+
+- name: Save content of user detail 
+  copy:
+    content: |
+      {{ user_detail.stdout }}
+    dest: "{{destfolder}}/{{ansible_default_ipv4.address}}-userdetail.txt"
+  delegate_to: localhost
+  become: false 
+
+- name: register users locals in file 
+  copy: 
+    content: | 
+        {{ usuarios_locales.stdout }}
+    dest: "{{destfolder}}/{{ansible_default_ipv4.address}}-userlocal.txt"
+  delegate_to: localhost 
+  become: false

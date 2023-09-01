@@ -1,0 +1,114 @@
+---
+- hosts: all
+  vars:
+    report_file: "~/data/report_check_preview.csv"
+    status_resolv: false
+    subscription_os: ""
+    named_server: false
+    mount_all: []
+  tasks: 
+
+################### create file to report.csv ###############################
+    - copy: 
+        dest: "{{report_file}}"
+        content: |
+          hostname,ipaddress,family,distribution,version,architecture,kernel,uptime,resolv.conf,check_dns,check_internet,check_disk_space,suscription_status
+      delegate_to: localhost
+      become: false
+
+################### Validate the file in the route /etc/resolv.con #######################################
+    - name: "check if exists the resolv.conf file"
+      stat:
+        path: "/etc/resolv.conf" 
+      register:
+        status_resolv
+      ignore_errors: true
+    
+    - name: "register to value"
+      ansible.builtin.set_fact: 
+          register_resolv: '{{ "exists" if status_resolv.stat.exists is true else "not exists" }}'
+
+################## Check the ip address of the file resolv.conf ##############################  
+    - name: check nameserver list in resolv.conf 
+      ansible.builtin.set_fact:
+        nameserver: "{{ lookup('file','/etc/resolv.conf') | regex_findall('\\s*nameserver\\s*(.*)') }}"
+      when: status_resolv.stat.exists is true
+
+    - name: check the resolution name  
+      failed_when: nameserver is not defined
+      debug:
+        msg: "{{ lookup('dig','redhat.com','qtype=A') }}"
+      loop: "{{ nameserver }}"
+      register: check_domain 
+      ignore_errors: true
+
+    - name: "Asigne value in string"
+      set_fact: 
+        cadena: '{{ "success" if item != "" else "failed" }}'
+      loop: "{{ check_domain.results | map (attribute='failed') | list }}"
+
+    - name: "register success the resolution name"
+      set_fact: 
+        register_dns: '{{"success" if cadena == "success" else "failed"}}'
+
+################### Check the output internet ######################
+    - name: check the output to internet
+      get_url:
+        url: https://www.redhat.com/en 
+        dest: /tmp/ 
+      register: status_www
+
+    - name:  
+      set_fact: 
+       register_www: '{{ "success" if status_www.status_code == 200 else "failed" }}'
+
+################### Check the subscribed to OS ######################
+
+    - name: check subscription to redhat family
+      when: ansible_distribution == 'RedHat'
+      block:
+          - name: check subscription for RedHat
+            shell: subscription-manager list |grep -iE ^status\:[[:blank:]]+|tr -d " " | awk -F ":" '{print $2}'
+            register: subscription_status
+
+          - name: register to suscription to RHEL
+            set_fact:
+              register_suscription: '{{ "subscribed" if subscription_status.stdout == "Subscribed" else "not subscribed" }}' 
+
+    - name: check status of register to SLES
+      when: ansible_distribution == 'SLES' or ansible_distribution == 'SLES_SAP'
+      block:
+          - name: check status of register SLES
+            failed_when: 1 == 2
+            command: SUSEConnect -s
+            register: suse_connect_result
+      
+          - name: save status of register in value
+            set_fact:
+              suscription_status: "{{ suse_connect_result.stdout | from_json | json_query('[*].status') | first if suse_connect_result.rc == 0 else 'Not Registered' }}"
+      
+          - name: register to suscription
+            set_fact:
+              register_suscription: '{{ "subscribed" if subscription_status.stdout == "Subscribed" else "not subscribed" }}'
+
+    - name: Register other SO 
+      when: register_suscription == ""
+      ansible.builtin.set_fact: 
+        register_suscription: "OpenSource"
+
+#################### Check space available to install OS ###################################
+    - set_fact:
+        mount_all: "{{ mount_all + [{'host':ansible_host,'dev':item.device,'mount':item.mount,'free':(((item.size_available/1024)/1024)/1024)|round(2,'common'),'total':(((item.size_total/1024)/1024)/1024)|round(2,'common')}] }}"
+      when: (item.size_total - item.size_available) > (item.size_total|float * 0.85)
+      with_items: "{{ ansible_mounts | list }}"
+
+    - set_fact:
+        register_disk: '{{"disk free" if mount_all == [] else "expand the disk"}}'
+
+    - name: Escribir reporte
+      shell: |
+          echo "{{ansible_hostname}},{{ansible_default_ipv4.address}},{{ ansible_os_family }},{{ ansible_distribution }},{{ansible_distribution_version}},\
+          {{ansible_architecture}},{{ ansible_kernel}},{{ ansible_uptime_seconds // 86400 }},{{register_resolv}},{{register_dns}},{{register_www}},{{register_disk}},{{register_suscription}}" >> {{ report_file }}
+      delegate_to: localhost
+      register: result
+      become: false

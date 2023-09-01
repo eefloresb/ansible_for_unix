@@ -1,0 +1,125 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: false
+  vars: 
+    USERS: "eflores2.pe"
+    PASSWORD: "shio8auY"
+  tasks: 
+
+   - name: Subscription Manager for redhat 
+     raw: | 
+      #!/bin/bash
+              _registration_os_suse(){
+                   _sles_user
+                   SUSECONNECT -e $USERS -r $PASSWDS 
+              }
+               _deregistration_os_suset(){ 
+                 if [[ ! -z $UNREGISTER ]]; then 
+                    SUSEConnect -d
+                    exit
+                 fi
+              }
+              _registration_os_redhat(){
+                         subscription-manager register --username={{USERS}} --password={{PASSWDS}} --auto-attach --force 
+               }
+               _deregistration_os_redhat(){
+                    if [ `which subscription-manager` ]
+                    then
+                      subscription-manager unregister
+                    fi
+               }
+              _get_Amazon(){
+                  os=$1
+                  version=${2}
+              }
+              _get_Suse(){
+                  os=$1
+                  version=${2}
+              }
+              _get_RedHat(){
+                   os=$1
+                   version=$2
+                    if [[ ! -z $UNREGISTER ]]; then 
+                        subscription-manager unregister 
+                        exit
+                    fi
+                    if which subscription-manager &>/dev/null; then 
+                        if [ `subscription-manager status | grep Overall | cut -d : -f 2 | tr -d " "` == "Unknown" ]
+                        then
+                            _registration_os_redhat
+                        fi
+                   fi
+                   ### Desactiva repositorio epel para oracle
+                   if [ $os = "Oracle" ]; then
+                        sed -i -e "/enabled/s/1/0/" /etc/yum.repos.d/epel.repo
+                   else  
+                       if [[ $version -ge 8 ]]; then
+                            dnf install -y python36
+                            ln -s -f /usr/libexec/platform-python3.6 /usr/bin/python
+                       elif [[ $version -eq 7 ]]; then
+                            echo -e "LANG=en_US.UTF-8\nLC_ALL=en_US.UTF-8" > /etc/environment
+                       elif [[ $version -eq 6 ]]; then
+                            yum install -y libselinux-python --nogpgcheck
+                       elif [[ $version -eq 5 ]]; then
+                            ln -s -f /usr/share/zoneinfo/America/Lima /etc/localtime
+                            if [ $(grep -woi centos /etc/redhat-release) ]; then 
+                              _get_repo_cen5
+                            fi
+                            yum install -y epel-release --nogpgcheck
+                            yum install -y python26 --nogpgcheck
+                       fi
+                   fi
+
+              }
+
+              _get_Debian(){
+                   os=$1
+                   version=$2
+                   apt-get update
+                   if [ $os == "ubuntu" ] && [ ${version%%.*} -le 16 ]
+                   then
+                    export DEBIAN_FRONTEND=noninteractive
+                    apt-get install -y python
+                   fi
+              }
+
+              _check_distro(){
+                   if [ -f /etc/redhat-release ]
+                   then
+                      if [[ $(grep -owi "Red Hat" /etc/redhat-release) == "Red Hat" ]]
+                      then
+                                os="RedHat"
+                      elif [[ $(grep -woi CentOS /etc/redhat-release) ]]
+                      then
+                                 os="CentOS"
+                      fi
+                      version=`grep -woE '[[:digit:]].*' /etc/redhat-release | cut -d "." -f1`
+                      _get_RedHat $os $version
+                   elif [ -f /etc/oracle-release ]
+                   then
+                      os=$(grep -Ewo "^Oracle" /etc/oracle-release)
+                      version=grep -Ewo '[[:digit:]]+\.[[:digit:]]+' /etc/oracle-release | cut -d "." -f1
+                      _get_RedHat $os $version
+                   elif [ -f /etc/release ]
+                   then
+                        os=`grep -woi solaris /etc/release`
+                        version=`grep -Ewoi [[:digit:]].[[:digit:]]+ /etc/release`
+                   elif [ -f /etc/os-release ]
+                   then
+                        os=`grep -w "ID" /etc/os-release | awk -F = '{print $2}' | tr -d '"'`
+                        version=`grep -w "VERSION_ID" /etc/os-release | awk -F = '{print $2}' | tr -d '"'`
+                        if [ $os == "ubuntu" ] || [ $os == "debian" ]
+                        then
+                             _get_Debian $os $version
+                        elif [ $os == 'sles' ]
+                        then
+                            _get_Suse $os $version
+                        elif [ $os == 'amzn' ]
+                        then
+                            _get_Amazon $os $version
+                        fi
+                   fi
+                }
+
+        _check_distro 

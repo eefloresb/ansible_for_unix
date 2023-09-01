@@ -1,0 +1,264 @@
+---
+- name: Create necessary directory to copy shell scripts 
+  file:
+    state: directory
+    path: "{{ item }}"
+    mode: 0755
+    owner: root
+    group: root
+  with_items:
+    - /scripts
+    - /nmondir
+
+- name: Copiar archivos para el monitoreo de memoria - swap - ram 
+  copy:
+    src: "./scripts/bash/{{item}}"
+    dest: /usr/local/bin/{{item.split('.')[0]}}
+    mode: 0755
+  with_items:
+    - check_mem_ram.sh
+    - check_mem_swap.sh 
+
+- name: Copiar archivos para el monitoreo de cpu
+  copy:
+    src: "./scripts/bash/{{item}}"
+    dest: /usr/local/bin/check_cpu
+    mode: 0755
+  with_items:
+    - check_cpu.sh
+
+- name: Copiar archivos para el monitoreo de disco 
+  copy:
+    src: "./scripts/bash/{{item}}"
+    dest: /usr/local/bin/check_disk
+    mode: 0755
+  with_items:
+    - check_disk.sh 
+
+- name: Validar si systat está instalado 
+  command: wchich sar 
+  failed_when: 1 == 2
+  register:
+    systat_resource 
+
+- name: Activar cron de sysstat en Debian/Ubuntu
+  lineinfile:
+    path: /etc/default/sysstat
+    regexp: '^ENABLED'
+    line: 'ENABLED="true"'
+  when:
+    - ansible_os_family == 'Debian' 
+    - systat_resource.rc == 0
+  notify: restart_sysstat
+
+- name: Activar cron de sysstat en SUSE
+  file:
+    path: /etc/cron.d/sysstat.cron
+    src: /etc/sysstat/sysstat.cron
+    state: link
+  when:
+    - ansible_os_family == 'Suse'
+    - systat_resource.rc == 0
+  ignore_errors: true
+
+- name: Nmon install for debian family
+  when: 
+    - os_vendor == 'debian'
+    - os_vendor == 'ubuntu'
+  ansible.builtin.package:
+    name: nmon 
+    state: present 
+
+- name: Nmon Binary for x86_64
+  when: ansible_architecture == "x86_64"
+  block:
+
+    - name: Copiar binario de nmon en SUSE 11
+      copy: 
+        src: "./software-iac/linux/nmon/nmon16g_x86_sles114"
+        dest: /usr/local/bin/nmon
+        mode: 0755
+      when:
+        - ansible_os_family == 'Suse'
+        - ansible_distribution_major_version|int == 11
+    
+    - name: Copiar binario de nmon en SUSE 12
+      copy:
+        src: "./software-iac/linux/nmon/nmon16g_x86_sles12"
+        dest: /usr/local/bin/nmon
+        mode: 0755
+      when:
+        - ansible_os_family == 'Suse'
+        - ansible_distribution_major_version|int == 12
+    
+    - name: Copiar binario de nmon en SUSE 15
+      copy:
+        src: "./software-iac/linux/nmon/nmon_x86_64_sles15"
+        dest: /usr/local/bin/nmon
+        mode: 0755
+      when:
+        - ansible_os_family == 'Suse'
+        - ansible_distribution_major_version|int == 15
+        
+    - name: Copiar binario de nmon en RedHat/CentOS 6
+      copy:
+        src: "./software-iac/linux/nmon/nmon16g_rhel6"
+        dest: /usr/local/bin/nmon
+        mode: 0755
+      when:
+        (ansible_os_family == 'RedHat' and ansible_distribution_major_version|int == 6 ) or
+        (ansible_distribution == "Amazon" and ansible_distribution_major_version|int != 2 ) 
+    
+    - name: Copiar binario de nmon en RedHat/CentOS 7
+      copy:
+        src: "./software-iac/linux/nmon/nmon16g_x86_rhel72"
+        dest: /usr/local/bin/nmon
+        mode: 0755
+      when:
+        ( ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 7 ) or
+        ( ansible_distribution == "Amazon" and ansible_distribution_major_version|int == 2 ) 
+    
+    - name: Copiar binario de nmon en RedHat/CentOS 8
+      copy:
+        src: "./software-iac/linux/nmon/nmon16m_x86_64_rhel8"
+        dest: /usr/local/bin/nmon
+        mode: 0755
+      when:
+        ( ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 8 ) 
+
+- name: Nmon Binary for ppc64le
+  when: ansible_architecture == "ppc64le"
+  block:
+
+      - name: Copiar binario de nmon en SUSE 12
+        copy:
+          src: "./software-iac/linux/nmon/nmon16g_power_sles122"
+          dest: /usr/local/bin/nmon
+          mode: 0755
+        when:
+          - ansible_os_family == 'Suse'
+          - ansible_distribution_major_version|int == 12
+
+      - name: Copiar binario de nmon en SUSE 15
+        copy:
+          src: "./software-iac/linux/nmon/nmon_power_sles15"
+          dest: /usr/local/bin/nmon
+          mode: 0755
+        when:
+          - ansible_os_family == 'Suse'
+          - ansible_distribution_major_version|int == 15
+
+- name: Crear cron de nmon
+  template:
+    src: nmon.cron
+    dest: /etc/cron.d
+    mode: 0644
+
+- name: Copiar script de reportes de nmon
+  template:
+    src: reportes.sh
+    dest: /scripts
+    mode: 0755
+
+- name: Configurar script de arranque de nmon en RHEL 6
+  lineinfile:
+    path: /etc/rc.d/rc.local
+    state: present
+    regexp: '^/scripts/reportes.sh -c -d'
+    line: '/scripts/reportes.sh -c -d'
+  when:
+    (os_vendor == 'amazon' and os_release != '2') or
+    ((os_vendor == 'rhel' or os_vendor == 'centos') and os_release.split('.')[0] == '6')
+
+- lineinfile:
+    path: /etc/rc.d/rc.local
+    state: present
+    regexp: '^/scripts/reportes.sh -c -m'
+    line: '/scripts/reportes.sh -c -m'
+  when:
+    (os_vendor == 'amazon' and os_release != '2') or
+    ((os_vendor == 'rhel' or os_vendor == 'centos') and os_release.split('.')[0] == '6')
+
+- name: Configurar script de arranque de nmon en SUSE 11
+  lineinfile:
+    path: /etc/rc.d/boot.local
+    state: present
+    regexp: '^/scripts/reportes.sh -c -d'
+    line: '/scripts/reportes.sh -c -d'
+  when:
+    os_vendor == 'sles' and
+    os_release.split('.')[0] == '11'
+
+- lineinfile:
+    path: /etc/rc.d/boot.local
+    state: present
+    regexp: '^/scripts/reportes.sh -c -m'
+    line: '/scripts/reportes.sh -c -m'
+  when:
+    os_vendor == 'sles' and
+    os_release.split('.')[0] == '11'
+    
+- name: Configurar servicio systemd para nmon en Amazon 2, Debian/Ubuntu, RHEL 7 o SLES 12
+  template:
+    src: "{{ item }}"
+    dest: /etc/systemd/system
+    mode: 0644
+  with_items:
+    - templates/nmon-daily.service
+    - templates/nmon-monthly.service
+  when:
+    (os_vendor == 'redhat' and os_release.split('.')[0] | int  >= 7 ) or
+    (os_vendor == 'centos' and os_release.split('.')[0] | int  >= 7 ) or 
+    (os_vendor == 'rocky' and os_release.split('.')[0] | int >= 7 ) or 
+    (ansible_distribution == "Amazon" and ansible_distribution_major_version|int == 2 ) or
+    (ansible_distribution == "Ubuntu" and  ansible_distribution_major_version|int >= 15.4) or
+    (ansible_distribution == "Debian" and ansible_distribution_major_version|int >= 8) or 
+    (ansible_os_family == "Suse" and ansible_distribution_major_version|int == 12)
+
+- name: Habilitar servicio systemd para nmon en Amazon 2, Debian/Ubuntu, RHEL 7 o SLES 12
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+  with_items:
+    - nmon-daily.service
+    - nmon-monthly.service
+  when:
+    (os_vendor == 'redhat' and os_release.split('.')[0] | int  >= 7 ) or
+    (os_vendor == 'centos' and os_release.split('.')[0] | int  >= 7 ) or 
+    (os_vendor == 'rocky' and os_release.split('.')[0] | int >= 7 ) or 
+    (ansible_distribution == "Amazon" and ansible_distribution_major_version|int == 2 ) or
+    (ansible_distribution == "Ubuntu" and  ansible_distribution_major_version|int >= 15.4) or
+    (ansible_distribution == "Debian" and ansible_distribution_major_version|int >= 8) or
+    (ansible_os_family == "Suse" and ansible_distribution_major_version|int == 12)
+
+- name: Copiar scripts de monitoreo de memoria y paginacion
+  copy:
+    src: "{{ item }}"
+    dest: /scripts
+    mode: 0755
+  with_items:
+    - ./scripts/bash/memuso.sh
+    - ./scripts/bash/paginguso.sh
+
+- name: Verificar que exista archivo snmpd.conf
+  stat:
+    path: /etc/snmp/snmpd.conf
+  register: snmpd_result
+
+- name: Configurar agente SNMP en snmpd.conf
+  when: snmpd_result.stat.exists == True
+  block:
+
+    - name: Configurar OID personalizada para monitoreo de memoria
+      lineinfile:
+        path: /etc/snmp/snmpd.conf
+        state: present
+        regexp: "^extend.*memuso"
+        line: "extend memuso /scripts/memuso.sh"
+
+    - name: Configurar OID personalizada para monitoreo de actividad de paginacion
+      lineinfile:
+        path: /etc/snmp/snmpd.conf
+        state: present
+        regexp: "^extend.*paginguso"
+        line: "extend paginguso /scripts/paginguso.sh"

@@ -1,0 +1,6 @@
+---
+- hosts: all
+  tasks:
+    - name: deploy role in remote server
+      ansible.builtin.include_role: 
+        name: deploy

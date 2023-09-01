@@ -1,0 +1,12 @@
+---
+  - name: Register the RedHat Enterpise Linux Server
+    redhat_subscription:
+      username: "{{os_register_username}}"
+      password: "{{os_register_password}}"
+      auto_attach: true
+      force_register: true
+      state: "{{os_register_state | default(omit)}}"
+
+
+
+

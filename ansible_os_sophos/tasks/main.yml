@@ -1,0 +1,43 @@
+---
+- hosts: all
+  become: true
+  environment:
+     http_proxy: http://127.0.0.1:3128
+     https_proxy: http://127.0.0.1:3128
+  vars:
+    disabled: false
+    ip_proxy: "127.0.0.1:3128"
+    install_pkg: True
+    sanity_reboot: True
+    proxy_is_enable: True
+  tasks:
+
+    - name: Define global vars
+      when: 
+        - proxy_is_enable == True
+      set_fact:
+          proxy_env:
+            http_proxy: "{{  ip_proxy | default(omit) }}"
+            https_proxy: "{{  ip_proxy | default(omit) }}"
+            ftp_proxy: "{{  ip_proxy | default(omit) }}"
+    
+    - name: Download sophos from web's pages 
+      get_url: 
+        url: "https://api-cloudstation-us-east-2.prod.hydra.sophos.com/api/download/87d8bb8d66f99e8f55d04602bcce258c/SophosSetup.sh"
+        dest: /tmp/SophosSetup.sh 
+        validate_certs: false
+        mode: '0755'
+  
+    - name: Execute sophos program in remote server
+      shell: ./SophosSetup.sh 
+      args:
+        chdir: /tmp
+  
+    - name: Validate installation in remote server 
+      shell: ./savupdate 
+      args: 
+        chdir: /tmp 
+      register: savupdate_result 
+
+    - debug: 
+        var: savupdate_result

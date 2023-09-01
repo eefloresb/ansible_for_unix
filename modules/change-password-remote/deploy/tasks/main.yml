@@ -1,0 +1,4 @@
+---
+- name: change password of users
+  when: ansible_system == 'Linux'
+  include_tasks: linux.yml

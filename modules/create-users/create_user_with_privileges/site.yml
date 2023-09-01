@@ -1,0 +1,19 @@
+---
+- hosts: all
+  vars:
+    client: ""
+    grupos:
+      - name: cnvadmin
+        fullname: grupo de canvia
+    usuarios:
+      - user: cnvkvald
+        fullname: Canvia Sysadmin / Kevin Valderrama Nuñez
+        password: CnV./abc66kv
+        expiredpass: true
+        cannotchangepass: false
+        passneverexpires: true
+        admin: true
+  tasks:
+
+  - include_role:
+      name: account_create

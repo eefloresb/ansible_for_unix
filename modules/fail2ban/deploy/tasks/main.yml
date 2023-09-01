@@ -1,0 +1,61 @@
+--- 
+- name: install fail2ban in server 
+  when: ansible_os_family == "RedHat"
+  block:
+    
+    - name: install epel-release package
+      yum: 
+        name: epel-release 
+        state: present
+
+    - name: install fail2ban 
+      yum: 
+        name: "{{item}}" 
+        state: present
+        update_cache: true
+      loop:
+        - fail2ban
+        - fail2ban-systemd  
+
+- name: copy configuration file in .local
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+
+- name: create the jail configure 
+  ansible.builtin.template:
+    src: sshd.j2
+    dest: /etc/fail2ban/jail.d/sshd.local
+  notify: restart_fail2ban
+
+- name: check the firewald is enable 
+  shell: | 
+    systemctl is-enabled firewalld 
+  register: 
+    is_enabled_fwd
+    
+- name: start the firewalld 
+  when: is_enabled_fwd.stdout == "disabled"
+  ansible.builtin.service:
+    name: firewald
+    state: started
+
+- name: enable service vsftpd/snmp in firewalld 
+  ansible.builtin.firewalld:
+    service: "{{item}}"
+    permanent: yes 
+    state: enabled
+  loop:
+    - ftp
+    - snmp
+
+- name: enable ports to firewalld 
+  ansible.builtin.firewalld:
+    port: "{{item}}"
+    permanent: true 
+    state: enabled
+  loop:
+    - 2085/tcp
+    - 22/tcp 
+  notify: restart_firewalld
+

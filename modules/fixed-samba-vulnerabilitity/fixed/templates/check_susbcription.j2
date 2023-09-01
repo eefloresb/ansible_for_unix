@@ -1,0 +1,23 @@
+#!/bin/bash
+_Ubuntu(){
+    echo "Subscribed"
+}
+_CentOS(){
+    echo "Subscribed"
+}
+_RedHat(){
+        if [[ ! -z `subscription-manager list | grep -wE "^Status\:[[:blank:]]+Subscribed" | awk '{print $2}'` ]]; then
+            echo "Subscribed"
+        else
+            echo "NOTSubscribed"
+        fi
+}
+_SLES(){
+    if [[ ! -z `SUSEConnect -s | grep -Eo ".status.:.Registered" | tr -d '"' | cut -d : -f2` ]]; then
+        echo "Subscribed"
+    else
+        echo "NOTSubscribed"
+    fi
+}
+
+_{{ ansible_distribution }}

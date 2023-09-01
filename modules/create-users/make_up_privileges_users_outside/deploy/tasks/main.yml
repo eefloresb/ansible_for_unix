@@ -1,0 +1,19 @@
+---
+  - name: create user remote
+    user:
+      name: "{{ user.name }}" 
+      group: "{{ user.group | default('users')}}"
+      password: "{{ user.password | password_hash('sha512') }}"
+      update_password: on_create
+      state: present 
+    loop: "{{users}}"
+    loop_control: 
+      loop_var: user 
+      
+  - name: crear directorio script
+    file:
+      path: /scripts
+      state: directory
+      mode: 0755
+
+  - include_tasks: os_{{ansible_system}}.yml

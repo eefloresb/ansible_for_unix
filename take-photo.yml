@@ -1,0 +1,19 @@
+---
+- name: Take photo server remote
+  hosts: all
+  become: false
+  gather_facts: false
+  strategy: free
+  tasks:
+
+   - name: Gather minimum OS facts
+     ansible.builtin.setup:
+      filter:
+       - ansible_system
+       - ansible_hostname
+       - ansible_python_version
+     ignore_errors: true
+
+   - name: Take photo
+     ansible.builtin.include_role:
+      name: ansible_take_photo

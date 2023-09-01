@@ -1,0 +1,99 @@
+---
+- hosts: localhost
+  become: false
+  gather_facts: true
+  connection: local
+  vars:
+    report_file: LPS_Reporte_semanal_multipath_{{ansible_date_time.day}}_{{ansible_date_time.month}}.csv
+  tasks:
+
+    - name: create file new of report
+      local_action:
+        module: copy
+        dest: "{{ report_file }}"
+        content: |
+            Hostname, IPAddress, System Operating, Multipath
+
+- hosts: all
+  become: false
+  gather_facts: false
+  tasks:
+
+    - name: capture hostname from inventory
+      set_fact:
+        hostname: "{{ inventory_hostname }}"
+
+    - name: capture month of server 
+      raw: | 
+        date +%m
+      register:
+        ansible_date_time_month  
+
+    - name: capture day of server 
+      raw: | 
+        date +%d
+      register:
+        ansible_date_time_day 
+
+    - name: capture ip from inventory
+      set_fact:
+        hosting: "{{ ansible_host }}"
+
+    - name: capture uname
+      raw: |
+        uname
+      register:
+        uname_os
+
+    - set_fact:
+        osystem: "{{ uname_os.stdout | regex_replace('[\\r\\n]','')}}"
+
+    - name: execute command remote
+      shell: |
+        returnVal=$(lslpp -l | grep -i sdd | head -n 1 | awk -F "" '{print $2}')
+        if [[ ! -z $returnVal ]]; then 
+          echo $returnVal
+        else 
+          echo "NULL"
+        fi 
+      register:
+        lslpp_output
+
+    - set_fact:
+        report_file: "LPS_Reporte_semanal_multipath_{{ansible_date_time_day.stdout| regex_replace('[\\r\\n]','')}}_{{ansible_date_time_month.stdout| regex_replace('[\\r\\n]','')}}.csv"
+
+    - set_fact:
+        mulpath: "{{ lslpp_output | regex_replace('[\\r\\n]','') if lslpp_output.stdout !='NULL' else 'Not multipath in this server' }}"
+     
+    - name: write report     
+      shell: |
+          echo "{{hostname}}, {{hosting}},{{osystem}},{{mulpath}}" >> "{{ report_file }}"
+      delegate_to: localhost
+      
+- hosts: localhost
+  become: false
+  connection: local
+  gather_facts: true
+  vars:
+    notify_by_email: true
+    report_file: LPS_Reporte_semanal_multipath_{{ansible_date_time.day}}_{{ansible_date_time.month}}.csv
+  tasks:
+
+    - name: include vars for mail
+      include_vars:
+        file: vars_mail.yml
+
+    - name: Send report for mail
+      mail:
+        host: "{{ smtp_server }}"
+        port: "{{ smtp_server_port }}"
+        from: "{{ mail_from }}"
+        to: "{{ mail_to }}"
+        cc: "{{ mail_cc | default(omit) }}"
+        subject: Reporte semanal multipath from {{ mail_from }}
+        body: |
+          Attach File report from {{ mail_from }} to multipath in {{ansible_date_time.date}} - {{ansible_date_time.hour}}:{{ansible_date_time.minute}}
+        attach:
+          - "{{ report_file }}"
+      delegate_to: localhost
+

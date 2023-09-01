@@ -1,0 +1,9 @@
+---
+linux_users:
+ - user: cnvhcarr
+   fullname: Canvia Sysadmin / Hiro Carranza Canales
+   password: CnV./abc66hr
+   expiredpass: true
+   cannotchangepass: false
+   passneverexpires: true
+   admin: true

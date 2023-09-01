@@ -1,0 +1,17 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: true 
+  tasks:
+
+   - name: Assigned values to os_vars
+     include_role: 
+      name: ./ansible_os_basevars
+
+    #   - name: Monitoring scripts to cnvcecom
+    #     include_role: 
+    #      name: ./ansible_os_monitoring 
+
+   - name: create user in remote servers 
+     ansible.builtin.include_role:
+      name: ansible_os_users_for_canvia_without_cnvadmin

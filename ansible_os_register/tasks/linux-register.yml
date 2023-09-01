@@ -1,0 +1,88 @@
+---
+- name: Check subscription for RedHat
+  when:
+    - os_vendor == 'rhel'
+  ansible.builtin.shell: |
+    set -o pipefail
+    subscription-manager list |grep -iE ^status\:[[:blank:]]+|tr -d " " | awk -F ":" '{print $2}'
+  register: subscription_status
+  changed_when: subscription_status.rc != 0
+  environment:
+    http_proxy: "{{ proxy | default(omit) }}"
+    https_proxy: "{{ proxy | default(omit) }}"
+
+- name: Configure satellite server
+  when:
+    - os_vendor == 'rhel'
+    - client == "Positiva"
+  ansible.builtin.include_tasks: configure_repo_rhel.yml
+
+- name: Registry of Red Hat Enterprise Linux Server
+  community.general.redhat_subscription:
+    username: "{{ os_register_username }}"
+    password: "{{ os_register_password }}"
+    auto_attach: true
+    force_register: true
+  when:
+    - os_vendor == 'rhel'
+    - subscription_status.stdout in ["Not Registered", "Unknown", "NotSubscribed", "Not Subscribed"]
+    - os_register_username is defined
+    - os_register_username|length > 0
+    - os_register_password is defined
+    - os_register_password|length >0
+  environment:
+    http_proxy: "{{ proxy | default(omit) }}"
+    https_proxy: "{{ proxy | default(omit) }}"
+
+- name: Check subscription for SuSe not client ACEROS
+  when: os_vendor == 'sles'
+  block:
+    - name: Check status of register SLES
+      failed_when: 1 == 2
+      ansible.builtin.command: SUSEConnect -s
+      register: suse_connect_result
+      changed_when: suse_connect_result.rc != 0
+
+    - name: Save status of register in value
+      ansible.builtin.set_fact:
+       suseconnect_status: "{{ suse_connect_result.stdout | from_json | json_query('[*].status') | first if suse_connect_result.rc == 0 else 'Not Registered' }}"
+      environment:
+        http_proxy: "{{ proxy | default(omit) }}"
+        https_proxy: "{{ proxy | default(omit) }}"
+
+    - name: Check subscription for SuSe not client and client ACEROS to x86-64 and ppcle
+      when:
+        - suseconnect_status == 'Not Registered'
+        - os_email|length > 0
+        - os_regcode|length > 0
+      ansible.builtin.shell: |
+        set -o pipefail
+        SUSEConnect -r {{ os_regcode }} -e {{ os_email }}
+      register: suseconnect_reg
+      changed_when: suseconnect_reg.rc != 0
+      environment:
+        http_proxy: "{{ proxy | default(omit) }}"
+        https_proxy: "{{ proxy | default(omit) }}"
+
+    - name: Check for suse client ACEROS to ppcle
+      when:
+        - client == 'Aceros'
+        - suseconnect_status == 'Not Registered'
+        - ansible_architecture == "ppcle"
+      block:
+        - name: Inscribir host de SMT en /etc/hosts
+          ansible.builtin.lineinfile:
+            path: /etc/hosts
+            regexp: "^{{ smt_ipaddr }}.*{{ smt_hostname }}"
+            line: "{{ smt_ipaddr }} {{ smt_hostname }}"
+
+        - name: Registro - Copiar script de SMT
+          ansible.builtin.copy:
+            src: files/{{ smt_script }}
+            dest: "{{ smt_script_path }}"
+            mode: "0755"
+
+        - name: Registro - Ejecutar proceso de registro
+          ansible.builtin.command: "{{ smt_script_path }} --host {{ smt_hostname }} --fingerprint {{ smt_fingerprint }} --yes"
+          register: smt_local
+          changed_when: smt_local.rc != 0

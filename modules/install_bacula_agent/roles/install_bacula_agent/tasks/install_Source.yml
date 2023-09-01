@@ -1,0 +1,93 @@
+---
+        - name: Instalar paquetes esenciales en "{{ansible_os_family}}"
+          zypper:
+            name: "{{item}}"
+            state: present
+            update_cache: true
+          loop:
+            - "{{packages_essential}}"
+            - "{{packages_for_building}}"
+      
+        - name : Compilar Instalador para Bacula Client
+          block:
+            - name: Descargar bacula
+              get_url:
+                url: "{{ bacula_url }}"
+                dest: /tmp/bacula.tar.gz
+                mode: 0644
+      
+            - name: Crear directorio de compilación de bacula
+              file:
+                path: "{{ bacula_build_dir }}"
+                state: directory
+      
+            - name: Extraer contenido del tarball de bacula
+              unarchive:
+                src: /tmp/bacula.tar.gz
+                dest: "{{ bacula_build_dir }}"
+                remote_src: yes
+                creates: "{{ bacula_build_dir }}/configure"
+                extra_opts: [--strip-components=1]
+      
+            - name: Ejecutar script configure de bacula
+              command: ./configure {{ bacula_build_opts }}
+              args:
+                chdir: "{{ bacula_build_dir }}"
+                creates: "{{ bacula_build_dir }}/Makefile"
+              register:
+                script_result
+      
+            - name: Mostrar restultado de script_result
+              debug:
+                msg: "{{ script_result.stdout_lines }}"
+      
+            - name: Verificar existencia de compilación previa
+              stat:
+                path: "{{ bacula_build_dir }}/src/stored/bacula-sd"
+              failed_when: 1 == 2
+              register: bacula_built
+      
+            - name: Compilar bacula
+              when: not bacula_built.stat.exists
+              make:
+                chdir: "{{ bacula_build_dir }}"
+              register:
+                make_result
+      
+            - name: Mostrar resultado de compilación de bacula
+              when: make_result.changed
+              debug:
+                "{{ make_result.stdout_lines}}"
+      
+            - name: Instalar los binarios compilados de bacula
+              when: make_result.changed
+              make:
+                chdir: "{{ bacula_build_dir }}"
+                target: install
+              register: make_install_result
+      
+            - name: Mostrar resultado de instalación de bacula
+              when: make_install_result.changed
+              debug:
+                msg: "{{ make_install_result.stdout_lines }}"
+      
+            - name: Ubicar archivos de servicio systemd
+              shell: ls {{ bacula_build_dir }}/platforms/systemd/*.service
+              register: systemd_files
+      
+            - name: copiar ficheros systemd bacula
+              copy:
+                src: "{{ item }}"
+                dest: /usr/lib/systemd/system
+                remote_src: yes
+              with_items: "{{ systemd_files.stdout_lines }}"
+              register: copy_result
+      
+            - name: Recargar systemd tras registro de servicio de bacula
+              when: copy_result.changed
+              command: systemctl daemon-reload
+      
+      
+      
+      
+      

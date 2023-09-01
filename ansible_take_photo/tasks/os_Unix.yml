@@ -1,0 +1,48 @@
+---
+- name: Make directory in remote server
+  ansible.builtin.file:
+   path: /scripts
+   state: directory
+   owner: root
+   group: "{{ 'root' if ansible_system | default(os_value) != 'AIX' else 'system' }}"
+   mode: "0755"
+
+- name: Copy file check_foto.sh
+  ansible.builtin.copy:
+   src: photo-linux.sh
+   dest: /scripts/check-foto.sh
+   owner: root
+   group: "{{ 'root' if ansible_system | default(os_value) != 'AIX' else 'system' }}"
+   mode: '755'
+
+- name: Create directory in local
+  become: false
+  ansible.builtin.file:
+   path: "{{ dest_folder }}"
+   state: directory
+   recurse: true
+  delegate_to: localhost
+
+- name: Execute photo into server remote server
+  ansible.builtin.shell: |
+   set -o pipefail
+   bash /scripts/check-foto.sh 2>/dev/null > /tmp/{{ ansible_host }}.txt
+   cat /tmp/{{ ansible_host }}.txt
+  changed_when: result_server.rc != 0
+  register: result_server
+  args:
+   executable: /bin/bash
+
+- name: Copy content in file located in localhost
+  ansible.builtin.copy:
+   dest: "{{ dest_folder }}/{{ inventory_hostname }}-{{ ansible_host }}.txt"
+   mode: '0644'
+   content: |
+    {{ result_server.stdout }}
+  delegate_to: localhost
+  become: false
+
+- name: Remove file scripts in remote server
+  ansible.builtin.file:
+   path: /scripts/check-foto.sh
+   state: "absent"

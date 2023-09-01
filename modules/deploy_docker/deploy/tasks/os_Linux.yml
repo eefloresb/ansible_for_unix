@@ -1,0 +1,38 @@
+---
+- name: install docker in ansible_os_family to RedHat 
+  when: ansible_os_family == "RedHat"
+  block:
+
+    - name: remove docker the remote server 
+      yum: 
+        name: "{{item}}"
+        state: absent 
+      loop:
+        - docker 
+        - docker-client 
+        - docker-common
+        - docker-rhel-push-plugin
+      ignore_errors: true
+
+    - name: enable repo in remote server 
+      yum_repository:
+        name: docker-ce 
+        description: Docker YUM repo
+        baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+        gpgcheck: false 
+        enabled: true
+
+    - name: Update package cache 
+      changed_when: false
+      when: os_vendor != "sles"
+      ansible.builtin.package:
+        update_cache: true
+
+    - name: install docker new version 
+      yum: 
+        name: "{{item}}" 
+        state: present 
+      loop:
+        - docker-ce 
+        - docker-ce-cli
+        - containerd.io

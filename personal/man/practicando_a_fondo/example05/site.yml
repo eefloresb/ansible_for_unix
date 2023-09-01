@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  connection: local 
+  tasks:
+
+  - name: Download wordpress from wordpress's page 
+    get_url: 
+      url: https://es.wordpress.org/latest-es_ES.tar.gz
+      dest: /tmp/wordpress-latest.tar.gz 
+
+  - name: unarchive file downloaded
+    unarchive:
+      src: /tmp/wordpress-latest.tar.gz 
+      dest: /tmp/ 

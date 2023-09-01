@@ -1,0 +1,20 @@
+galaxy_info:
+  author: raki
+  description: "install apache httpd"
+  company: "Office L"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 1.8
+  platforms:
+    - name: EL
+      versions:
+        - 6
+        - 7
+  galaxy_tags: 
+    - centos
+    - system
+    - initial
+    - web
+    - httpd
+    - apache
+
+dependencies: []

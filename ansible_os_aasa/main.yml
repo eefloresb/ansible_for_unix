@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Identificar el Sistema Operativo
+      command: uname
+      register: ansible_os
+
+#   - name: Asegurarse que exista directorio /scripts
+#     file: name=/scripts state=directory mode=0755 owner=root
+
+#   - name: Configurar no expiracion de cuenta en Linux
+#     import_tasks: noexpiry-linux.yml
+#     when: ansible_os.stdout == 'Linux'
+
+#   - name: Configurar no expiracion de cuenta en AIX
+#     import_tasks: noexpiry-aix.yml
+#     when: ansible_os.stdout == 'AIX'
+
+#   - name: Asegurarse de tener sysstat instalado
+#     zypper: name=sysstat state=present
+#     when: ansible_os.stdout == 'Linux'
+
+#   - name: Asegurarse de tener sysstat habilitado en cron
+#     file: src=/etc/sysstat/sysstat.cron name=/etc/cron.d/sysstat.cron state=link
+#     when: ansible_os.stdout == 'Linux'
+
+#   - name: Copiar scripts de plantilla
+#     template:
+#       src: "{{item}}"
+#       dest: /scripts
+#       mode: 0755
+#     with_items:
+#       - /scripts/reportes.sh
+#       - /scripts/sysinfo.sh

@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: remote task 
+      raw: echo remote
+
+    - name: local scp 
+      local_action: command scp ./files/Python-2.7.18.tgz gmdadmin@{{inventory_hostname}}:/tmp/ 
+      become: false
+
+    #    - name: install package in remote server
+    #      raw: | 
+    #        yum -y install zlib-devel
+
+    - name: uncompress file in remote server 
+      raw: | 
+        tar -zxvf /tmp/Python-2.7.18.tgz -C /tmp/ 
+
+    - name: configure 
+      raw: |
+        cd /tmp/Python-2.7.18
+        ./configure --enable-optimizations --with-zlib-dir=/usr/local/lib 
+
+    - name: compile python 2.7.18
+      raw: |
+         cd /tmp/Python-2.7.18
+         sed -rie "/^#zlib/s/^#//g" /tmp/Python-2.7.18/Modules/Setup
+         make altinstall  
+      register:
+         python_output_install
+
+    - debug:
+       var: python_output_install
+

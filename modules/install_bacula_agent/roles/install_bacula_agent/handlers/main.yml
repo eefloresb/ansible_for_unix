@@ -1,0 +1,7 @@
+---
+# handlers file for install_bacula_agent
+ - name: init bacula
+   service:  
+    name: bacula
+    state: started
+    enabled: true

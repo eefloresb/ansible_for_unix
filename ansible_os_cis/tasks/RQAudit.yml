@@ -1,0 +1,295 @@
+---
+- name: R001 - AUDTRQ
+  shell: |
+    if [ $(rpm -qa | grep 'audit' | wc -l) -eq 2 ];
+    then echo "OK" 
+    else echo "FAIL" 
+    fi
+  register: audrq01
+
+- name: Make changes RQ001 (Para usuarios locales (autenticados))
+  yum:
+    name:
+      - audit
+      - audit-libs
+    state: present
+  when: audrq01.stdout == "FAIL"
+
+- name: Habilitar auditd
+  ansible.builtin.systemd:
+    name: auditd
+    masked: true
+
+- name: Query1
+  shell: 'cat {{ pathsup }} | grep auth[^\n]*sufficient[^\n]*pam_wheel'
+  register: pam_wheel1
+
+- name: Make changes
+  replace:
+    path: "{{ pathsup }}"
+    regexp: '{{ pam_wheel1.stdout }}'
+    replace: 'auth           sufficient      pam_wheel.so trust use_uid'
+
+- name: Query1
+  shell: 'cat {{ pathsup }} | grep auth[^\n]*required[^\n]*pam_wheel'
+  register: pam_wheel2
+
+- name: Make changes
+  replace:
+    path: "{{ pathsup }}"
+    regexp: '{{ pam_wheel2.stdout }}'
+    replace: 'auth           required        pam_wheel.so use_uid'
+
+- name: Clear R003.5
+  debug:
+    msg: "{{ ansible_distribution_major_version }}"
+
+- name: install authconfig
+  yum:
+    name: authconfig
+    state: present
+
+- name: Query1
+  shell: 'authconfig --enablefaillock --faillockargs="deny=3 unlock_time=600" --update'
+
+- name: Add a line
+  lineinfile:
+    path: "{{ pathaudrul }}"
+    line: '-w /etc/sudoers -p wa -k scope'
+
+- name: Query R008 (Redhat)
+  shell: 'cat {{ pathaudit }} | grep max_log_file_action'
+  register: max_log_file_action
+
+- name: Make changes R008
+  replace:
+    path: "{{ pathaudit }}"
+    regexp: '{{ max_log_file_action.stdout }}'
+    replace: 'max_log_file_action = keep_logs'
+
+- name: Query R008 (Redhat)
+  shell: 'cat {{ pathaudit }} | grep ^space_left_action'
+  register: space_left_action
+
+- name: Make changes R008
+  replace:
+    path: "{{ pathaudit }}"
+    regexp: '{{ space_left_action.stdout }}'
+    replace: 'space_left_action = email'
+
+- name: Query R008 (Redhat)
+  shell: 'cat {{ pathaudit }} | grep ^admin_space_left_action'
+  register: admin_space_left_action
+
+- name: Make changes R008
+  replace:
+    path: "{{ pathaudit }}"
+    regexp: '{{ admin_space_left_action.stdout }}'
+    replace: 'admin_space_left_action = halt'
+
+- name: Habilitar auditd
+  ansible.builtin.systemd:
+    name: audit
+    masked: true
+
+- name: Add a line
+  lineinfile:
+    path: "{{ pathaudrul }}"
+    line: '{{ item }}'
+  with_items:
+     - '# Collect Login and Logout Events'
+     - '-w /var/log/faillog -p wa -k logins'
+     - '-w /var/log/lastlog -p wa -k logins'
+     - '-w /var/log/tallylog -p wa -k logins'
+     - '# Collect Session Initiation Information'
+     - '-w /var/run/utmp -p wa -k session'
+     - '-w /var/log/wtmp -p wa -k session'
+     - '-w /var/log/btmp -p wa -k session'
+     - '# Record Events That Modify Date and Time Information'
+     - '-a always,exit -F arch=b64 -S adjtimex -S settimeofday -k time-change'
+     - '-a always,exit -F arch=b32 -S adjtimex -S settimeofday -S stime -k time-change'
+     - '-a always,exit -F arch=b64 -S clock_settime -k time-change'
+     - '-a always,exit -F arch=b32 -S clock_settime -k time-change'
+     - '-w /etc/localtime -p wa -k time-change'
+     - '# Record Events That Modify the System s Mandatory Access Controls'
+     - '-w /etc/selinux/ -p wa -k MAC-policy'
+     - '# Record Events That Modify the System s Network Environment'
+     - '-a always,exit -F arch=b64 -S sethostname -S setdomainname -k system-locale'
+     - '-a always,exit -F arch=b32 -S sethostname -S setdomainname -k system-locale'
+     - '-w /etc/issue -p wa -k system-locale'
+     - '-w /etc/issue.net -p wa -k system-locale'
+     - '-w /etc/hosts -p wa -k system-locale'
+     - '-w /etc/sysconfig/network -p wa -k system-locale'
+
+- name: Add a line
+  lineinfile:
+    path: "{{ pathaudrul }}"
+    line: '{{ item }}'
+  with_items:
+     - '# Collect Discretionary Access Control Permission Modification Events'
+     - '-a always,exit -F arch=b64 -S chmod -S fchmod -S fchmodat -F auid>=500 -F auid!=4294967295 -k perm_mod'
+     - '-a always,exit -F arch=b32 -S chmod -S fchmod -S fchmodat -F auid>=500 -F auid!=4294967295 -k perm_mod'
+     - '-a always,exit -F arch=b64 -S chown -S fchown -S fchownat -S lchown -F auid>=500 -F auid!=4294967295 -k perm_mod'
+     - '-a always,exit -F arch=b32 -S chown -S fchown -S fchownat -S lchown -F auid>=500 -F auid!=4294967295 -k perm_mod'
+     - '-a always,exit -F arch=b64 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=500 -F auid!=4294967295 -k perm_mod'
+     - '-a always,exit -F arch=b32 -S setxattr -S lsetxattr -S fsetxattr -S removexattr -S lremovexattr -S fremovexattr -F auid>=500 -F auid!=4294967295 -k perm_mod'
+     - '# Collect Unsuccessful Unauthorized Access Attempts to Files'
+     - '-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=500 -F auid!=4294967295 -k access'
+     - '-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EACCES -F auid>=500 -F auid!=4294967295 -k access'
+     - '-a always,exit -F arch=b64 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=500 -F auid!=4294967295 -k access'
+     - '-a always,exit -F arch=b32 -S creat -S open -S openat -S truncate -S ftruncate -F exit=-EPERM -F auid>=500 -F auid!=4294967295 -k access'
+     - '# Record Events That Modify User/Group Information'
+     - '-w /etc/group -p wa -k identity'
+     - '-w /etc/passwd -p wa -k identity'
+     - '-w /etc/gshadow -p wa -k identity'
+     - '-w /etc/shadow -p wa -k identity'
+     - '-w /etc/security/opasswd -p wa -k identity'
+     - '# Collect Successful File System Mounts'
+     - '-a always,exit -F arch=b64 -S mount -F auid>=500 -F auid!=4294967295 -k mounts'
+     - '-a always,exit -F arch=b32 -S mount -F auid>=500 -F auid!=4294967295 -k mounts'
+     - '# Collect Kernel Module Loading and Unloading'
+     - '-w /sbin/insmod -p x -k modules'
+     - '-w /sbin/rmmod -p x -k modules'
+     - '-w /sbin/modprobe -p x -k modules'
+     - '-a always,exit -F arch=b64 -S init_module -S delete_module -k modules'
+     - '# Make the Audit Configuration Immutable'
+     - '-e 2'
+
+- name: Add a line
+  lineinfile:
+    path: /etc/rsyslog.conf
+    line: '{{ item }}'
+  with_items:
+     - '$FileCreateMode 0640'
+
+- name: Make changes R013 v5
+  lineinfile:
+    path: /etc/rsyslog.conf
+    insertafter: "^$ModLoad imtcp"
+    line: "$ModLoad imtcp"
+    firstmatch: yes
+    state: present
+
+- name: Query
+  shell: 'cat /etc/rsyslog.conf | grep "InputTCPServerRun"'
+  register: inputtcp
+  failed_when: inputtcp.rc != 0 and inputtcp.rc != 1
+
+- name: Make changes R008
+  replace:
+    path: /etc/rsyslog.conf
+    regexp: '{{ inputtcp.stdout }}'
+    replace: "$InputTCPServerRun 514"
+  when: "{{ inputtcp.stdout != '' }}"
+
+- name: Query R008 (Redhat)
+  shell: 'cat {{ pathjourn }} | grep -i ForwardToSyslog'
+  register: ForwardToSyslog
+
+- name: Make changes R008
+  replace:
+    path: "{{ pathjourn }}"
+    regexp: '{{ ForwardToSyslog.stdout }}'
+    replace: 'ForwardToSyslog=yes'
+
+- name: Query R008 (Redhat)
+  shell: 'cat {{ pathjourn }} | grep -i Compress'
+  register: Compress
+
+- name: Make changes R008
+  replace:
+    path: "{{ pathjourn }}"
+    regexp: '{{ Compress.stdout }}'
+    replace: 'Compress=yes'
+
+- name: Query R008 (Redhat)
+  shell: 'cat {{ pathjourn }} | grep -i Storage'
+  register: Storage
+
+- name: Make changes R008
+  replace:
+    path: "{{ pathjourn }}"
+    regexp: '{{ Storage.stdout }}'
+    replace: 'Storage=persistent'
+
+- name: Habilitar auditd
+  shell: 'pkill -HUP rsyslogd'
+
+- name: Ensure auditing for processes that start prior to auditd is enabled and audit_backlog_limit is sufficient
+  lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX'
+    line: GRUB_CMDLINE_LINUX="audit=1 audit_backlog_limit=8192"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Update the grub2 configuration
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Ensure system administrator actions (sudolog) are collected
+  lineinfile:
+    path: /etc/audit/rules.d/audit.rules
+    line: -w /var/log/sudo.log -p wa -k actions
+    state: present
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Ensure rsyslog is configured to send logs to a remote log host
+  lineinfile:
+    path: /etc/rsyslog.conf
+    state: present
+    line: '*.* @@{{ remote_log_server }}'
+
+- name: Ensure permissions on all logfiles are configured
+  command: find /var/log -type f -exec chmod g-wx,o-rwx "{}" + -o -type d -exec chmod g-wx,o-rwx "{}" +
+  changed_when: no
+  failed_when: no
+
+- name: Ensure permissions on /etc/crontab are configured
+  file:
+    dest: /etc/crontab
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Ensure cron is restricted to authorized users
+  block:
+  - name: Remove cron.deny
+    file:
+      dest: /etc/cron.deny
+      state: absent
+
+  - name: Check if cron.allow exists
+    stat:
+      path: "/etc/cron.allow"
+    register: p
+
+  - name: Ensure cron.allow is restricted to authorized users
+    file:
+      dest: /etc/cron.allow
+      state: '{{ "file" if  p.stat.exists else "touch" }}'
+      owner: root
+      group: root
+      mode: 0600
+
+- name: Ensure at is restricted to authorized users
+  block:
+  - name: Remove at.deny
+    file:
+      dest: /etc/at.deny
+      state: absent
+
+  - name: Check if at.allow exists
+    stat:
+      path: "/etc/at.allow"
+    register: p
+
+  - name: Ensure at.allow is restricted to authorized users
+    file:
+      dest: /etc/at.allow
+      state: '{{ "file" if  p.stat.exists else "touch" }}'
+      owner: root
+      group: root
+      mode: 0600

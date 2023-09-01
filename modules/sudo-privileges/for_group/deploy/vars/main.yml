@@ -1,0 +1,19 @@
+---
+user:
+  - name: "rgonzales"
+    comment: "Slackwarnet SSAA/Unix-Linux - Sysadmin"
+    group: "system"
+    enable_root: true 
+    password: password
+
+  - name: "jquispe"
+    comment: "Slackwarnet SSAA/Unix-Linux - Sysadmin"
+    group: "accounting"
+    enable_root: false 
+    password: password 
+
+  - name: "slacw_jmatos"
+    comment: "Slackwarnet SSAA/Unix-Linux - Sysadmin"
+    group: "desing"
+    enable_root: true 
+    password: password

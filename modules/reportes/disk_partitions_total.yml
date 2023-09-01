@@ -1,0 +1,65 @@
+---
+- name: Crear archivos con extensión csv
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: true
+  tasks:
+   - name: Registrar datos a nivel local
+     ansible.builtin.copy:
+      content: |
+       host,hostname,disk,size,environment
+      dest: ~/data/{{ client | default('Canvia') }}/datadisk.csv
+      mode: '0755'
+
+- name: Capacidad total de disco que tiene cada MV
+  hosts: all
+  gather_facts: true
+  tasks:
+
+   - name: Extraer datos con lsblk
+     ansible.builtin.shell: |
+       cat /dev/null > /tmp/datadisk.csv
+       total=$(
+       sum=0
+       set -o pipefail
+       __total(){
+        local xsize=$1
+        value=$(echo $xsize|grep -Eo '([[:digit:]]+\.?)+')
+        unit=$(echo $xsize|grep -Eo '(P|T|G|M)')
+        if [[ $unit == 'P' ]]; then
+          value=$(echo "$value*1024*1024" | bc)
+        elif [[ $unit == 'T' ]]; then
+          value=$(echo "$value*1024" | bc )
+        elif [[ $unit == 'M' ]]; then
+          value=$(echo "$value/1024"|bc)
+        fi
+        echo $value
+       }
+       lsblk | grep disk | while read line; do
+         xunidad=$(echo $line|awk '{print $1}')
+         xsize=$(echo $line|awk '{print $4}')
+       resultado=$(__total $xsize)
+       echo "{{ ansible_host }},{{ ansible_hostname }},$xunidad,$xsize,{{ environmentabc }}" >> /tmp/datadisk.csv
+       sum=$(echo "$sum+$resultado"|bc)
+       echo "$sum" > /tmp/sumaTotal
+       done
+       sum=$(cat /tmp/sumaTotal)
+       if (( $(echo "$sum > 1024" | bc -l) )); then
+        valor=$(echo "scale=2; $sum / 1024" | bc)
+        echo "${valor}T"
+       else
+        echo ${sum}G
+       fi)
+       echo "{{ ansible_host }},{{ ansible_hostname }},total,$total," >> /tmp/datadisk.csv
+       cat /tmp/datadisk.csv
+     register: disk_out
+     changed_when: disk_out.rc != 0
+
+   - name: Guardar los datos localmente
+     ansible.builtin.shell: |
+      echo "{{ disk_out.stdout }}" >> ~/data/{{ client }}/datadisk.csv
+     register: save_result
+     changed_when: save_result.rc != 0
+     delegate_to: localhost
+     become: false

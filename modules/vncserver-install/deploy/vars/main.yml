@@ -1,0 +1,11 @@
+---
+packages:
+  - tigervnc-server-module
+  - tigervnc 
+  - tigervnc-server
+
+users: 
+  - cnveflor
+
+RUTADIR: 
+  - "~/data/scripts"

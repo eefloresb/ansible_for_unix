@@ -1,0 +1,34 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Ejecucion local
+      local_action:
+        module: file
+        path: /tmp/aasa-wwn-inventory.csv
+        state: absent
+
+    - name: Identificar el Sistema Operativo
+      command: uname
+      register: ansible_os
+
+    - name: Obtener WWNs en Linux
+      shell: systool -c fc_host| grep "Class Device" | awk '{ print $4 }' | tr -d '"' | while read host ; do wwn=$(systool -a $host -c fc_host -v | grep -w port_name | cut -c 30-45 | tr a-z A-Z); wwncolon=$(echo $wwn | perl -pe 's/\w{2}\B/$&:/g') ; echo $(hostname -s),$host,$wwn,$wwncolon ; done | grep -v "FFFFFF"
+      register: wwns_linux
+      when: ansible_os.stdout == 'Linux'
+
+    - name: Obtener WWNs en AIX
+      shell: lsdev -c adapter -S 1 -F name | grep ^fcs | while read host; do wwn=$(lscfg -vl $host | grep -i netw | cut -c 37-); wwncolon=$(echo $wwn | perl -pe 's/\w{2}\B/$&:/g') ; echo $(hostname -s),$host,$wwn,$wwncolon ; done
+      register: wwns_aix
+      when: ansible_os.stdout == 'AIX'
+
+    - name: Escribir WWNs de Linux
+      shell: echo "{{wwns_linux.stdout}}" >> /tmp/aasa-wwn-inventory.csv
+      when: ansible_os.stdout == 'Linux'
+      delegate_to: localhost
+
+    - name: Escribir WWNs de AIX
+      shell: echo "{{wwns_aix.stdout}}" >> /tmp/aasa-wwn-inventory.csv
+      when: ansible_os.stdout == 'AIX'
+      delegate_to: localhost

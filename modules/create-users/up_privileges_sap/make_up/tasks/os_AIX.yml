@@ -1,0 +1,28 @@
+---
+  - name: copy script a achivo sudo 
+    template: 
+      src: change_sudo.j2
+      dest: /scripts/change_sudo.sh 
+      mode: 0755
+      owner: root
+
+  - name: "Añadir los usuarios solicitados a sudoers"
+    lineinfile:
+      path: /etc/sudoers
+      regexp: '^%{{item.group}}.*ALL'
+      line: '%{{item.group}} ALL=(ALL) NOPASSWD: ALL'
+      validate: '/usr/sbin/visudo -cf %s'
+      backup: yes
+    with_items:
+      - "{{ usuarios }} "
+
+  - name: "Inicializar el servicio at"
+    command: atd
+
+  - name: "Rotas el permiso por usuario para un periodo de 7 días"
+    shell:
+      echo "bash /scripts/change_sudo.sh {{ item.group }}" | at -m now +7 days
+    loop:
+      - "{{ usuarios }}"
+    loop_control:
+      label: "{{item.user}} - {{item.comment}}"

@@ -1,0 +1,50 @@
+---
+- name: Create directory
+  ansible.builtin.file:
+    path: /home/canvia
+    state: directory
+    owner: root
+    group: root
+    mode: '755'
+
+- name: Create group
+  ansible.builtin.group:
+    name: "cnvadmin"
+    state: present
+
+- name: Create user
+  ansible.builtin.user:
+    name: "{{ item.user }}"
+    comment: "{{ item.fullname }}"
+    group: "{{  'cnvadmin' if item.admin == true else 'users' }}"
+    password: "{{ item.password | password_hash('sha512') }}"
+    home: "/home/canvia/{{ item.user }}"
+    shell: /bin/bash
+    update_password: on_create
+  loop: "{{ linux_users }}"
+  loop_control:
+    label: "{{ item.user }} - {{ item.fullname }}"
+
+- name: Configurar llaves privadas
+  ansible.posix.authorized_key:
+    user: "{{ item.split('/')[-1].split('.')[0] }}"
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+    - files/*pub
+  loop_control:
+    label: "{{ item.split('/')[-1].split('.')[0] }}"
+
+- name: Al iniciar sesión pedir el cambio de clave
+  ansible.builtin.command: chage -d 0 {{ item.user }}
+  loop: "{{ linux_users }}"
+  register: user_change
+  changed_when: user_change.rc != 0
+  loop_control:
+    label: "{{ item.user }} - {{ item.fullname }}"
+
+- name: Configurar sudo para usuarios administradores
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    regexp: '^cnvadmin.*'
+    line: 'cnvadmin ALL=(ALL) NOPASSWD: ALL'
+    validate: '/usr/sbin/visudo -cf %s'

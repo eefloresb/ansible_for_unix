@@ -1,0 +1,11 @@
+- name: Agregar líneas a /etc/hosts
+  hosts: all
+  become: true
+  tasks:
+    - name: Agregar líneas a /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        line: "172.16.4.154	jsq6.aasa.com.pe jsq6"
+        state: present
+        regexp: "^172.16.4.154\\s+jsq6\\.aasa\\.com\\.pe"
+        backup: true

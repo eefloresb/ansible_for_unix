@@ -1,0 +1,5 @@
+---
+# tasks file for deploy
+- name: apply patch update to Linux Systems 
+  include_tasks: linux-update.yml
+  when: ansible_system == "Linux"

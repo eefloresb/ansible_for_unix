@@ -1,0 +1,173 @@
+---
+# Core dumps are restricted
+- name: Set fs.suid_dumpable to 0 in /etc/sysctl.conf
+  sysctl:
+    name: fs.suid_dumpable
+    value: '0'
+    state: present
+    reload: yes
+    sysctl_set: yes
+    ignoreerrors: yes
+
+- name: Add or modify hard core limits in /etc/security/limits.conf
+  pam_limits:
+    domain: '*'
+    limit_type: hard
+    limit_item: core
+    value: '0'
+
+- name: Set kernel.randomize_va_space to 2 in /etc/sysctl.conf
+  sysctl:
+    name: kernel.randomize_va_space
+    value: '2'
+    state: present
+    reload: yes
+    sysctl_set: yes
+    ignoreerrors: yes
+
+- name: Install SELinux
+  yum:
+    name: libselinux
+    state: present
+
+# 1.7.1.2 Ensure SELinux is not disabled in bootloader configuration
+- name: Edit in /etc/default/grub and update the grub2 configuration
+  lineinfile:
+    path: /etc/default/grub
+    insertbefore: '^GRUB_CMDLINE_LINUX'
+    line: GRUB_CMDLINE_LINUX_DEFAULT="quiet"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Update the grub2 configuration
+  command: grub2-mkconfig -o /boot/grub2/grub.cfg
+
+- name: Enable SELinux
+  selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Verify no unconfined daemons exist
+  command: ps -eZ | grep unconfined_service_t
+  ignore_errors: True
+  register: unconf
+  failed_when: unconf.stdout != ""
+
+- name: Remove setroubleshoot and mcstrans packages
+  yum:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - setroubleshoot
+    - mcstrans
+
+- name: Remove any instances of \m, \r, \s, or \v
+  command: egrep '(\\v|\\r|\\m|\\s)' /etc/motd
+  ignore_errors: True
+  register: unconf
+  failed_when: unconf.stdout != ""
+
+- name: Add content in motd file
+  copy:
+    src: files/bsshd.bn
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: u+rw,g-wx,o-rwx
+
+- name: Replace by a message warning
+  copy:
+    src: files/issue.bn
+    dest: "{{ item }}"
+    owner: root
+    group: root
+    mode: u+rw,g-wx,o-rwx
+  loop:
+    - /etc/issue
+    - /etc/issue.net
+
+- name: Set permissions  
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - /etc/motd
+    - /etc/issue
+    - /etc/issue.net
+
+#1.8.2 Ensure GDM login banner is configured
+- name: Ensure dconf and gdm is installed
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - dconf-editor
+    - gdm
+
+- name: Register variable if a banner message exists
+  shell: |
+    if cat /etc/dconf/profile/gdm && cat /etc/dconf/db/gdm.d/01-banner-message; then
+    echo OK
+    else
+    echo FAILED
+    fi
+  register: dconf
+  ignore_errors: True
+
+- name: Configure the GNOME login screen banner
+  block:
+    - copy:
+        content: |
+          user-db:user
+          system-db:gdm
+          file-db:/usr/share/gdm/greeter-dconf-defaults
+        dest: /etc/dconf/profile/gdm 
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create gdm.d directory if it does not exist
+      file:
+        path: /etc/dconf/db/gdm.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0644'
+
+    - copy:
+        content: |
+          [org/gnome/login-screen]
+          banner-message-enable=true
+          banner-message-text='Authorized uses only. All activity may be monitored and reported.'
+        dest: /etc/dconf/db/gdm.d/01-banner-message
+        owner: root
+        group: root
+        mode: '0644'
+  when: dconf.stdout == "FAILED"
+
+- name: Update all security packages on the system
+  dnf:
+    name: '*'
+    state: latest
+    security: yes
+  ignore_errors: True
+
+- name: Ensure system-wide crypto policy is not legacy
+  block:
+    - name: Check Crypto Policy
+      slurp:
+        src: /etc/crypto-policies/config
+      register: cryptopolicies
+
+    - name: Update if not correct
+      command: update-crypto-policies --set DEFAULT
+      when:
+        - '"LEGACY" in cryptopolicies.content|b64decode'
+  ignore_errors: True
+
+- name: Enable FIPS mode
+  command: fips-mode-setup --enable
+  ignore_errors: True

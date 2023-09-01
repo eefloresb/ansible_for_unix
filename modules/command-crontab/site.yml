@@ -1,0 +1,27 @@
+---
+- hosts: all 
+  become: true
+  gather_facts:
+  vars:
+    - name_file: "program_tcpdump"
+  tasks:
+    - name: create directory in remote server 
+      file:
+        path: "/scripts"
+        state: directory
+
+    - name: copy script remote server 
+      template: 
+        src: ./files/{{name_file}}.j2
+        dest: /scripts/{{name_file}}.sh 
+        owner: root
+        group: root 
+        mode: '755'
+
+    - name: configure crontab in remote server 
+      cron:
+        name: "execute between hour"
+        minute: "0"
+        hour: "*/1"
+        user: root
+        job: "bash /scripts/{{name_file}}.sh"

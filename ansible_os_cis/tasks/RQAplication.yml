@@ -1,0 +1,252 @@
+---
+- name: Habilitar crond
+  service:
+    name: crond
+    state: started
+    enabled: true
+
+- name: Change file crontab
+  file:
+    path: /etc/crontab
+    owner: '{{ vowner }}'
+    group: '{{ vgroup }}'
+    mode: '{{ pcrontab }}'
+
+- name: Change file crontab
+  file:
+    path: "/etc/{{ item }}"
+    owner: '{{ vowner }}'
+    group: '{{ vgroup }}'
+    mode: '700'
+  with_items:
+     - "{{ crondat }}"
+
+- name: Query R001
+  shell: "stat -c '%n %A' /etc/{{ item }}"
+  register: R001
+  with_items:
+     - "{{ crondat }}"
+
+- name: Clear R001
+  debug:
+    msg: "{{ R001.results | map(attribute='stdout') | list }}" 
+
+- name: Add a line
+  lineinfile:
+    path: "{{ pathcdeny }}"
+    line: "{{ item }}"
+  with_items:
+     - "{{ crondeny }}"
+  ignore_errors: True
+
+- name: Change file sshd
+  file:
+    path: "{{ pathssh }}"
+    owner: root
+    group: root
+    mode: '600'
+
+- name: Query UserPAM
+  shell: "cat {{ pathssh }} | grep '^[Uu]sePAM *'"
+  register: userpam
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ userpam.stdout }}'
+    replace: 'UsePAM yes'
+
+- name: Add a line
+  lineinfile:
+    path: "{{ pathssh }}"
+    line: AllowGroups ec2-user root cnvadmin
+
+- name: Query
+  shell: "ls -l /etc/ssh/ssh_host_*_key | awk '{print $9}'"
+  register: listssh
+
+- name: Query1
+  shell: "ls -l /etc/ssh/ssh_host_*_key.pub | awk '{print $9}'"
+  register: listsshpub
+
+- name: Change file ssh
+  file:
+    path: "{{ item }}"
+    mode: '600'
+  with_items:
+     - "{{ listssh.stdout_lines }}"
+
+- name: Change file ssh pub
+  file:
+    path: "{{ item }}"
+    mode: '600'
+  with_items:
+     - "{{ listsshpub.stdout_lines }}"
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep 'LogLevel'"
+  register: loglevel
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ loglevel.stdout }}'
+    replace: 'LogLevel INFO'
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep 'X11Forwarding.*' | head -1"
+  register: X11Forwarding
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ X11Forwarding.stdout }}'
+    replace: 'X11Forwarding no'
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep -i maxauthtries"
+  register: maxauthtries
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ maxauthtries.stdout }}'
+    replace: 'MaxAuthTries {{ vmaxauthtries }}'
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep -i ignorerhosts"
+  register: ignorerhosts
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ ignorerhosts.stdout }}'
+    replace: 'ignorerhosts yes'
+
+- name: Make changes
+  lineinfile:
+    path: "{{ pathssh }}"
+    regexp: '(^hostbasedauthentication.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+
+- name: Make changes
+  lineinfile:
+    path: "{{ pathssh }}"
+    regexp: '(^permitrootlogin.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+
+- name: Make changes
+  lineinfile:
+    path: "{{ pathssh }}"
+    regexp: '(^permitemptypasswords.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+
+- name: Make changes
+  lineinfile:
+    path: "{{ pathssh }}"
+    regexp: '(^permituserenvironment.*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep -i clientaliveinterval"
+  register: clientaliveinterval
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ clientaliveinterval.stdout }}'
+    replace: 'ClientAliveInterval {{ vclientaliveinterval }}'
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep -i clientalivecountmax"
+  register: clientalivecountmax
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ clientalivecountmax.stdout }}'
+    replace: 'ClientAliveCountMax {{ vclientalivecountmax }}'
+
+- name: Query1
+  shell: "cat {{ pathssh }} |  grep -i logingracetime"
+  register: logingracetime
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ logingracetime.stdout }}'
+    replace: 'logingracetime {{ vlogingracetime }}'
+
+- name: banner
+  copy:
+    src: files/bsshd.bn
+    dest: /etc/bsshd.bn
+    owner: root
+    group: root
+    mode: u+rw,g-wx,o-rwx
+
+- name: Query1
+  shell: "cat {{ pathssh }} |  grep 'Banner.*'"
+  register: Banner
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ Banner.stdout }}'
+    replace: 'Banner /etc/bsshd.bn'
+
+- name: Query1
+  shell: "cat {{ pathssh }} |  grep -i allowtcpforwarding.* | head -1"
+  register: allowtcpforwarding
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ allowtcpforwarding.stdout }}'
+    replace: 'AllowTcpForwarding no'
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep -i maxstartups"
+  register: maxstartups
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ maxstartups.stdout }}'
+    replace: 'MaxStartups {{ vmaxstartups }}'
+
+- name: Query1
+  shell: "cat {{ pathssh }} | grep -i  maxsessions"
+  register: maxsessions
+
+- name: Make changes
+  replace:
+    path: "{{ pathssh }}"
+    regexp: '{{ maxsessions.stdout }}'
+    replace: 'MaxSessions {{ vmaxsessions }}'
+
+- name: Add a line
+  lineinfile:
+    path: "{{ pathsshd }}"
+    line: CRYPTO_POLICY= {{ crypolssh }}
+
+- name: Ensure SSH warning banner is configured
+  lineinfile:
+    state: present
+    dest: /etc/ssh/sshd_config
+    regexp: '^Banner'
+    line: 'Banner /etc/issue.net'
+
+- name: Reload service sshd
+  service:
+    name: sshd
+    state: reloaded
+...

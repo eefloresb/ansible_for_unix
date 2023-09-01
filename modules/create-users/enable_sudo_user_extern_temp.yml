@@ -1,0 +1,19 @@
+---
+- hosts: all
+  vars:
+    client: "centria"
+    usuarios:
+     - user: ext_gchozo
+       fullname: "Centria /  ext_gchozo - WO0000000345422"
+       password: LmE-lnx$90EN
+       expiredpass: False 
+       passneverexpires: True
+       admin: True
+
+  tasks:
+
+  - include_role: 
+      name: enable_sudo_user_extern_temp
+    vars: 
+      days: '190'
+

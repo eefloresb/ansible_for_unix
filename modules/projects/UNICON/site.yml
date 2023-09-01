@@ -1,0 +1,88 @@
+--- 
+ - hosts: all
+   become: false
+   gather_facts: true 
+   vars:
+    usuarios: 
+      - user: cnvmonitor
+        password: uuBeho3v@$
+   tasks:
+
+    - name: create user in remotyes
+      ansible.builtin.user:
+        name: "{{item.user}}"
+        password: "{{item.password | password_hash('sha512') }}"
+        home: "/home/{{item.user}}"
+        update_password: on_create
+        group: cnvadmin 
+        state: present
+      loop: "{{ usuarios }}"
+
+    - name: configure remote llave private/pub 
+      community.crypto.openssh_keypair:
+        path: /tmp/id_rsa
+        size: 2048 
+        type: rsa
+      delegate_to: localhost
+      run_once: true
+
+    - name: create the directory in remote server 
+      ansible.builtin.file:
+        path: "/home/{{item.user}}/.ssh"
+        state: directory
+        owner: "{{item.user}}"
+        group: "cnvadmin"
+        mode: 0755
+      loop: "{{usuarios}}"
+
+    - name: Copy the file pub in remote server 
+      ansible.builtin.copy:
+        src: /tmp/id_rsa.pub
+        dest: /home/{{item.user}}/.ssh/authorized_keys
+        owner: "{{item.user}}"
+        group: cnvadmin
+        mode: 0644
+        force: yes
+      loop: "{{usuarios}}"
+      
+    - name: validate the remote directory sudoers.d 
+      ansible.builtin.file:
+        path: "{{item}}"
+        state: directory
+        mode: 0755
+        owner: root
+        group: root
+      loop:
+        - /etc/sudoers.d/
+        - scripts
+
+    - name: copy template the rules to users cnvmonitor
+      ansible.builtin.template:
+        src: ./templates/unprivileged.j2
+        dest: /etc/sudoers.d/{{item.user}}
+      loop: "{{usuarios}}"
+
+    - name: copy the photo with unprivileged 
+      ansible.builtin.copy:
+        src: ./files/unprivileged-foto.sh 
+        dest: /scripts/take-photo.sh 
+        owner: root
+        group: root 
+        mode: 0755
+
+    - name: execute remote script
+      tags: web  
+      ansible.builtin.shell:
+        cmd: bash /scripts/take-photo.sh
+      register:
+        take_photo
+      become: false
+
+    - name: copy content in localhost
+      tags: web 
+      become: false
+      ansible.builtin.copy:
+        content: |
+          "{{take_photo.stdout}}"
+        dest: "~/data/{{client | default('Canvia') }}/{{ansible_hostname}}_{{ansible_host}}.txt"
+      delegate_to: localhost

@@ -1,0 +1,13 @@
+# Alias de grupos y usuarios
+User_Alias USR_ROOT = %cnvadmin
+#User_Alias USR_BKP = %cnvbkp
+# User_Alias USR_CECOM = %cnvcecom
+# User_Alias USR_DBA = %cnvdba
+#User_Alias USR_MNT = %cnvmnt
+# User_Alias USR_OPE = %cnvope
+
+# Permisos
+USR_ROOT	ALL=(ALL)	NOPASSWD: ALL
+USR_BKP		ALL=(ALL)	NOPASSWD: CMD_BKP
+USR_MNT		ALL=(ALL)	NOPASSWD: CMD_MNT
+USR_DBA		ALL=(ALL)	NOPASSWD: CMD_DBA

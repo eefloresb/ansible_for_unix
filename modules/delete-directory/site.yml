@@ -1,0 +1,34 @@
+---
+- hosts: all 
+  gather_facts: true
+  become: true
+  tasks:
+
+   - name: create validate 
+     shell: |
+      if [[ ! -d /tmp/kikinvalidate ]]; then
+        mkdir /tmp/kikinvalidate
+      fi
+
+   - name: report boorado /tmp 
+     shell: ls -l 
+     register: out 
+     args:
+      chdir: /tmp 
+
+   - name: show data 
+     ansible.builtin.copy:
+      dest: ~/unicon/tmp/{{ansible_host}}
+      content: | 
+        "{{ out.stdout }}"
+     delegate_to: localhost  
+     become: false
+    
+   - name: delete content directory 
+     shell: |
+      if [[ -d kikinvalidate ]]; then
+        rm -rfv * 
+        echo "the files deletes in $(date)" > fichero_evaluate.txt
+      fi 
+     args:
+      chdir: /tmp/

@@ -1,0 +1,9 @@
+---
+- name: Install software essential in Suse <= 15
+  when: os_release.split(".")[0] | int <= 15
+  zypper:
+    name: "{{ linux_sles_packages }}"
+    state: present
+  environment:
+    http_proxy: "{{ proxy | default(omit) }}"
+    https_proxy: "{{ proxy | default(omit) }}"

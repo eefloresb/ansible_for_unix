@@ -1,0 +1,7 @@
+---
+- name: install when SuSe family 
+  when:
+    - ansible_os_family == "SuSe"
+  zypper: 
+    name: at 
+    state: present

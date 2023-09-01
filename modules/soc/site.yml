@@ -1,0 +1,50 @@
+---
+ - hosts: all
+   gather_facts: true
+   vars:
+      dest_remote_dir: "~/data/{{ client | default('CANVIA')}}/report_dsagent_{{ansible_hostname}}.csv"
+   tasks:
+     - name: create file report in .csv 
+       copy:
+        dest: "{{dest_remote_dir}}"
+        content: |
+          Hostname,IP Address, Check Domain TrendMicro, Service
+       delegate_to: localhost 
+       become: false
+
+     - name: register hostname and value assigned 
+       set_fact: 
+        xhostname: "{{ ansible_hostname }}"
+
+     - name: register ip in value 
+       set_fact: 
+        xipaddress: "{{ ansible_default_ipv4.address }}"
+    
+     - name: check domain TrendMicro 
+       uri: 
+          url: "https://www.trendmicro.com/es_mx/business.html"
+          return_content: yes
+       register: get_tredmicro
+
+     - name: assigned value to check internet 
+       set_fact:
+          get_conection_tredmicro: '{{ "You access to *.TrendMicro.com domain" if get_tredmicro.status | int == 200 else "you do not access to domain *trendmicro.com" }}'
+     
+     - name: Get Service ds_agent Status
+       systemd:
+         name: "ds_agent"
+       register: ds_service_status
+
+     - set_fact:
+        get_service_ds: '{{ "the ds_agent is active" if ds_service_status.status.ActiveState == "active" else "the ds_agent is inactive"}}'
+
+     - service:
+        name: ds_agent
+        state: restarted 
+
+     - name: register values captured of remote machines 
+       shell: |
+          echo "{{xhostname}},{{xipaddress}},{{ get_conection_tredmicro }},{{ get_service_ds }}" >> {{ dest_remote_dir }}  
+       become: false
+       delegate_to: localhost
+        

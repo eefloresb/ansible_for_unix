@@ -1,0 +1,72 @@
+# Begin  Global Automation Engineer standard template - Ver 2.0.1 Date 2015-06-01  * Master * Refer NA14139015 Begin #
+# Description
+# Software products and versions
+# Supported OS platforms : All Unix/Linux variants.
+# This sudo profile is required on the 'managed systems' associated 
+# to the indicated automation tool set.  Self serve access
+# considerations are 'Not applicable' for this template.
+#
+# Automation Engineer id's may be placed in the 'standard' system 
+# admin group and sudo entry -provided- that entry is consistent 
+# with the tool's needs.  
+# In the event that entry is NOT consistent with the tool needs, then 
+# this template can be used instead.
+#
+#
+# Version control
+#
+# See changelog on Global sudo wiki https://ibm.biz/ChlogMiddlewareTemplates for previous changes
+#
+# Updates in this version:
+#
+# V2.0 - pczaldy@us.ibm.com / jekri@dk.ibm.com - new template - based 
+#       on NA 209_AutomationEngineer_NA template
+# 
+#
+# V2.0.1 - jekri@dk.ibm.com - functional change - Begin and End lines changed to standard 
+# 
+#
+#
+# User Aliases
+#
+# Replace sample group names with real group names for your account.
+#
+# The User_Alias name IBM_AE_BAU to identify the Alias as an 
+#     Automation Engineer alias
+#
+User_Alias     IBM_AE_BAU = %automata
+#
+# If a different group name is used, replace
+# %automata with the -group- that contains the account specific 
+# automation ids. 
+
+#----------------------------------------------------------------------
+# Host Aliases 
+#
+# In this template, we assume all systems are managed by the 
+# automation.  Indicate a subset of systems if not all will
+# be managed by automation and a master file is used.
+#
+Host_Alias    IBM_AE_HOSTS = ALL 
+#
+# ------------- standard content reminder:
+#  This entry uses standard aliases (eg: Cmnd_Alias  IBM_NONE_EDITOR ) 
+#  which are defined in:   https://ibm.biz/GsudoStdAlias .  Ensure you 
+#  have included all needed standard aliases from this file into the 
+#  /etc/sudoers file.
+#
+# --------------Do not change anything below this line. ---------------
+#
+#---------------------------------------------------------------------
+#
+# IBM AE command Aliases
+#        
+Cmnd_Alias  IBM_UNIX_AE_BAU_CMDS = \
+    /usr/bin/su -, /bin/su -, /usr/bin/su - root, /bin/su - root         
+#
+#
+IBM_AE_BAU  IBM_AE_HOSTS =  NOPASSWD:ALL, \
+                 !IBM_NONE_SA,!IBM_SHELLS_ALL,IBM_UNIX_AE_BAU_CMDS, \
+                 !IBM_SHELLESCAPE_ALL,!IBM_NONE_EDITOR
+#
+# End  Global Automation Engineer standard template - Ver 2.0.1 Date 2015-06-01  * Master * Refer NA14139015 End #

@@ -1,0 +1,94 @@
+---
+# pwd
+pass_max_days: 60
+pass_min_days: 7
+num_shadow_4: 60
+num_shadow_2: 1
+num_minlen: 8
+num_dcredit: -1
+num_ucredit: 0
+num_lcredit: -1
+num_ocredit: 0
+
+pathntw: /etc/sysctl.conf
+pathlgn: /etc/login.defs
+pathpwq: /etc/security/pwquality.conf
+
+#Apl
+crondat:
+  - cron.hourly
+  - cron.daily
+  - cron.weekly
+  - cron.monthly
+  - cron.d
+
+crondeny:
+  - daemon
+  - bin
+  - smtp
+  - nuucp
+  - listen
+  - nobody
+  - noaccess
+
+ngroupcron: useradm
+pcrontab: 0640
+vowner: root
+vgroup: root
+pathcdeny: /etc/cron.deny
+
+# sshd
+#------
+pathssh: /etc/ssh/sshd_config
+
+vmaxauthtries: 4
+vclientaliveinterval: 60
+vclientalivecountmax: 3
+vlogingracetime: 60
+vmaxstartups: 10:30:60
+vmaxsessions: 4
+
+pathsshd: /etc/sysconfig/sshd
+vallowtcpforwarding: no
+crypolssh: Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com
+
+#Audit
+pathsup: /etc/pam.d/su
+pathsysau: /etc/pam.d/system-auth
+pathaudit: /etc/audit/auditd.conf
+pathaudrul: /etc/audit/rules.d/audit.rules
+pathjourn: /etc/systemd/journald.conf
+
+valor1: YES
+valory: yes
+valorn: no
+
+# LogFiles
+logfiles:
+  - Defaults  logfile="/var/log/sudo.log"
+  - Defaults  log_host, log_year, logfile="/var/log/sudo.log"
+
+# Services
+service:
+  - rsyncd
+  - avahi-daemon
+  - snmpd
+  - squid
+  - smb
+  - dovecot
+  - httpd
+  - vsftpd
+  - named
+  - nfs
+  - rpcbind
+  - slapd
+  - dhcpd
+  - cups
+  - ypserv
+
+service_uninstall:
+  - xinetd
+  - xorg-x11  
+  - ypbind
+  - telnet
+  - openldap-clients

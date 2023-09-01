@@ -1,0 +1,31 @@
+---
+- name: create directory data 
+  file: 
+    path: ./data 
+    state: directory 
+  delegate_to: localhost
+
+- name: check the subscription of remote servers for SuSe preview to update 
+  when: ansible_distribution == 'SLES'
+  block:
+
+    - name: check registred Suse 
+      command: SUSEConnect -s 
+      register: subscription_status
+      ignore_errors: true
+  
+    - set_fact:
+        os_subscription : "{{subscription_status.stdout | from_json | json_query('[*].status') | first if subscription_status.rc == 0 else 'Not Registered'}}"
+
+- name: check the subscription of remote server for RedHat preview to update 
+  when: ansible_distribution == 'RedHat' 
+  block: 
+    - name: check registred RedHat 
+      shell: subscription-manager list |grep -iE ^status\:[[:blank:]]+|tr -d " " | awk -F ":" '{print $2}'
+      register: subscription_status 
+
+    - set_fact: 
+        os_subscription: '{{ "Registered" if subscription_status.stdout == "Subscribed" else "Not Registered"}}'
+
+- name: Writing global report 
+  include_tasks: os_report_preview.yml

@@ -1,0 +1,54 @@
+---
+- name: Make scripts directory
+  ansible.builtin.file:
+   dest: /scripts
+   state: directory
+   mode: '0755'
+   owner: root
+
+- name: Copy script check_mem to remote server
+  ansible.builtin.copy:
+   src: check_mem_used.j2
+   dest: /scripts/check_mem_used.sh
+   owner: root
+   mode: '0755'
+
+- name: Register various values
+  ansible.builtin.set_fact:
+   xhostname: "{{ ansible_hostname }}"
+   xipaddress: "{{ ansible_default_ipv4.address }}"
+   xgateway: "{{ ansible_default_ipv4.gateway }}"
+   xaddress: "{{ ansible_default_ipv4.interface }}"
+   xarchitecture: "{{ ansible_architecture }}"
+   xosfamily: "{{ ansible_os_family }}"
+   xdate: "{{ ansible_date_time.iso8601 }}"
+   xdistribution: "{{ ansible_distribution }}"
+   xvdistribution: "{{ ansible_distribution_version }}"
+   xmem: "{{ ansible_memtotal_mb }}"
+   xmemfree: "{{ ansible_memfree_mb }}"
+   xswap: "{{ ansible_swaptotal_mb }}"
+   xpcpu: "{{ ansible_processor_count }}"
+   xcpu: "{{ ansible_processor_cores }}"
+   xvcpu: "{{ ansible_processor_vcpus }}"
+   modified_facts: "{{ ansible_system_vendor | to_json | regex_replace('VMware, Inc.', 'vmware_incl') | from_json }}"
+
+- name: Register various values
+  ansible.builtin.set_fact:
+   xtvirtualization: "{{ modified_facts }} {{ ansible_virtualization_type }}"
+
+- name: Include task to check the subscription
+  ansible.builtin.include_tasks: check_subscription_{{ ansible_distribution }}.yml
+  when:
+   - ansible_distribution == 'SLES' or ansible_distribution == 'SLES_SAP' or ansible_distribution == 'RedHat'
+
+- name: Include the check internet in remote server
+  ansible.builtin.include_tasks: check_internet.yml
+
+- name: Include the check resource from remote server
+  ansible.builtin.include_tasks: check_resource.yml
+
+- name: Capture data from remote servers
+  ansible.builtin.include_tasks: capture_data.yml
+
+- name: Generate report in localhost
+  ansible.builtin.include_tasks: generate_report.yml

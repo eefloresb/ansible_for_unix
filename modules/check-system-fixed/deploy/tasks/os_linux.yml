@@ -1,0 +1,52 @@
+---
+hosts: all
+tasks:
+
+  - name: create directory to copy scripts
+    file: 
+      path: /scripts 
+      type: directory 
+      state: present 
+      owner: root
+      group: root
+      mode: 0755 
+      
+  - name: copy script check_cpu in remote server 
+    copy:
+      src: scripts/bash/{{item}}
+      dest: /usr/local/bin/{{item.split('.')[0]}}
+      mode: 0755 
+    loop:
+        - check_cpu.sh 
+        - check_mem_swap.sh 
+        - check_mem_ram.sh
+        - check_disk.sh
+  
+  - name: check mem swap 
+    comand: ./check_mem_swap   
+    args:
+      chdir /usr/local/bin/ 
+    register: 
+        mem_swap_health 
+
+  - name: check mem ram 
+    comand: ./check_mem_ram 
+    args:
+      chdir /usr/local/bin/ 
+    register: 
+        mem_ram_health 
+
+  
+  - name: check cpu to view process
+    comand: ./check_cpu  
+    args:
+      chdir /usr/local/bin/ 
+    register: 
+       cpu_health 
+
+  - name: check disk 
+    comand: ./check_disk  
+    args:
+      chdir /usr/local/bin/ 
+    register: 
+       cpu_health 

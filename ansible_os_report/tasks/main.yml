@@ -1,0 +1,5 @@
+---
+- name: configure report for Linux
+  when: ansible_system == 'Linux'
+  include_tasks: os_linux_report.yml 
+

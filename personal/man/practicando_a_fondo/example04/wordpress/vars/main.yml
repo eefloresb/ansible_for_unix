@@ -1,0 +1,7 @@
+---
+# vars file for wordpress
+mysql_root_password: "password"
+db_wordpress_username: "wordpress_admin"
+db_wordpress_password: "password"
+db_wordpress_name: "wordpress_db"
+

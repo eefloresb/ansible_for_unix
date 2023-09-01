@@ -1,0 +1,5 @@
+---
+- name: shutdown remote machines in local server
+  shell: |
+    shutdown -h now 
+  ignore_errors: true 

@@ -1,0 +1,17 @@
+---
+ - hosts: all
+   become: true
+   gather_facts: true
+   vars:
+    sanity_reboot: "false"
+    client: "ACEROS" 
+   tasks:
+
+    - include_role:
+        name: ansible_os_basevars
+
+    - include_role:
+        name: ansible_take_photo 
+
+    - ansible.builtin.include_role:
+        name: ansible_reboot_vm

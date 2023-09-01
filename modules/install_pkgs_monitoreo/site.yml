@@ -1,0 +1,8 @@
+---
+  - name: install packages for redhat family 
+    when: ansible_os_family == "RedHat"
+    ansible.builtin.yum:
+      name: "{{ item.name }}"
+      state: present
+    loop:
+      - "{{ pkg_monitor }}"

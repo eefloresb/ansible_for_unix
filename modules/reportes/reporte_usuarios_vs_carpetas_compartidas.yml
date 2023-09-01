@@ -1,0 +1,31 @@
+---
+- name: Crear el archivo de registro
+  hosts: localhost
+  connection: local
+  become: false
+  tasks:
+   - name: Create the head in csv
+     ansible.builtin.copy:
+      content: |
+         "Nombre,Carpeta compartida,{{ ansible_hostname }},{{ ansible_host }},servicio"
+      dest: ~/data/{{ client | default('Canvia') }}/reporte_smbd.csv
+      mode: '0644'
+
+- name: Reporte_usuarios_vs_carpetas_compartidas
+  hosts: all
+  vars:
+   servicios:
+    - smb
+    - sshd
+  tasks:
+   - name: Check if services is running
+     ansible.builtin.shell: |
+      set -o pipefail
+      if systemctl is-active {{ item }}; then
+        echo "{{ item }},0"
+      else
+        echo "{{ item }},1"
+      fi
+     register: check_program
+     changed_when: check_program.rc != 0
+     loop: "{{ servicios }}"

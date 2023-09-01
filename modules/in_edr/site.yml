@@ -1,0 +1,21 @@
+---
+    - hosts: all
+      become: true
+      gather_facts: true
+      vars:
+        pkg_edr: true
+      tasks:
+        - name: install edr crowdstrike
+          when: pkg_edr == false          
+          include_role:
+            name: install_CroudStrike
+        
+        - name: install edr trendmicro 
+          when: pkg_edr == false 
+          include_role:
+            name: install_TrendMicro  
+
+        - name: install WithSecure
+          when: pkg_edr == true
+          ansible.builtin.include_role:
+            name: install_WithSecure

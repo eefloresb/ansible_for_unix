@@ -1,0 +1,10 @@
+---
+- hosts: all 
+  become: true
+  tasks:
+
+    - include_role:
+        name: ansible_os_basevars
+
+    - include_role: 
+        name: deploy

@@ -1,0 +1,36 @@
+---
+- name: Create file to save data
+  hosts: localhost
+  become: false
+  connection: local
+  vars:
+    client_name: "{{ client | default('Canvia') }}"
+    dest_dir: "~/data/{{ client_name }}"
+    dest_remote_dir: "{{ dest_dir }}"
+  tasks:
+    # Create directory if it doesn't exist
+    - name: Create directory
+      ansible.builtin.file:
+        path: "{{ dest_dir }}"
+        state: directory
+        mode: '0755'
+
+    # Create a CSV report using a Jinja2 template
+    - name: Create file report in .csv
+      ansible.builtin.template:
+        src: deploy/templates/report.csv.j2
+        dest: "{{ dest_remote_dir }}/report_assesment.csv"
+        mode: '0644'
+
+- name: Get values from the servers
+  hosts: all
+  gather_facts: true
+  become: true
+  vars:
+    client_name: "{{ client | default('Canvia') }}"
+    dest_dir: "~/data/{{ client_name }}"
+    dest_remote_dir: "{{ dest_dir }}" # Same as defined earlier
+  tasks:
+    - name: Include Role to deploy assesment
+      ansible.builtin.include_role:
+        name: deploy

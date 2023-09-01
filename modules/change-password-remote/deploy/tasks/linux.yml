@@ -1,0 +1,22 @@
+---
+
+- name: find user in remote server 
+  failed_when: 1 == 2
+  shell: grep -E "^{{usuario}}.*ALL$" /etc/sudoers 
+  register:
+      user_result
+
+- name: add user to sudofile 
+  when: user_result.rc != 0 
+  lineinfile:
+    path: /etc/sudoers
+    line: '{{usuario}} ALL = (ALL) ALL'
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: change password for user 
+  user: 
+    name: "{{usuario}}"
+    password: "{{password | password_hash('sha512')}}"
+    state: present 
+    group: users
+

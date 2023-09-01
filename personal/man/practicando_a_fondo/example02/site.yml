@@ -1,0 +1,15 @@
+---
+ - hosts: all 
+   become: true
+   tasks:
+ 
+    - name: create a csv file from your complete inventory using an inline template
+      copy: 
+        content: |
+          HOSTNAME;IPADDRESS;FQDN;OSNAME;OSVERSION;PROCESSOR;ARCHITECTURE;MEMORY
+          {% for host in hostvars %}
+          {%  set vars=hostvars[host|string] %}
+          {{vars.ansible_hostname}},{{vars.ansible_distribution}}
+          {%endfor%} 
+        dest: archivo.csv 
+      delegate_to: localhost

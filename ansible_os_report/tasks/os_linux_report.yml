@@ -1,0 +1,55 @@
+---
+- name: create repository of packages to the reports of clients or canvia 
+  become: false
+  file: 
+    path: "{{dest_folder}}"
+    mode: '0755'
+    state: directory
+    recurse: true
+  delegate_to: localhost
+
+- name: create directory in remote server 
+  file:
+     name: /scripts 
+     owner: root
+     group: root
+     mode: 755 
+     state: directory 
+
+- name: Update package cache repository from OS
+  changed_when: false
+  when: os_vendor != "sles"
+  ansible.builtin.package:
+    update_cache: true
+
+- name: Update package cache (Zypper only)
+  when: os_vendor == "sles"
+  changed_when: false
+  check_mode: false
+  ansible.builtin.command:
+     cmd: "zypper refresh"
+     warn: false
+
+- name: os report for sles 
+  when: 
+    - ansible_os_family == "Suse"
+  ansible.builtin.include_tasks: os_sles.yml 
+
+- name: os report for debian 
+  when: 
+    - ansible_os_family == "Debian"
+  ansible.builtin.include_tasks: os_debian.yml 
+
+- name: os report for RedHat 
+  when: 
+    - ansible_os_family == "RedHat"
+  ansible.builtin.include_tasks: os_rhel.yml
+
+- name: generate report package update for os_release({{os_vendor}})
+  become: false
+  failed_when: os_report_result | length == 0
+  copy:
+    dest: "{{dest_folder}}/{{ansible_hostname}}-{{ansible_default_ipv4.address }}.csv"
+    content: | 
+        {{os_report_result.stdout}}
+  delegate_to: localhost

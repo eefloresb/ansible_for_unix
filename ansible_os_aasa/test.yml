@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - wait_for:
+        host: lpar2rrd
+        port: 8163
+        timeout: 2
+      register: portcheck
+      ignore_errors: yes
+
+    - debug: msg={{portcheck.failed}}

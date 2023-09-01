@@ -1,0 +1,12 @@
+---
+    - name: copy file installer to /usr/local/src/
+      copy:
+        src: files/{{file_installer}}.{{ansible_distribution}}.amd64.deb
+        dest: /usr/local/src/
+
+    - name: install when debian family
+      block:
+      - name: Install in {{ansible_distribution}} - {{ansible_distribution_major_version}}
+        apt:
+          name: /usr/local/src/{{file_installer}}.{{ansible_distribution}}.amd64.deb
+          state: present

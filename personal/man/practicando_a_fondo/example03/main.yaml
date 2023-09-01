@@ -1,0 +1,14 @@
+---
+- hosts: grupo2
+  become: true
+  tasks:
+    - name: service
+      service: 
+        name: httpd
+        state: started
+        enabled: true 
+      register: srv 
+    
+    - debug:
+        var: srv
+

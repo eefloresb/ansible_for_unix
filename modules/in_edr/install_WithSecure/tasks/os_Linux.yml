@@ -1,0 +1,26 @@
+--- 
+    - name: mount the remote smb install programs
+      ansible.builtin.include_tasks: smb_mount_server.yml 
+
+    - name: install package {{ ansible_os_family}}
+      include_tasks: install_{{ansible_os_family}}.yml
+    
+    - name: copy files in remote server 
+      copy: 
+        src: "{{volumen_mount}}/software-iac/linux/antivirus/f-secure-linuxsecurity-installer"
+        dest: /tmp/f-secure-linuxsecurity-installer
+        mode: 0755
+        owner: root
+        group: root 
+
+    - name: Command Execute install and integrate portal 
+      ansible.builtin.command: | 
+         ./f-secure-linuxsecurity-installer --subscription-key "{{SUBSCRIPTIONKEY}}" 
+      args:
+        chdir: /tmp
+      register: secure_installer
+
+    - name: umount the shared remote server 
+      ansible.builtin.mount:
+        path: "{{volumen_mount}}"
+        state: unmounted

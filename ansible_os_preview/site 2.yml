@@ -1,0 +1,6 @@
+---
+- hosts: all
+  tasks:
+
+  - name: os preview check to Update Equipment 
+    include_role: deploy

@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  environment:
+     http_proxy: http://127.0.0.1:3128
+     https_proxy: http://127.0.0.1:3128
+  vars:
+    disabled: false
+    ip_proxy: "127.0.0.1:3128"
+    install_pkg: True
+  tasks:
+
+    - name: Define global vars
+      set_fact:
+            proxy_env:
+              http_proxy: "{{  ip_proxy | default(omit) }}"
+              https_proxy: "{{  ip_proxy | default(omit) }}"
+              ftp_proxy: "{{  ip_proxy | default(omit) }}"
+
+    - include_role:
+        name: ansible_os_basevars
+
+    - name: apply hardening to remote server 
+      include_role: 
+        name: ansible_os_hardening_basic

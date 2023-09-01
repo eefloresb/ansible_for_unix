@@ -1,0 +1,4 @@
+---
+xenabled: "true"
+xmaxretry: "5"
+xbantime: "10800"

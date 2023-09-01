@@ -1,0 +1,94 @@
+---
+- name: install package into family debian
+  when: ansible_os_family == 'Debian'
+  apt: 
+     name: nginx 
+     state: present 
+
+- name: install package nginx into family SuSe 
+  when: ansible_os_family == 'sles' 
+  zypper: 
+    name: nginx 
+    repo: 'http://nginx.org/packages/sles/{{os_release}}/'
+    state: present
+
+- name: Install nginx in family RedHat 
+  when: ansible_os_family == 'RedHat'
+  block: 
+    - name: configure repo in remote server 
+      template: 
+        src: nginx.repo.j2
+        dest: /etc/yum.repos.d/nginx.repo 
+
+    - name: install nginx 
+      yum: 
+        name: nginx 
+        state: latest 
+        update_cache: true
+
+    - name: install modules to nginx 
+      package: 
+        name: "{{item}}"
+        state: present
+      loop: "{{nginx_modules_packages}}"
+
+- name: nginx config 
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf 
+  notify: reload nginx 
+
+- name: Nginx default config 
+  template: 
+    src: default.conf.j2 
+    dest: /etc/nginx/conf.d/default.conf 
+  notify: reload nginx 
+
+- name: create working directory 
+  file: 
+    path: "{{nginx_default_root}}"
+    state: directory 
+    setype: httpd_sys_content_t
+
+- name: create conf to modules  
+  file:
+    path: "{{item}}"
+    state: present 
+    owner: nginx 
+    group: nginx 
+    mode: 644 
+  loop: "{{nginx_modules}}"
+
+#- name: insert text in remote file 
+#  lineinfile: 
+#    path: "{{item}}"
+#    line: "load_module /usr/lib64/modules/"
+#  loop: 
+#    - { nginx_modules: "{{nginx_modules}}",  }
+    
+
+- name: check modules 
+  file: 
+    path: "{{item}}"
+    state: file 
+  loop: "{{nginx_modules}}"
+
+- name: open firewall 
+  firewalld: 
+    port: 80/tcp 
+    inmediate: true
+    permanent: true
+    state: enabled 
+
+- name: start/enable nginx service 
+  service: 
+    name: nginx 
+    enabled: yes
+    state: started 
+
+- name: sample content 
+  copy: 
+    content: |
+      "Hello nginx"
+    dest: "{{nginx_default_root}}/index.html"
+  notify: reload nginx 

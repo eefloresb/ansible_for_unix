@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    dir_vagrant_vm: "/Users/edwinflores/Documents/github.com/MyProjects/vagrant"  
+    so: "{{system | default('redhat')}}"
+    all: false
+  tasks:
+
+  - name: started machine vm from vagrant to practice code  
+    when: so == "redhat" or all == true
+    command: 
+      cmd: vagrant up 
+      chdir: "{{dir_vagrant_vm}}/RedHat/{{version | default(7) }}/"
+
+  - name: started machine to CentOS 
+    when: so == "centos" or all == true 
+    command: 
+      cmd: vagrant up
+      chdir: "{{dir_vagrant_vm}}/CentOS/{{version | default(7) }}/"
+  
+  - name: started machine to Ubuntu 
+    when: so == "Ubuntu" or all == true 
+    command: 
+      cmd: vagrant up
+      chdir: "{{dir_vagrant_vm}}/Ubuntu/{{version | default(21.04)}}/"
+
+  - name: stated machine to suse 
+    when: so == "Suse" or all==true 
+    command: 
+      cmd: vagrant up 
+      chdir: "{{dir_vagrant_vm}}/sles12sp2/"
+
+
+

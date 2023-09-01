@@ -1,0 +1,36 @@
+---
+    - name: output check service TrendMicro
+      failed_when: 1 == 2
+      shell: |
+        ps -fea | grep ds_agent
+      register: check_tm
+
+    - name: copy file installer to /tmp
+      when: check_tm != "0"
+      copy:
+        src: files/aix_v20_install_scripts.sh
+        dest: /tmp/aix_trendmicrot.sh 
+        mode: 755
+
+    - name: install Trend Micro
+      when: check_tm != "0"
+      shell: |
+        bash aix_trendmicrot.sh 
+      args:
+        chdir: /tmp
+
+    - name: output check service 
+      when: check_tm != "0"
+      shell: |
+        ps -fea | grep ds_agent
+      register: check_installtm
+
+    - name: Output Strin check Falcon 
+      when: check_installtm.rc == 0
+      debug:
+        msg: "status OK - Install correct service"  
+
+    - name: Desactived service
+      shell: |
+        stopsrc -s ds_agent
+      register: check_tm

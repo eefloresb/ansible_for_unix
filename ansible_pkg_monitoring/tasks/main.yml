@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    pkg_monitor: 
+      - name: "perl-Sys-Syslog"
+      - name: "perl-IO-Compress"
+  tasks: 
+
+  - name: install packages for redhat family 
+    when: ansible_os_family == "RedHat"
+    ansible.builtin.yum:
+      name: "{{ item.name }}"
+      state: present
+    loop:
+      - "{{ pkg_monitor }}"

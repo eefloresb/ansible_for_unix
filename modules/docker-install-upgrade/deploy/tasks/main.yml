@@ -1,0 +1,73 @@
+---
+## technical note 
+## https://www.ibm.com/docs/de/fci/6.5.0?topic=steps-upgrading-docker 
+- name: stop service of docker 
+  service: 
+    name: docker 
+    state: stopped 
+
+- name: Pause stop by execute snapshopt
+  pause:
+    prompt: "Enter a secret"
+    echo: yes 
+
+- name: remove docker the remote server 
+  yum: 
+    name: "{{item}}"
+    state: absent 
+  loop:
+    - docker 
+    - docker-client 
+    - docker-common
+    - docker-rhel-push-plugin
+
+- name: enable repo in remote server 
+  yum_repository:
+    name: docker-ce 
+    description: Docker YUM repo
+    baseurl: https://download.docker.com/linux/centos/$releasever/$basearch/stable
+    gpgcheck: false 
+    enabled: true
+
+- name: Update package cache 
+  changed_when: false
+  when: os_vendor != "sles"
+  ansible.builtin.package:
+    update_cache: true
+
+- name: install docker new version 
+  yum: 
+    name: "{{item}}" 
+    state: present 
+  loop:
+    - docker-ce 
+    - docker-ce-cli
+    - containerd.io
+
+- name: find directories in /var/lib/docker/containers 
+  find:
+    path: /var/lib/docker/containers
+    file_type: directory
+  register: result
+
+- name: change value docker-runc by runc
+  replace:
+    path: "{{item}}/hostconfig.json"
+    regexp: "docker-runc"
+    replace: "runc"
+    backup: true 
+  loop:
+    - "{{ result.files[0].path }}"
+    
+- name: up services 
+  service: 
+    name: docker 
+    state: started 
+
+- name: up containers in remote server 
+  shell: |
+      docker ps -a | tail -n +2 | awk '{print $1}' | while read line; do docker start $line; done 
+  register: result_start_docker 
+
+- debug: 
+    var: result_start_docker

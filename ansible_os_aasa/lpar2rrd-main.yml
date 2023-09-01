@@ -1,0 +1,40 @@
+---
+- hosts: all
+  gather_facts: true
+  become: true
+  vars:
+    lpar2rrd_agent_rpm_linux: lpar2rrd-agent-5.05-6.noarch.rpm
+    lpar2rrd_agent_rpm_aix: lpar2rrd-agent-5.05-8.ppc.rpm
+    lpar2rrd_host_nat36: 10.222.36.184
+    lpar2rrd_host_nat42: 10.222.40.9
+  tasks:
+    - name: Crear usuario lpar2rrd
+      user: name=lpar2rrd create_home=yes state=present
+
+    - name: Quitar registros previos de lpar2rrd
+      lineinfile:
+        path: /etc/hosts
+        state: absent
+        regexp: 'lpar2rrd'
+
+    - name: Registrar nombre de servidor lpar2rrd en red NAT 10.222.36.*
+      lineinfile:
+        path: /etc/hosts
+        state: present
+        regexp: '^{{lpar2rrd_host_nat36}}[[:blank:]]+lpar2rrd'
+        line: '{{lpar2rrd_host_nat36}} lpar2rrd'
+      when: ansible_host is match("^10.222.36")
+
+    - name: Registrar nombre de servidor lpar2rrd en red NAT 10.222.42.*
+      lineinfile:
+        path: /etc/hosts
+        state: present
+        regexp: '^{{lpar2rrd_host_nat42}}[[:blank:]]+lpar2rrd'
+        line: '{{lpar2rrd_host_nat42}} lpar2rrd'
+      when: ansible_host is match("^10.222.42")
+
+    - import_tasks: lpar2rrd-deployment-suse.yml
+      when: ansible_os_family == 'Suse'
+
+    - import_tasks: lpar2rrd-deployment-aix.yml
+      when: ansible_os_family == 'AIX'

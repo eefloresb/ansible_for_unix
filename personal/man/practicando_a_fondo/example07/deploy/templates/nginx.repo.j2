@@ -1,0 +1,15 @@
+[nginx-stable]
+name=nginx stable repo
+baseurl=http://nginx.org/packages/{{ 'centos' if ansible_distribution == 'CentOS' else 'rhel' }}/{{ansible_distribution_major_version}}/{{ansible_architecture}}/
+gpgcheck=1
+enabled=1
+gpgkey=https://nginx.org/keys/nginx_signing.key
+module_hotfixes=true
+
+[nginx-mainline]
+name=nginx mainline repo
+baseurl=http://nginx.org/packages/mainline/{{ 'centos' if ansible_distribution == 'CentOS' else 'rhel' }} /{{ansible_distribution_major_version}}/{{ansible_architecture}}/
+gpgcheck=1
+enabled=0
+gpgkey=https://nginx.org/keys/nginx_signing.key
+module_hotfixes=true

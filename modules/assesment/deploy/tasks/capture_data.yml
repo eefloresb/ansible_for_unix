@@ -1,0 +1,41 @@
+---
+- name: Leer archivo CSV
+  ansible.builtin.slurp:
+    src: ~/data/release.csv
+  register: archivo_csv
+  become: false
+  delegate_to: localhost
+
+- name: Convertir contenido a string
+  ansible.builtin.set_fact:
+    archivo_csv_string: "{{ archivo_csv['content'] | b64decode }}"
+
+- name: Buscar valor en archivo CSV
+  ansible.builtin.shell: |
+   {% if item.split(';')[0] == ansible_distribution %}
+       {% if item.split(';')[1] == ansible_distribution_version.split('.')[0] %}
+           {% if item.split(';')[2] == ansible_distribution_version.split('.')[1] %}
+             echo "Release actualizado" > /tmp/file.txt
+           {% elif item.split(';')[2] | int > ansible_distribution_version.split('.')[1] | int %}
+             echo "Release Desactualizado" > /tmp/file.txt
+           {%else %}
+             echo "Revisar la BD del release" > /tmp/file.txt
+           {% endif %}
+       {% endif %}
+   {% endif %}
+  loop: "{{ archivo_csv_string.splitlines() }}"
+  register: find_value_csv
+  changed_when: find_value_csv.rc != 0
+  ignore_errors: true
+
+- name: Show data from file.txt
+  ansible.builtin.command: cat /tmp/file.txt
+  register: release_std
+  changed_when: release_std.rc != 0
+  ignore_errors: true
+
+- name: Delete file generate
+  ansible.builtin.file:
+    path: "/tmp/file.txt"
+    state: absent
+    mode: '0644'

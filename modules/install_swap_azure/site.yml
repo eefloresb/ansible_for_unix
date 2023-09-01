@@ -1,0 +1,36 @@
+---
+- hosts: all
+  become: true
+  vars:
+    sanity_reboot: false
+  gather_facts: true
+  tasks:
+    - name: validate the file in remote server
+      ansible.builtin.stat:
+        path: /etc/waagent.conf
+      register: waagent_st
+
+    - name: when exist the waagent_st
+      when: waagent_st.exists is true
+      ansible.builtin.lineinfile:
+        path: /etc/waagent
+        regexp: "{{ item.path }}"
+        line: "{{ item.mode }}"
+      loop:
+        - { path: "ResourceDisk.Format=", mode: "ResourceDisk.Format=y" }
+        - {
+            path: "ResourceDisk.EnableSwap=",
+            mode: "ResourceDisk.EnableSwap=y",
+          }
+        - { path: "ResourceDisk.SwapSize=", mode: "ResourceDisk.SwapSize=4G" }
+      notify: restart walinuxagent
+
+    - name: the reboot machine
+      ansible.builtin.include_role:
+        name: ../reboot-vm
+
+  handlers:
+    - name: restart walinuxagent
+      ansible.builtin.service:
+        name: walinuxagent
+        state: restarted

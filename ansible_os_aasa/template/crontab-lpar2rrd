@@ -1,0 +1,1 @@
+* * * * * /usr/bin/perl /opt/lpar2rrd-agent/lpar2rrd-agent.pl lpar2rrd > /var/tmp/lpar2rrd-agent.out 2>&1 

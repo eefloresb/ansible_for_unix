@@ -1,0 +1,10 @@
+#!/bin/bash
+function _group_remove(){
+    pname=$1
+    if grep $pname /etc/sudoers 
+    then
+        sed -i -e "s/^%$pname.*ALL//g" /etc/sudoers
+    fi
+}
+
+_group_remove $1

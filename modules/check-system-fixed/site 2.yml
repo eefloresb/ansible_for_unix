@@ -1,0 +1,7 @@
+---
+- hosts: all
+  tasks:
+
+    - name: add role to check system 
+      ansible.builtin.include_role: 
+        name: deploy

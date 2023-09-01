@@ -1,0 +1,36 @@
+# Begin PE 4_OPERACIONES_PE standard template Ver 1.0  Date 2014-11-19  * Master * Refer XXXX  Begin #
+# Description
+# Software products and versions
+# Supported OS platforms: ALL
+# local functional ID
+# local path changes
+# local OS groups for the Master
+# self serve access permitted for all sub templates
+#
+# Version control (note: version number indicated will be chosen to
+# align with the corresponding global 'paired' template)
+#------------------------------------------------------------------------
+# v1.0   - vasina@pe.ibm.com - initial PE version
+# Replace sample group names with real group names for your account
+
+User_Alias      IBMPE_OPERACIONES_USER = %ibmopepe
+
+Host_Alias IBMPE_OPERACIONES_HOSTS = ALL # in this case, we want this defined on all hosts, indicate subsets as appropriate.
+
+# TWS commands (IBM TWS scripts)
+#---------- Operation Commands --------------#
+Cmnd_Alias IBMPE_OPERACIONES = /usr/local/bin/opactiva*.sh, \
+                                /usr/local/bin/opdesactiva*.sh, \
+                                /usr/bin/tail * /tmp/*.log, \
+                                /usr/bin/cat /tmp/*.log, \
+                                /usr/bin/tail * /tmp/*.txt, \
+                                /usr/bin/cat /tmp/*.txt, \
+                                /usr/tivoli/tsm/client/ba/bin64/backup*.sh, \
+                                /usr/local/bin/mantenimiento.sh
+#--------- End Operation Commands --------------#
+
+IBMPE_OPERACIONES_USER IBMPE_OPERACIONES_HOSTS = IBMPE_OPERACIONES
+
+# Note: No overrides needed in * Maintenance * section. #
+
+# End   PE 4_OPERACIONES_PE standard template Ver 1.0   Date 2014-11-19 * Master * Refer XXXXX End #

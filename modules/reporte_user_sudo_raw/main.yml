@@ -1,0 +1,58 @@
+---
+ - hosts: localhost
+   become: false
+   connection: local
+   vars:
+     dest_dir: "~/data/{{ client | default('CANVIA')}}"
+     dest_out_file: "{{dest_dir}}/report_users_with_sudo.csv"
+   tasks:
+     - name: create directory
+       file:
+        path: "{{ dest_dir }}"
+        state: directory
+
+     - name: create file report in .csv
+       local_action: 
+        module: copy
+        dest: "{{dest_out_file}}"
+        content: |
+            IPAddress,Hostname,Os Family,Distribution,Operative System, User with root sudo, Comment 
+
+ - hosts: all 
+   become: true
+   gather_facts: false 
+   tasks:
+    - name: check the OS in remote server 
+      raw: |
+        os=$(uname)
+        echo $os 
+      register: os_value
+
+    - name: define the os in value server 
+      set_fact: 
+        os_name: "{{os_value.stdout | regex_replace('[\\r\\n]','')}}"
+
+    - name: if os value is aix/linux       
+      when: os_name == "AIX" or os_name == "Linux"
+      include_role:
+        name: lnx_aix
+    
+    - name: if os value is hpux 
+      when: os_name == "HP-UX"
+      include_role:
+        name: hpx 
+
+ - hosts: localhost
+   become: false
+   connection: local
+   vars:
+    dest_dir: "~/data/{{ client | default('CANVIA')}}"
+    dest_out_file: "{{dest_dir}}/report_users_with_sudo.csv"
+   tasks:
+        - name: Juntar los archivos en uno solo
+          delegate_to: localhost  
+          shell: | 
+            join -1 1 -2 1 -t , {{ansible_host}}_1.csv {{ansible_host}}_2.csv > union.csv
+            cat union.csv >> {{dest_out_file}}
+            rm -rfv {{ansible_host}}_1.csv {{ansible_host}}_2.csv union.csv
+

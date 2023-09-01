@@ -1,0 +1,3 @@
+---
+- name: Remover expiracion de cuenta a gmdareng (chuser)
+  command: chuser maxage=0 gmdareng

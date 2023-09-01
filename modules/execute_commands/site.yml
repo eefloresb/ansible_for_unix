@@ -1,0 +1,14 @@
+- name: Hosts all
+  hosts: all
+  become: false
+  gather_facts: false
+  tasks:
+   - name: Execute commands in remote server
+     ansible.builtin.shell: |
+        whoami 
+        uname -a 
+     register: cmt_std
+
+   - name: Debug info
+     ansible.builtin.debug:
+      msg: "{{cmt_std.stdout}}"

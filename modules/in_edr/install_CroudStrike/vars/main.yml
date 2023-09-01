@@ -1,0 +1,5 @@
+---
+#TokenFalcon: "8249D47FADDA4D6EB5C7690EFF8A37A4-49"
+file_installer: "falcon-sensor-6.12.0-10912"
+nameservera: "8.8.8.8"
+nameserverb: "8.8.4.4"

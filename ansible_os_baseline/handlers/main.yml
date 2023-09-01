@@ -1,0 +1,10 @@
+---
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted
+
+    - name: yum-clean-metadata
+      command: yum clean metadata
+      args:
+       warn: no

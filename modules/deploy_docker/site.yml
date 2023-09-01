@@ -1,0 +1,14 @@
+---
+- hosts: all 
+  become: true
+  gather_facts: true
+  tasks: 
+
+    - name: Capture values to SO 
+      include_role:
+        name: ../../ansible_os_basevars
+          
+    - name: Deploy docker in remote server for Linux
+      include_role:
+        name: deploy
+        

@@ -1,0 +1,29 @@
+---
+- hosts: VMS
+  become: true 
+  tasks:
+  
+  - include_tasks: main.yml
+
+- hosts: localhost
+  connection: local
+  become: true
+  tasks: 
+
+    - name: capture process of local  
+      shell: ps axo pid,comm | grep -iE '.*{{item}}$' | awk -F " " '{print $1}'
+      loop:
+         - safari
+         - numbers 
+         - mail
+      register: 
+          ps_result  
+
+    - debug:  
+        var: ps_result | json_query('results[*].stdout')
+
+    - name: kill process of local server 
+      shell: sudo kill -9 {{item}}
+      loop: "{{ps_result | json_query('results[*].stdout')}}"
+
+

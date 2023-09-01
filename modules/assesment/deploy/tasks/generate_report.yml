@@ -1,0 +1,19 @@
+---
+- name: Register values captured of remote machines
+  vars:
+    high_cpu_warning: "{{ 'Critical alert: High usage' if get_cpu_per.stdout | int > 85 else 'Normal Usage' }}"
+    high_memory_warning: "{{ 'Critical alert: High usage' if get_mem_per.stdout | int > 85 else 'Normal Usage' }}"
+    process_cpu_output: "{{ proccess_cpu.stdout | default('No high CPU usage found') if proccess_cpu is defined else ' ' }}"
+    os_subscription_info: "{{ os_subscription | default('SO OpenSource') }}"
+  ansible.builtin.shell: >
+   echo {{ xhostname }},{{ xipaddress }},{{ xgateway }},{{ xaddress }},
+   {{ xarchitecture }},{{ xdate }},{{ ansible_uptime_seconds // 86400 }},
+   {{ xosfamily }},{{ xdistribution }},{{ xvdistribution }},{{ release_std.stdout }},
+   {{ os_subscription_info }},{{ xmem }},{{ xmemfree }},{{ xswap }},{{ xpcpu }},
+   {{ xcpu }},{{ xvcpu }},{{ xtvirtualization }},{{ get_conection_www }},
+   {{ high_cpu_warning }},{{ process_cpu_output }},
+   {{ high_memory_warning }} >> {{ dest_remote_dir }}/report_assesment.csv
+  delegate_to: localhost
+  register: save_report
+  changed_when: save_report.rc != 0
+  become: false

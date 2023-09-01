@@ -1,0 +1,53 @@
+---
+- hosts: all 
+  tasks: 
+    #### replicate install docker from client
+    - name: Disable SELinux
+      ansible.posix.selinux:
+        state: disabled
+
+    - name: configure repository in redhat repo to install docker 
+      yum_repository: 
+        name: docker 
+        description: Docker YUM repo
+        baseurl: http://download.nus.edu.sg/mirror/centos/7.9.2009/extras/x86_64/
+        enabled: yes  
+        gpgcheck: no
+    
+    - name: install docker in remote server 
+      yum: 
+        name: docker-2:1.13.1-162.git64e9980.el7.centos.x86_64
+        state: present 
+    
+    - service:
+        name: docker 
+        state: started
+    
+    - name: create network private
+      shell: | 
+        docker network create private
+
+    - name: create users jenkins
+      user:
+        name: jenkins
+        state: present 
+    
+    - name: create directory to jenkins 
+      file:
+       name: "{{item}}"
+       state: directory  
+       owner: jenkins 
+       group: users
+       mode: 0777
+      loop:  
+        - "/usr/data/jenkins"
+        - "/var/jenkins_home"
+    
+    - name: execute jenkins docker 
+      shell: | 
+        docker run -d --name jenkinsPrueba2 -p 8080:8080 --env JENKINS_OPTS="--prefix=/jenkins" -p50000:50000 -v /usr/data/jenkins:/var/jenkins_home:rw --network private jenkins/jenkins:lts
+      register: execute_jenkins
+    
+    - debug:
+       var: execute_jenkins
+    

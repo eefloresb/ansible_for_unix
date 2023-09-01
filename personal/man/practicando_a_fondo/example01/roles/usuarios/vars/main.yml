@@ -1,0 +1,8 @@
+---
+grupoA:
+  - usuarioA
+  - usuarioB 
+
+grupoB:
+  - usuarioC
+  - usuarioD

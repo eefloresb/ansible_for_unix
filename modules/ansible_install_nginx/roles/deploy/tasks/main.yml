@@ -1,0 +1,4 @@
+---
+- name: install nginx in Linux architect
+  when: ansible_system == "Linux"
+  ansible.builtin.include_tasks: os_linux.yml

@@ -1,0 +1,21 @@
+---
+- name: Create new file report 
+  copy:
+    dest: "{{ report_file }}"
+    content: |
+      "Hostname","IP principal","Sistema operativo","Arquitectura","Version de kernel","Dias encendido","status"
+  delegate_to: localhost
+
+
+- name: writing report in localhost 
+  shell: | 
+    echo "{{ansible_hostname}},{{ansible_default_ipv4.address}},{{ansible_system}} {{ansible_distribution}}\
+    {{ansible_distribution_major_version}},{{ansible_architecture}},{{ansible_kernel}},\
+    {{ansible_uptime_seconds // 86400}}, {{os_subscription}}">>{{report_file}}
+  delegate_to: localhost
+
+#- name: Escribir reporte
+#  shell: |
+#      echo "{{ ansible_hostname }},{{ ansible_default_ipv4.address }},{{ ansible_system }} {{ ansible_distribution }},\
+#      {{ ansible_architecture }},{{ ansible_kernel }},{{ ansible_uptime_seconds // 86400 }},{{ subscription_status.stdout if ansible_distribution == 'RedHat' else ( os_subscription if ansible_distribution =='SLES' else 'other SO') }}" >> {{ report_file }}
+#  delegate_to: localhost

@@ -1,0 +1,130 @@
+---
+- name: Hardening de cuentas de usuario
+  block:
+
+        - name: Configurar duracion maxima de clave
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_MAX_DAYS).*$'
+            replace: '\1\t{{ maxpassage }}'
+
+        - name: Configurar duracion minima de clave 
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_MIN_DAYS).*$'
+            replace: '\1\t{{ minpassage }}'
+
+        - name: Configurar longitud minima de clave
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_MIN_LEN).*$'
+            replace: '\1\t{{ minpasslen }}'
+
+        - name: Configurar dias de advertencia por expiracion de clave
+          replace:
+            path: /etc/login.defs
+            regexp: '(^PASS_WARN_AGE).*$'
+            replace: '\1\t{{ passwarnage }}'
+
+- name: Ajustes SSH
+  block:
+      - name: Configurar template de banner SSH
+        template:
+          src: templates/ssh_banner.txt.j2
+          dest: /etc/ssh/banner.txt
+
+      - name: Configurar SSH - Banner
+        lineinfile:
+          path: /etc/ssh/sshd_config
+          regexp: '^Banner.*'
+          line: 'Banner /etc/ssh/banner.txt'
+        notify: reload_sshd
+
+- name: Deshabilitar Reinicio Servidores con Ctrl+Alt+Del
+  block:
+      - name: Deshabilitar reinicio con Ctrl+Alt+Del en sistemas basados en Systemd
+        systemd:
+          name: ctrl-alt-del.target
+          masked: yes
+        when:
+          (os_vendor == 'amazon' and os_release == '2') or 
+          (os_vendor == 'sles' and os_release.split('.')[0] == '12') or
+          ( ansible_distribution == "Debian" and ansible_distribution_major_version|int >= 8 ) or
+          ( ansible_distribution == "Ubuntu" and ansible_distribution_major_version|int >= 16 ) or
+          ( ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 7 )
+
+      - name: Deshabilitar reinicio con Ctrl+Alt+Del en sistemas basados en Upstart
+        template:
+          src: templates/control-alt-delete.override
+          dest: /etc/init/control-alt-delete.override
+          mode: 0644
+        when:
+          (os_vendor == 'amazon' and os_release != '2') or 
+          ( ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 6 )
+
+      - name: Deshabilitar reinicio con Ctrl+Alt+Del en sistemas basados en System V
+        lineinfile:
+          path: /etc/inittab
+          regexp: '^ca::ctrlaltdel'
+          state: absent
+        register: ctrlaltdel
+        when:
+          ( ansible_os_family == "RedHat" and ansible_distribution_major_version|int == 5 ) or
+          (os_vendor == 'sles' and os_release.split('.')[0] == '11')
+
+      - name: Recargar inittab
+        shell: telinit q
+        when: ctrlaltdel is defined and ctrlaltdel.changed == True
+
+- name: Habilitar Secondary Logging
+  block:
+
+      - name: Crear directorio de historial de comandos
+        file:
+          path: /var/log/history
+          mode: '01777'
+          state: directory
+
+      - name: Asegurarse que exista directorio de scripts
+        file:
+          path: /scripts
+          mode: 0755
+          state: directory
+          owner: root
+          group: root
+
+      - name: Copiar scripts de registro de historial de comandos
+        template:
+          src: "{{ item }}"
+          mode: 0755
+          dest: /scripts
+        with_items:
+          - files/history-log.sh
+          - files/compress-history-log.sh
+
+      - name: Configurar cron para comprimir logs de historial de comandos
+        template:
+          src: templates/compress-history-log.cron
+          dest: /etc/cron.d
+          mode: 0644
+
+      - name: Configurar registro de historial de comandos en bash de SUSE o Debian/Ubuntu
+        lineinfile:
+          path: /etc/bash.bashrc
+          state: present
+          regexp: '^\. /scripts/history-log.sh'
+          line: '. /scripts/history-log.sh'
+        when:
+          os_vendor == 'sles' or
+          os_vendor == 'kali' or
+          ansible_os_family == "Debian"
+
+      - name: Configurar registro de historial de comandos en bash de RedHat/CentOS/Oracle
+        lineinfile:
+          path: /etc/bashrc
+          state: present
+          regexp: '^\. /scripts/history-log.sh'
+          line: '. /scripts/history-log.sh'
+        when:
+          ansible_os_family == "RedHat" or 
+          os_vendor == 'amazon'

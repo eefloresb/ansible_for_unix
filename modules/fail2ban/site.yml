@@ -1,0 +1,11 @@
+---
+ - hosts: all 
+   become: true
+   gather_facts: true
+   vars: 
+    ip_address: "127.0.0.1/8 ::1 10.8.5.0/24 10.130.9.12/32"
+   tasks: 
+
+    - name: include role fail2ban 
+      ansible.builtin.include_role:
+        name: deploy

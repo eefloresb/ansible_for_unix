@@ -1,0 +1,51 @@
+---
+- name: Captura datos a nivel de os_system
+  ansible.builtin.raw: |
+   uname
+  register: os_value
+  when: ansible_system is not defined
+  changed_when: os_value.rc != 0
+
+- name: Eliminar cadena de una variable
+  ansible.builtin.set_fact:
+   os_value: "{{ os_value.stdout | trim | replace('\r', '') | replace('\n', '') }}"
+  when:
+   - os_value is defined
+   - ansible_system is not defined
+
+- name: Check if Python is installed
+  when:
+   - os_value == "AIX" or os_value == "Linux"
+   - os_value is defined
+  ansible.builtin.raw: command -v python || echo "not_installed"
+  register: python_check
+  changed_when: false
+
+- name: Take photo to UNIX System with ansible_system
+  become: true
+  block:
+   - name: System Operating UNIX with setup exists
+     when:
+      - ansible_system is defined
+      - ansible_python_version is defined
+      - ansible_system == "Linux" or ansible_system == "SunOS" or ansible_system == "AIX"
+     ansible.builtin.include_tasks: os_Unix.yml
+
+- name: Take photo to UNIX System with ansible_system undifined
+  become: true
+  block:
+   - name: System Operating UNIX without setup exists but version ansible < 1.10
+     when:
+      - ansible_system is not defined
+      - python_check is defined
+      - os_value == "Linux" or  os_value == "SunOS" or  os_value == "AIX"
+     ansible.builtin.include_tasks: os_Unix.yml
+
+- name: Include tasks for AIX/LINUX without Python
+  become: true
+  block:
+   - name: Take Photo to SO
+     ansible.builtin.include_tasks: os_AIX_without_python.yml
+     when:
+      - python_check == "not_installed"
+      - os_value == "Linux" or  os_value == "SunOS" or  os_value == "AIX"

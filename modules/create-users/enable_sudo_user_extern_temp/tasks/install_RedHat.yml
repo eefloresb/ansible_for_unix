@@ -1,0 +1,7 @@
+---
+  - name: install when redhat family
+    when: 
+      - ansible_os_family == "RedHat" 
+    yum:
+      name: at
+      state: present

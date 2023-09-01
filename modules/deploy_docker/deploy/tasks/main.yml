@@ -1,0 +1,5 @@
+---
+- name: install docker in Linux 
+  when: ansible_system == "Linux"
+  include_tasks: os_{{ansible_system}}.yml
+    

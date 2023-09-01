@@ -1,0 +1,18 @@
+---
+- hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Ejecucion local
+      local_action:
+        module: file
+        path: /data/AASA/intel-inventory.csv
+        state: absent
+
+    - name: Ejecutar reporte de capacidades
+      shell: /scripts/sysinfo.sh
+      register: sysinfo
+
+    - name: Escribir reporte
+      shell: echo "{{ansible_host}},{{ansible_host_lan}},{{sysinfo.stdout}}" >> /data/AASA/intel-inventory.csv
+      delegate_to: localhost

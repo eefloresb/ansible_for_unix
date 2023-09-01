@@ -1,0 +1,98 @@
+# Begin Global Negations standard template Ver 2.0.2  Date 2015-05-19  * Master * Refer NA15148025 Begin #
+#
+#
+# Version control
+#
+# See changelog on Global sudo wiki http://ibm.biz/GsudoStandardAlias for previous changes
+#
+# Updates in this version:
+#
+# V2.0.1 - jekri@dk.ibm.com - Version not released replaced by V2.0.2
+#------------------------------------------------------------------------------
+# V2.0.2 - jekri@dk.ibm.com - functional update to IBM_COMPRESS_NEG, and IBM_FIND_NEG
+#
+# -    !/usr/bin/find *-exec*, !/usr/bin/find *-ok*, !/usr/bin/find *..*, \
+# -    !/usr/bin/find *-execdir*, !/usr/bin/find *-okdir*  
+# +    !/usr/bin/find * -exec *, !/usr/bin/find * -ok *, !/usr/bin/find *..*, \
+# +    !/usr/bin/find * -execdir *, !/usr/bin/find * -okdir *
+# -    !/usr/bin/compress /* *,!/usr/bin/compress * /* *,!/bin/compress *..*, !/bin/compress *./* 
+# +    !/usr/bin/compress /* *,!/usr/bin/compress * /* *,!/usr/bin/compress *..*, !/usr/bin/compress *./* 
+#
+#==============================================================================
+# Standard negations 
+#
+# Note:  For AIX, Solaris, HPUX, /bin is a symlink to /usr/bin.  sudo will apply
+# negations coded against /bin commands to /usr/bin in this case, and thus
+# the 'Linux location', when in /bin, can be used for all 4 OS's.
+#
+Cmnd_Alias   IBM_CAT_NEG  = \
+    !/bin/cat /* *,!/bin/cat * /* *,!/bin/cat *..*,  !/bin/cat *./* 
+Cmnd_Alias   IBM_CHGRP_NEG = \
+    !/bin/chgrp * /* *,!/bin/chgrp *..*,!/bin/chgrp *./* 
+Cmnd_Alias   IBM_CHMOD_NEG = \
+     !/bin/chmod * /* *, !/bin/chmod *..*,!/bin/chmod *./*   
+Cmnd_Alias   IBM_CHOWN_NEG = \
+    !/bin/chown * /* *,!/bin/chown *..*, !/bin/chown *./*    
+Cmnd_Alias   IBM_COMPRESS_NEG = \
+    !/usr/bin/compress /* *,!/usr/bin/compress * /* *,!/usr/bin/compress *..*, !/usr/bin/compress *./* 
+Cmnd_Alias   IBM_CP_NEG = \
+    !/bin/cp /* /* *, !/bin/cp * /* /* *, !/bin/cp *..*, !/bin/cp *./* 
+Cmnd_Alias   IBM_DIFF_NEG = \
+    !/usr/bin/diff /* /* *,!/usr/bin/diff * /* /* *, !/usr/bin/diff *..*, !/usr/bin/diff *./* 
+Cmnd_Alias   IBM_FIND_NEG = \
+    !/usr/bin/find * -exec *, !/usr/bin/find * -ok *, !/usr/bin/find *..*, \
+    !/usr/bin/find * -execdir *, !/usr/bin/find * -okdir *
+Cmnd_Alias   IBM_GUNZIP_NEG = \
+    !/usr/bin/gunzip /* *,!/usr/bin/gunzip -* /* *,!/usr/bin/gunzip *..*, !/usr/bin/gunzip *./*
+Cmnd_Alias   IBM_GZIP_NEG = \
+    !/usr/bin/gzip /* *,!/usr/bin/gzip -* /* *,!/usr/bin/gzip *..*, !/usr/bin/gzip *./*  
+Cmnd_Alias   IBM_HEAD_NEG = \ 
+    !/usr/bin/head  /* *,!/usr/bin/head * /* *,!/usr/bin/head *..*, !/usr/bin/head *./* 
+        # Authorization of head is discouraged.  Instead, authorize the
+        # the team to 'cat', team can then run 'sudo cat /tmp/specified file | head {any flags they need}'
+        # While discouraged, negation is effective when head is authorized
+Cmnd_Alias   IBM_LN_NEG = \
+    !/bin/ln /* /* *, !/bin/ln -* /* /* *, !/bin/ln *..*, !/bin/ln *./*
+Cmnd_Alias   IBM_LS_NEG = \
+            !/bin/ls /* *, !/bin/ls -* /* *, !/bin/ls *..*, !/bin/ls *./*
+Cmnd_Alias   IBM_MKDIR_NEG = \
+    !/bin/mkdir /* *,!/bin/mkdir * /* *, !/bin/mkdir *..*, !/bin/mkdir *./* 
+Cmnd_Alias   IBM_MOUNT_NEG = \
+    !/bin/mount /* *,!/bin/mount * /* *,!/bin/mount *..*, !/bin/mount *./* , \
+    !/usr/sbin/mount /* *,!/usr/sbin/mount * /* *,!/usr/sbin/mount *..*, !/usr/sbin/mount *./*  
+    # Caution:  we have only coded a negation for the 'single directory/device' version of the mount command;
+    #           if you need to 'permit' the 'two directory/device' version of the command, it will have to be
+    #           with a different negation, and if this negation is used, must be specified AFTER use of this
+    #           this negation or the use of IBM_NEG_ALL as this negation will block the two * version.
+Cmnd_Alias   IBM_MV_NEG = \
+    !/bin/mv /* /* *,!/bin/mv * /* /* *, !/bin/mv *..*, !/bin/mv *./* 
+Cmnd_Alias   IBM_RM_NEG = \
+    !/bin/rm /* *,!/bin/rm * /* *, !/bin/rm *..*, !/bin/rm *./* 
+Cmnd_Alias   IBM_RMDIR_NEG = \
+    !/bin/rmdir /* *,!/bin/rmdir * /* *,!/bin/rmdir *..*,!/bin/rmdir *./* 
+Cmnd_Alias   IBM_TAIL_NEG = \
+    !/usr/bin/tail /* *,!/usr/bin/tail -* /* *,!/usr/bin/tail *..*,  !/usr/bin/tail *./*
+        # authorization of tail 'except for' tail -f is discouraged.  Instead, authorize the
+        # the team to 'cat', team can then run 'sudo cat /tmp/specified file | tail {any flags they need}'
+        # While discouraged, negation is effective for when tail is authorized to be issued with no flags.
+Cmnd_Alias   IBM_TAR_NEG = \
+    !/bin/tar /* /* *,!/bin/tar * /* /* *, !/bin/tar *..*, !/bin/tar *./*   
+Cmnd_Alias   IBM_TOUCH_NEG = \
+   !/bin/touch /* *, !/bin/touch * /* *, !/bin/touch *..*, !/bin/touch *./* # will block some complex parms such as "-r"
+        #Note: PO will need to create custom negation if flags such as -r must be 'allowed for'.
+Cmnd_Alias   IBM_UMOUNT_NEG = \
+    !/bin/umount  /* *,!/bin/umount * /* *,!/bin/umount *..*, !/bin/umount *./*,\
+    !/usr/sbin/umount /* *, !/usr/sbin/umount * /* *,!/usr/sbin/umount *..*, !/usr/sbin/umount *./* 
+Cmnd_Alias   IBM_UNCOMPRESS_NEG = \
+    !/usr/bin/uncompress /* *,!/usr/bin/uncompress * /* *,!/usr/bin/uncompress *..*, !/usr/bin/uncompress *./* 
+Cmnd_Alias   IBM_ZCAT_NEG = \
+    !/bin/zcat /* *, !/bin/zcat *..*, !/bin/zcat *./* 
+Cmnd_Alias   IBM_ALL_NEG = \
+    IBM_CAT_NEG, IBM_CHGRP_NEG, IBM_CHMOD_NEG, IBM_CHOWN_NEG, \
+    IBM_COMPRESS_NEG, IBM_CP_NEG, IBM_DIFF_NEG, IBM_FIND_NEG, \ 
+    IBM_GUNZIP_NEG, IBM_GZIP_NEG, IBM_HEAD_NEG, \ 
+    IBM_LS_NEG, IBM_LN_NEG, IBM_MKDIR_NEG, \
+    IBM_MOUNT_NEG, IBM_MV_NEG, IBM_RM_NEG, IBM_RMDIR_NEG, IBM_TAIL_NEG, \
+    IBM_TAR_NEG, IBM_TOUCH_NEG, IBM_UMOUNT_NEG, IBM_UNCOMPRESS_NEG,IBM_ZCAT_NEG 
+#
+# End Global Negations standard template Ver 2.0.2  Date 2015-05-19  * Master * Refer NA15148025 End #

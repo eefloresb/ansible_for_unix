@@ -1,0 +1,31 @@
+---
+- name: Capturar datos de los hosts remotos
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+  vars:
+    fichero: reporte-equipos.csv
+  tasks:
+    - name: Crear la estructura del fichero
+      ansible.builtin.copy:
+       content: |
+         Nombre Equipo,NombreVirtual,Ambiente,S.O.,Version S.O.,IP
+       dest: ~/data/{{ client | default('Canvia') }}/{{ fichero }}
+       mode: '0644'
+      become: false
+
+- name: Captura de datos en el fichero
+  hosts: all
+  gather_facts: true
+  become: false
+  vars:
+    fichero: reporte-equipos.csv
+  tasks:
+    - name: Añadir datos a la estructura de archivos
+      ansible.builtin.shell: |
+        echo "{{ ansible_hostname }},{{ ansible_hostname }},{{ ansible_environment }},{{ ansible_system }},{{ ansible_distribution }} "\
+        "{{ ansible_distribution_version }}({{ ansible_architecture }}),{{ ansible_default_ipv4.address }}" >> ~/data/{{ client | default('Canvia') }}/{{ fichero }}
+      register: check_resource
+      changed_when: check_resource.rc != 0
+      delegate_to: localhost

@@ -1,0 +1,12 @@
+---
+# defaults file for ansible-role-httpd
+
+httpd_install_from:
+    - { name: "httpd",       enablerepo: ~ }
+    - { name: "httpd-devel", enablerepo: ~ }
+    - { name: "mod_ssl",     enablerepo: ~ }
+
+var_log_httpd_permission: "0755"
+
+httpd_service_on: yes
+

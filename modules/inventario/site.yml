@@ -1,0 +1,105 @@
+---
+ - hosts: localhost
+   become: false
+   connection: local
+   vars:
+     dest_dir: "~/data/{{ client | default('CANVIA') }}"
+     dest_remote_dir: "~/data/{{ client | default('CANVIA') }}/report_assesment.csv"
+   tasks:
+     - name: create directory
+       file:
+        path: "{{ dest_dir }}"
+        state: directory
+
+     - ansible.builtin.debug:
+        var: dest_remote_dir
+
+     - name: create file report in .csv
+       copy:
+        dest: "{{ dest_remote_dir }}"
+        content: |
+          hostname,ip_nat,ipaddress,architecture,Os system,Os Family,Distribution,D.Version,Memory(MB),Memory FREE(MB),Memory swap(MB),#cpu,#cores,#vcpus,Type Virtual
+
+ - hosts: all 
+   gather_facts: true
+   become: true
+   vars:
+     dest_remote_dir: "~/data/{{ client | default('CANVIA')}}/report_assesment.csv"
+   tasks:
+  
+     - name: register hostname and value assigned
+       set_fact:
+        xhostname: "{{ ansible_hostname }}"
+
+     - name: Register IP nat 
+       set_fact:
+        ip_nat: "{{ansible_host | default(omit)}}"
+
+     - name: register ip in value
+       set_fact:
+        xipaddress: "{{ ansible_default_ipv4.address }}"
+
+     - name: register architecture in value
+       set_fact:
+          xarchitecture: "{{ansible_architecture}}"
+
+     - name: register ansible os system y value 
+       ansible.builtin.set_fact:
+        xosystem: "{{ ansible_system }}"
+
+     - name: register family the server
+       set_fact:
+          xosfamily: "{{ ansible_os_family }}"
+
+     - name: register the distribution
+       set_fact:
+          xdistribution: "{{ ansible_distribution }}"
+
+     - name: register the distribution version
+       set_fact:
+          xvdistribution: "{{ansible_distribution_version}}"
+
+     - name: register the mem
+       set_fact:
+          xmem: "{{ansible_memtotal_mb}}"
+
+     - name: register the mem free
+       set_fact:
+          xmemfree: "{{ansible_memfree_mb}}"
+
+     - name: register the swap
+       set_fact:
+          xswap: "{{ansible_swaptotal_mb}}"
+
+     - name: processor count
+       set_fact:
+        xpcpu: "{{ ansible_processor_count }}"
+
+     - name: number of cores
+       set_fact:
+        xcpu: "{{ansible_processor_cores}}"
+
+     - name: number of virtual core
+       set_fact:
+        xvcpu: "{{ ansible_processor_vcpus }}"
+
+     - name: asigned values 
+       ansible.builtin.set_fact:        
+        modified_facts: "{{ ansible_system_vendor | to_json | regex_replace('VMware, Inc.', 'vmware_incl') | from_json }}"
+
+     - name: change value 
+       ansible.builtin.set_fact: 
+        modified_facts: 
+       when: modified_facts == "NA"
+
+     - name: type virtualization
+       set_fact:
+        xtvirtualization: "{{modified_facts}} {{ansible_virtualization_type}}"
+
+
+     - name: register values captured of remote machines
+       shell: |
+          echo "{{xhostname}},{{ip_nat}},{{xipaddress}},{{xarchitecture}},{{xosystem}},{{xosfamily}},{{xdistribution}},{{xvdistribution}},{{xmem}},{{xmemfree}},{{xswap}},{{xpcpu}},{{xcpu}},{{xvcpu}},\
+          {{xtvirtualization}}" >> {{ dest_remote_dir }}
+       become: false
+       delegate_to: localhost

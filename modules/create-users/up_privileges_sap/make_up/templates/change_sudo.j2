@@ -1,0 +1,10 @@
+#!/bin/bash
+function _user_remove(){
+    uname=$1
+    if grep $uname /etc/sudoers 
+    then
+        sed -i -e "s/^$uname.*ALL//g" /etc/sudoers
+    fi
+}
+
+_user_remove $1

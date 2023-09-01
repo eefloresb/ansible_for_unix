@@ -1,0 +1,78 @@
+---
+- name: Ensure /tmp is configured
+  block:
+  - name: Enable systemd
+    systemd:
+      name: tmp.mount
+      state: started
+      enabled: yes
+      masked: no
+
+  - name: Change options nodev, nosuid, noexec and strictatime
+    lineinfile:
+      path: /usr/lib/systemd/system/tmp.mount
+      regexp: '^Options=*'
+      line: Options=mode=1777,strictatime,noexec,nodev,nosuid
+      owner: root
+      group: root
+      mode: '0644'
+      state: present
+    notify: reboot
+
+  - name: Ensure nodev,nosuid,noexec options set on /dev/shm partition
+    mount:
+      name: /dev/shm
+      src: tmpfs
+      state: mounted
+      fstype: tmpfs
+      opts: "defaults,nodev,nosuid,noexec"
+
+- name: Ensure Red Hat Network or Subscription Manager connection is configured
+  command: subscription-manager identity
+  changed_when: no
+  failed_when: no
+  
+# TODO: disable rhnsd daemon
+# NOTE: No es posible añadir el paquete. La arquitectura no es compatible (MISMO ERROR EN RHEL8 Y AMAZON LINUX 2)
+
+- name: Disable the rhnsd daemon
+  systemd:
+    name: rhnsd
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+
+- name: Ensure sudo commands use pty
+  lineinfile:
+    path: /etc/sudoers
+    line: 'Defaults  use_pty'
+    state: present
+
+- name: Ensure Sudo Log File exists
+  lineinfile:
+    path: /etc/sudoers
+    line: "{{ item }}"
+    state: present
+  loop: "{{ logfiles }}"
+
+- name: Ensure AIDE is installed
+  yum:
+    name: aide
+    state: present
+
+- name: Configure AIDE
+  shell: 'aide --init && mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz'
+  ignore_errors: true
+
+- name: Ensure filesystem integrity is regularly checked
+  cron:
+    name: "Run AIDE (CIS 1.3.2)"
+    minute: "0"
+    hour: "5"
+    job: "/usr/sbin/aide --check"
+
+- name: Edit crontab
+  lineinfile:
+    path: /etc/crontab
+    line: "0 5 * * * root /usr/sbin/aide --check"
+    state: present

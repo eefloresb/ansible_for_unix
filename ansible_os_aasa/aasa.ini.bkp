@@ -1,0 +1,103 @@
+[aix-noha]
+podaix ansible_host=10.222.36.253 ansible_host_lan=172.16.1.70 role="IC PO DEV"
+poqaix ansible_host=10.222.36.17 ansible_host_lan=172.16.1.72 role="IC PO QAS"
+smddevic ansible_host=10.222.42.39 ansible_host_lan=172.16.1.105 role="IC SOLMAN DEV"
+erpdicx ansible_host=10.222.36.86 ansible_host_lan=172.16.1.75 role="IC ERP DEV"
+#erpdicx2 ansible_host=10.222.36.6 ansible_host_lan=172.16.1.88 role="IC ERP QAS" Servidor apagado RFC 19661 
+bidqicbdsbx ansible_host=10.222.36.143 ansible_host_lan=172.16.1.80 role="BW QAS+DEV"
+bipicbdcl ansible_host=10.222.42.49 ansible_host_lan=172.16.1.89 role="IC BWP QAS"
+erpqasic ansible_host=10.222.42.122 ansible_host_lan=172.16.2.67 role="IC ERP QAS S/4HANA"
+#erpmokic ansible_host=10.222.40.71 ansible_host_lan=172.16.2.71 role="IC ERP QAS S/4HANA" Servidor apagado RFC 19688
+#aasal ansible_host=10.222.36.63 ansible_host_lan=172.16.0.3 role="" Servidor no administrado, no se cuenta con root
+#ias ansible_host=10.222.36.64 ansible_host_lan=172.16.0.8 role="" Servidor no administrado, no se cuenta con root
+histsohprdic ansible_host=10.222.42.19 ansible_host_lan=172.16.108.5 role="CLON IC ERP PRD"
+
+[aix-ha]
+aasal2 ansible_host=10.222.36.58 ansible_host_lan=172.16.0.11 ansible_host_srv=10.222.36.210 ansible_host_lan_srv=172.16.0.4 role="BD LEGACY / BAAN DESA PROD AASAP (HA PRD)"
+aasal2ha ansible_host=10.222.36.214 ansible_host_lan=172.16.0.12 ansible_host_srv=10.222.36.58 ansible_host_lan_srv=172.16.0.12 role="BD LEGACY / BAAN DESA PROD AASAP (HA CONT)"
+bipicbd ansible_host=10.222.36.168 ansible_host_lan=172.16.4.53 ansible_host_srv=10.222.36.32 ansible_host_lan_srv=172.16.4.81 role="IC BWP PRD (PRD)"
+bipicbdha ansible_host=10.222.36.213 ansible_host_lan=172.16.4.54 ansible_host_srv=10.222.36.32 ansible_host_lan_srv=172.16.4.81 role="IC BWP PRD (CONT)"
+erppicbd ansible_host=10.222.36.248 ansible_host_lan=172.16.4.75 ansible_host_srv=10.222.36.55 ansible_host_lan_srv=172.16.4.72 role="IC ERP PRD (PRD)"
+erppicbdha ansible_host=10.222.36.217 ansible_host_lan=172.16.4.76 ansible_host_srv=10.222.36.55 ansible_host_lan_srv=172.16.4.72 role="IC ERP PRD (CONT)"
+popaix ansible_host=10.222.36.131 ansible_host_lan=172.16.2.186 ansible_host_srv=10.222.36.53 ansible_host_lan_srv=172.16.1.73 role="IC PO PRD (PRD)"
+popaixha ansible_host=10.222.36.89 ansible_host_lan=172.16.4.89 ansible_host_srv=10.222.36.53 ansible_host_lan_srv=172.16.1.73 role="IC PO PRD (CONT)"
+smpprdic ansible_host=10.222.36.96 ansible_host_lan=172.16.1.106 ansible_host_srv=10.222.36.21 ansible_host_lan_srv=172.16.1.104 role="IC SOLMAN PRD (PRD)"
+smpprdicha ansible_host=10.222.36.103 ansible_host_lan=172.16.6.7 ansible_host_srv=10.222.36.21 ansible_host_lan_srv=172.16.1.104 role="IC SOLMAN PRD (CONT)"
+
+[aix:children]
+aix-ha
+aix-noha
+
+[linux-vmware]
+saprouter11 ansible_host=10.222.36.205 ansible_host_lan=192.168.1.105 role="SAP ROUTER"
+syslog ansible_host=10.222.42.156 ansible_host_lan=172.16.108.1 role="LOGS CENTRALIZADOS"
+aaqbosdbicd ansible_host=10.222.42.59 ansible_host_lan=172.16.1.101 role="BO SYBASE DEV"
+aaqbosdbicq ansible_host=10.222.42.60 ansible_host_lan=172.16.1.102 role="BO SYBASE QA"
+aaqbosdbicp ansible_host=10.222.42.61 ansible_host_lan=172.16.1.103 role="BO SYBASE PRD"
+hanatest ansible_host=10.222.42.67 ansible_host_lan=172.16.3.141 role="BD LEGACY / BAAN DESA PROD AASAP (DEV)"
+aasasmt ansible_host=10.222.42.64 ansible_host_lan=172.16.3.87 role="REPOSITORIO PARCHES SUSE"
+dsagent ansible_host=10.222.36.171 ansible_host_lan=172.16.1.142 role=""
+dsagentp ansible_host=10.222.36.166 ansible_host_lan=172.16.1.151 role=""
+bocloud ansible_host=10.222.42.80 ansible_host_lan=172.16.2.38 role=""
+fioridev ansible_host=10.222.42.178 ansible_host_lan=172.16.2.66 role="SAP FIORI DEV"
+fioriqas ansible_host=10.222.42.213 ansible_host_lan=172.16.2.77 role="SAP FIORI QAS"
+fioriprd ansible_host=10.222.42.215 ansible_host_lan=172.16.2.90 role="SAP FIORI PRD"
+sapwdfioridev ansible_host=10.222.42.180 ansible_host_lan=172.16.2.76 role="SAP FIORI DEV WEB DISPATCHER"
+sapwdfioriqas ansible_host=10.222.42.214 ansible_host_lan=172.16.2.78 role="SAP FIORI QAS WEB DISPATCHER"
+sapwdfioriprd ansible_host=10.222.42.216 ansible_host_lan=172.16.2.91 role="SAP FIORI PRD WEB DISPATCHER"
+
+[linux-power-ha]
+erpprdbd ansible_host=10.222.36.211 ansible_host_lan=172.16.1.84 role="BD HANA ERP PRD (PRD)"
+erpprdbdha ansible_host=10.222.42.53 ansible_host_lan=172.16.1.94 role="BD HANA ERP PRD (CONT)"
+biprdbd ansible_host=10.222.42.42 ansible_host_lan=172.16.1.82 role="BD HANA BWP PRD (PRD)"
+biprdbdha ansible_host=10.222.36.5 ansible_host_lan=172.16.1.87 role="BD HANA BWP PRD (CONT)"
+smpprdbd ansible_host=10.222.42.54 ansible_host_lan=172.16.1.96 role="BD HANA SOLMAN PRD (PRD)"
+smpprdbdha ansible_host=10.222.42.56 ansible_host_lan=172.16.1.98 role="BD HANA SOLMAN PRD (CONT)"
+sappoprd ansible_host=10.222.42.30 ansible_host_lan=172.16.1.71 role="BD HANA PO PRD (PRD)"
+sappoprdha ansible_host=10.222.42.28 ansible_host_lan=172.16.2.174 role="BD HANA PO PRD (CONT)"
+
+[linux-power-noha]
+sappoqas ansible_host=10.222.36.100 ansible_host_lan=172.16.1.77 role="BD HANA PO QAS"
+sle4hanasaperpdev ansible_host=10.222.36.254 ansible_host_lan=172.16.1.85 role="BD HANA ERP DEV"
+sappodev ansible_host=10.222.42.37 ansible_host_lan=172.16.1.78 role="BD HANA PO DEV"
+sapbidev ansible_host=10.222.42.41 ansible_host_lan=172.16.1.81 role="BD HANA BWP DEV"
+sapbiqas ansible_host=10.222.42.43 ansible_host_lan=172.16.1.83 role="BD HANA BWP QAS"
+#sle4hanaerpqas ansible_host=10.222.42.52 ansible_host_lan=172.16.1.93 role="BD HANA ERP QAS" Servidor apagado RFC 19661
+smpdevbd ansible_host=10.222.42.55 ansible_host_lan=172.16.1.97 role="BD HANA SOLMAN DEV"
+bipid02 ansible_host=10.222.42.65 ansible_host_lan=172.16.2.198 role="ID BWP PRD"
+bpcpid02 ansible_host=10.222.42.66 ansible_host_lan=172.16.2.199 role="ID BWP PRD"
+erppid03 ansible_host=10.222.42.69 ansible_host_lan=172.16.2.200 role="ID ERP PRD"
+erppid04 ansible_host=10.222.42.70 ansible_host_lan=172.16.2.201 role="ID ERP PRD"
+erpqasbd ansible_host=10.222.42.123 ansible_host_lan=172.16.2.68 role="BD HANA ERP QAS S/4HANA"
+#erpmokbd ansible_host=10.222.40.72 ansible_host_lan=172.16.2.72 role="BD HANA ERP QAS S/4HANA" Servidor apagado RFC 19688
+erpdevicx ansible_host=10.222.42.245 ansible_host_lan=172.16.2.29 role="IC ap DEV"
+erpdevbdx ansible_host=10.222.42.246 ansible_host_lan=172.16.2.30 role="IC bd DEV"
+erpmokd1 ansible_host=10.222.42.177 ansible_host_lan=172.16.2.30 role="ID Dev"
+histsohprdbd ansible_host=10.222.42.20 ansible_host_lan=172.16.108.6 role="CLON BD HANA ERP PRD"
+
+[linux-fisico]
+sapb1prd ansible_host=10.222.42.173 ansible_host_lan=172.16.3.138 role="SAP B1 (PRD)"
+sapb1prdha ansible_host=10.222.42.174 ansible_host_lan=172.16.3.139 role="SAP B1 (CONT)"
+
+[linux-power:children]
+linux-power-ha
+linux-power-noha
+
+[linux:children]
+linux-power
+linux-vmware
+linux-fisico
+
+[power:children]
+linux-power
+aix
+
+[intel:children]
+linux-fisico
+linux-vmware
+
+[pruebas]
+suseha1 ansible_host=10.222.36.30 ansible_host_lan=172.16.6.8 role="Pruebas Cluster HA"
+suseha2 ansible_host=10.222.36.31 ansible_host_lan=172.16.6.9 role="Pruebas Cluster HA"
+suseha3 ansible_host=10.222.36.215 ansible_host_lan=172.16.4.52 role="Pruebas Cluster HA"
+SUSE4SAP12SP3 ansible_host=172.16.108.3 ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q 10.222.36.215"'

@@ -1,0 +1,17 @@
+--- 
+ - hosts: all
+   become: false
+   vars:
+    os: "{{ os | default('RedHat') }}"
+    os_version: 
+      Redhat: 
+        - 7
+        - 8
+        - 9
+    route: "~/vagrant/"
+   tasks: 
+
+    - name: up virtual machine in local
+      ansible.builtin.command: vagrant up
+      args:
+        chdir: "{{ route }}"
