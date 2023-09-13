@@ -4,43 +4,42 @@
   become: true
   gather_facts: true
   vars:
-   client: "Canvia"
-   disabled: false
-   ip_proxy: ""
-   python_check: ""
-   install_pkg: true
-   proxy: ""
+    client: "Canvia"
+    disabled: false
+    ip_proxy: ""
+    python_check: ""
+    install_pkg: true
+    proxy: ""
   tasks:
+    - name: Capture values from remote server
+      ansible.builtin.include_role:
+        name: ansible_os_basevars
 
-   - name: Capture values from remote server
-     ansible.builtin.include_role:
-      name: ansible_os_basevars
+    - name: Take photo into server remote
+      ansible.builtin.include_role:
+        name: ansible_take_photo
 
-#   - name: Take photo into server remote
-#     ansible.builtin.include_role:
-#      name: ansible_take_photo
-#
-#   - name: Validate CIS on the remote server
-#     ansible.builtin.include_role:
-#      name: ansible_os_check_cis
-#
-   - name: up values for subscription
-     include_tasks: password.yml
+    - name: Validate CIS on the remote server
+      ansible.builtin.include_role:
+        name: ansible_os_check_cis
 
-   - name: register remote server to redhat
-     include_role:
-       name: ansible_os_register
-     vars:
-       os_register_state: present
+    - name: up values for subscription
+      include_tasks: password.yml
 
-   - name: Apply hardening advanced
-     ansible.builtin.include_role:
-      name: ansible_os_cis
+    - name: register remote server to redhat
+      include_role:
+        name: ansible_os_register
+      vars:
+        os_register_state: present
 
-   - name: configure tools to monitoring
-     include_role:
-       name: ansible_os_monitoring
+    - name: Apply hardening advanced
+      ansible.builtin.include_role:
+        name: ansible_os_cis
 
-   - name: sanity reboot of server
-     reboot:
-       reboot_timeout: 300
+    - name: configure tools to monitoring
+      include_role:
+        name: ansible_os_monitoring
+
+    - name: sanity reboot of server
+      reboot:
+        reboot_timeout: 300

@@ -4,41 +4,40 @@
   become: true
   gather_facts: true
   vars:
-   disabled: false
-   remove_ip:
-   proxy:
-   install_pkg: true
-   client: ""
+    disabled: false
+    remove_ip:
+    proxy:
+    install_pkg: true
+    client: ""
   tasks:
+    - name: Capture values by default
+      ansible.builtin.include_role:
+        name: ansible_os_basevars
 
-   - name: Capture values by default
-     ansible.builtin.include_role:
-      name: ansible_os_basevars
+      #   - name: Up values for subscription
+      #     ansible.builtin.include_tasks: password.yml
+      #
+      #   - name: Subscribe the os
+      #     ansible.builtin.include_role:
+      #      name: ansible_os_register
+      #     vars:
+      #      os_register_state: present
 
-   - name: Up values for subscription
-     ansible.builtin.include_tasks: password.yml
+    - name: Create users systems and generic
+      ansible.builtin.include_role:
+        name: ansible_os_users
 
-   - name: Subscribe the os
-     ansible.builtin.include_role:
-      name: ansible_os_register
-     vars:
-      os_register_state: present
+    - name: Configure tools to monitoring
+      ansible.builtin.include_role:
+        name: ansible_os_monitoring
 
-   - name: Create users systems and generic
-     ansible.builtin.include_role:
-      name: ansible_os_users
+    - name: Apply hardening to remote server
+      ansible.builtin.include_role:
+        name: ansible_os_hardening_basic
 
-   - name: Configure tools to monitoring
-     ansible.builtin.include_role:
-      name: ansible_os_monitoring
-
-   - name: Apply hardening to remote server
-     ansible.builtin.include_role:
-      name: ansible_os_hardening_basic
-
-   - name: Configure base line
-     ansible.builtin.include_role:
-      name: ansible_os_baseline
+    - name: Configure base line
+      ansible.builtin.include_role:
+        name: ansible_os_baseline
 
   #  - include_role:
   #      name: os_line_register_vagrant
