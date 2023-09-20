@@ -1,0 +1,27 @@
+---
+- name: Vulnerabilities Corriged
+  hosts: all
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Remediate vulnerabilities
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+      register: result
+
+    - name: Insert line ciphers wheater not exist
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com"
+      when: '"Ciphers" not in restult.stat.attributes'
+
+    - name: Configure algoritmes to intercambiev from password strong
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "^KexAlgorithms"
+        line: "KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256"
+
+    - name: Restart the service
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

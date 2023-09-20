@@ -1,0 +1,107 @@
+---
+- name: Update cache from ubuntu
+  ansible.builtin.apt:
+    update_cache: true
+    state: present
+
+- name: Install packages in remote server
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - openjdk-17-jdk
+    - tomcat9
+    - tomcat9-admin
+    - tomcat9-docs
+    - tomcat9-examples
+    - apache2
+    - bind9
+
+- name: Add file template the domain in remote server
+  ansible.builtin.template:
+    src: slackwarnet.conf
+    dest: /etc/apache2/sites-available/slackwarnet.conf
+    mode: "0644"
+
+- name: Enable the firewall the ports
+  when: 1 == 2
+  community.general.ufw:
+    name: "{{ item }}"
+    state: enabled
+  loop:
+    - ssh
+    - http
+    - https
+  notify: reload_ufw
+
+- name: Generate Certificate
+  community.crypto.openssl_privatekey:
+    path: /etc/ssl/private/slackwarnet.key
+
+- name: Generate the request for domain
+  community.crypto.openssl_csr:
+    path: /etc/ssl/certs/slackwarnet.csr
+    privatekey_path: /etc/ssl/private/slackwarnet.key
+
+- name: Generate Certificate autofirm
+  community.crypto.x509_certificate:
+    path: /etc/ssl/certs/slackwarnet.crt
+    privatekey_path: /etc/ssl/private/slackwarnet.key
+    csr_path: /etc/ssl/certs/slackwarnet.csr
+    provider: selfsigned
+
+- name: Add module to apache2
+  community.general.apache2_module:
+    name: "{{ item }}"
+  loop:
+    - proxy
+    - proxy_http
+    - proxy_ajp
+    - rewrite
+    - deflate
+    - headers
+    - proxy_balancer
+    - proxy_connect
+    - proxy_html
+
+- name: Enaxle the configuration
+  ansible.builtin.shell: |
+    a2ensite slackwarnet.conf
+  register: a2ensite
+  changed_when: a2ensite.rc != 0
+  notify: restart_apache2
+
+- name: Add values from java and tomcat
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    line: "{{ item.value }}={{ item.dir }}"
+  loop:
+    - { value: "JAVA_HOME", dir: "/usr/lib/java-11-openjdk-adm64" }
+    - { value: "CATALINA_HOME", dir: "/opt/tomcat" }
+
+- name: Add line enviroment to file tomcat9.service
+  ansible.builtin.lineinfile:
+    path: /lib/systemd/system/tomcat9.service
+    insertafter: Enviroment="JAVA_OPTS.*"
+    line: '"JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64"'
+
+- name: Copy the configuration for bind
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "/etc/bind/{{ item | ternary(item[:-3] + '.conf', item) if item.endswith('.j2') else item }}"
+    mode: "0644"
+  loop:
+    - named.conf.options.j2
+    - named.conf.default-zones.j2
+    - slackwarnet.com.db
+    - 56.168.192.in-addr.arpa
+  notify: restart_bind
+
+- name: Copy the server xml en remote server
+  ansible.builtin.template:
+    src: server.xml.j2
+    dest: /opt/tomcat/conf/server.xml
+    mode: "0644"
+    owner: root
+    group: tomcat
+  notify: restart_tomcat

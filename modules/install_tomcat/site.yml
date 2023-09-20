@@ -1,0 +1,24 @@
+---
+- name: Install Tomcat programs
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    server_admin: "enrique@sfi-networks.com"
+    server_name: "slackwarnet.com"
+    server_aliases:
+      - "www.slackwarnet.com"
+      - "slackwarnet.com"
+    proxy_pass_ip: "192.168.56.19"
+    proxy_pass_port: "8080"
+    proxy_pass_reverse_ip: "localhost"
+    proxy_pass_reverse_port: "8080"
+    ssl_certificate_file: "/etc/ssl/certs/slackwarnet.crt"
+    ssl_certificate_key_file: "/etc/ssl/private/slackwarnet.key"
+    forwarder_list:
+      - "8.8.8.8"
+      - "4.4.4.4"
+  tasks:
+    - name: Tomcat Role install
+      ansible.builtin.include_role:
+        name: tomcat_install
