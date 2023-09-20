@@ -1,0 +1,8 @@
+options{
+  directory "/var/cache/bind";
+  {% if forwarder_list %}
+  forwarders { {{ forwarder_list|join('; ') }}; };
+  {% endif %}
+  dnssec-validation auto;
+  listen-on-v6 { any; };
+};

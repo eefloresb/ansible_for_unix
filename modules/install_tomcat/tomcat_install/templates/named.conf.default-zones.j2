@@ -1,0 +1,34 @@
+zone "." {
+  type hint;
+  file "/usr/share/dns/root.hints";
+};
+
+zone "localhost" {
+  type master;
+  file "/etc/bind/db.local";
+};
+
+zone "127.in-addr.arpa" {
+  type master;
+  file "/etc/bind/db.127";
+};
+
+zone "0.in-addr.arpa" {
+  type master;
+  file "/etc/bind/db.0";
+};
+
+zone "255.in-addr.arpa" {
+  type master;
+  file "/etc/bind/db.255";
+};
+
+zone "56.168.192.in-addr.arpa" {
+  type master;
+  file "/etc/bind/56.168.192.in-addr.arpa";
+};
+
+zone "slackwarnet.com" {
+  type master;
+  file "/etc/bind/slackwarnet.com.db";
+};

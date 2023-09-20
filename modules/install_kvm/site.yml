@@ -1,0 +1,48 @@
+---
+- name: Install kvm in remote hosts
+  hosts: all
+  become: true
+  gather_facts: true
+  vars:
+    packages:
+      - qemu-kvm
+      - virt-manager
+      - libvirt-daemon-system
+      - virtinst
+      - libvirt-clients
+      - bridge-utils
+  tasks:
+    - name: Install kvm packages
+      ansible.builtin.package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - packages
+
+    - name: Configure Network interfaces
+      ansible.builtin.file:
+        path: /etc/sysctl.d/bridge.conf
+        state: touch
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: Add the content to bridge
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf/bridge.conf
+        regex: "^(net.brigde.bridge-nf-call-){{ item }}=0"
+        line: '\1{{ item }}'
+
+    - name: Reboot the server
+      ansible.builtin.reboot:
+        reboot_timeout: 120
+
+    - name: The file remote server
+      ansible.builtin.template:
+        src: 00-installer-config.j2
+        dest: /etc/netplan/00-installer-config.yaml
+        mode: "0644"
+        owner: root
+        group: root
+
+    - name: the file remote server

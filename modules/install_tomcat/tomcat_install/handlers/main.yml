@@ -1,0 +1,21 @@
+---
+# handlers file for tomcat_install
+- name: restart_apache2
+  ansible.builtin.service:
+    name: apache2
+    state: restarted
+
+- name: restart_ufw
+  ansible.builtin.service:
+    name: ufw
+    state: reloaded
+
+- name: restart_bind
+  ansible.builtin.service:
+    name: bind9
+    state: restarted
+
+- name: restart_tomcat
+  ansible.builtin.service:
+    name: tomcat
+    state: restarted
