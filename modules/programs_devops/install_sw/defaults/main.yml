@@ -21,11 +21,13 @@ base_packages:
   - ca-certificates
   - ccze
   - curl
+  - ethtool
   - exfat-fuse
   - expect
   - fd
   - finger
   - filezilla
+  - flameshot
   - fontconfig
   - gimp
   - gnome-remote-desktop
@@ -35,6 +37,7 @@ base_packages:
   - hunspell-es
   - iftop
   - iotop
+  - keepassxc
   - libdate-manip-perl
   - links
   - lsb-release
@@ -42,6 +45,7 @@ base_packages:
   - mlocate
   - netcat
   - net-tools
+  - nfs-utils
   - nmap
   - nmon
   - ntfs-3g
@@ -136,7 +140,7 @@ npm_packages:
   - "tree-sitter-cli"
   - "yaml-language-server"
   - "@ansible/ansible-language-server"
-  - yarn
+  - "yarn"
 
 npm_packages_sudo:
   - neovim
