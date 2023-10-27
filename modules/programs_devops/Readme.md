@@ -1,10 +1,19 @@
-# Configurar tu pc/latop para programar para devops
+[![PyPI version](https://img.shields.io/pypi/v/ansible-core.svg)](https://pypi.org/project/ansible-core)
+[![Docs badge](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://docs.ansible.com/ansible/latest/)
+[![Chat badge](https://img.shields.io/badge/chat-IRC-brightgreen.svg)](https://docs.ansible.com/ansible/latest/community/communication.html)
+[![Build Status](https://dev.azure.com/ansible/ansible/_apis/build/status/CI?branchName=devel)](https://dev.azure.com/ansible/ansible/_build/latest?definitionId=20&branchName=devel)
+[![Ansible Code of Conduct](https://img.shields.io/badge/code%20of%20conduct-Ansible-silver.svg)](https://docs.ansible.com/ansible/latest/community/code_of_conduct.html)
+[![Ansible mailing lists](https://img.shields.io/badge/mailing%20lists-Ansible-orange.svg)](https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information)
+[![Repository License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](COPYING)
+[![Ansible CII Best Practices certification](https://bestpractices.coreinfrastructure.org/projects/2372/badge)](https://bestpractices.coreinfrastructure.org/projects/2372)
+
+## Licencia
+Distribuido bajo la licencia XYZ. Ver `LICENSE` para más información.
+
+# Configurar tu pc/latop para programar en entornos de desarrollo o devops
 
 ## Motivo
-En sfinetworks deseamos facilitar las herramientas necesarias para que cada integrante que se incorpora pueda instalar todos los programas necesarios que se usa en la empresa, fiel a su estilo sfi-networks apuesta por el codigo abierto (opensource) que de la mano con ansible te permite tener tu maquina lista para programar.
-
-## Objetivo
-Facilitar al compañero las herramientas de manera rapida y que se pueda acoplar al equipo en el menor tiempo posible
+Cada vez que me instalo una maquina debo configurar mi entorno de escritorio, esto no es seguido, pero entiendase que configurar todo tu equipo tomo al menos unas cuantas horas ó cuando tienes varias personas en una empresa y quieres instalarle o instalarte todos los programas incluyendo los famosos utilitarios como es mi caso entonces opto por programs_devops que me facilita todo desde la primera instalación.
 
 ## Estructura de directorios
 ```mermaid

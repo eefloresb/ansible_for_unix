@@ -22,6 +22,7 @@ thun_desktop_url: "https://raw.githubusercontent.com/mozilla/sumo-kb/main/instal
 fisher_url: "https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish"
 vscode_url: "https://packages.microsoft.com/repos/vscode"
 edge_url: "https://packages.microsoft.com/repos/edge/"
+virtualbox_extension_url: "https://download.virtualbox.org/virtualbox/7.0.12/Oracle_VM_VirtualBox_Extension_Pack-7.0.12.vbox-extpack"
 
 # %%%%%%%%%%%%%%%% deb download %%%%%%%%%%%%%%%%%%%
 url_deb:
