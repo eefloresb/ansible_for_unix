@@ -56,6 +56,7 @@ b. Instalar ansible
 apt install python3 
 apt install python3-pip
 pip3 install ansible-core
+ansible-galaxy collection install community.general
 ```
 
 ```shell

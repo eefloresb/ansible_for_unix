@@ -17,14 +17,14 @@
     dest: /tmp/discord.deb
     mode: '0755'
 
-- name: Download thunderbird to ubuntu
-  ansible.builtin.get_url:
-    url: "{{ thunderbird_url }}"
-    dest: /tmp/thunderbird.tar.gz
-    mode: '0644'
-
-- name: Download the app to desktop in ubuntu
-  ansible.builtin.get_url:
-    url: "{{ thun_desktop_url }}"
-    dest: /usr/share/applications
-    mode: '0644'
+# - name: Download thunderbird to ubuntu
+#   ansible.builtin.get_url:
+#     url: "{{ thunderbird_url }}"
+#     dest: /tmp/thunderbird.tar.gz
+#     mode: '0644'
+#
+# - name: Download the app to desktop in ubuntu
+#   ansible.builtin.get_url:
+#     url: "{{ thun_desktop_url }}"
+#     dest: /usr/share/applications
+#     mode: '0644'

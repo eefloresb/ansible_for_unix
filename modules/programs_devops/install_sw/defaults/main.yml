@@ -24,7 +24,6 @@ base_packages:
   - ethtool
   - exfat-fuse
   - expect
-  - fd
   - finger
   - filezilla
   - flameshot
@@ -49,13 +48,14 @@ base_packages:
   - network-manager-openvpn
   - network-manager-openconnect
   - network-manager-openconnect-gnome
-  - nfs-utils
+  - libnfs-utils
   - nmap
   - nmon
   - ntfs-3g
   - ntp
   - ntpdate
   - openssl
+  - obs-studio
   - perl
   - procps
   - psmisc
@@ -103,6 +103,7 @@ packages:
   # Automation Package
   - apt-transport-https
   - azure-cli
+  - code
   - cpanminus
   - docker-ce
   - docker-ce-cli
@@ -119,7 +120,7 @@ packages:
   - lua5.4
   - lua-nvim
   - ninja-build
-  - microft-edge-stable
+  - microsoft-edge-stable
   - nodejs
   - python3-pip
   - python3-setuptools
@@ -151,7 +152,7 @@ npm_packages_sudo:
   - neovim
 
 fisher_packages:
-  - PatrickF1/fzf.fish
+  - patrickf1/fzf.fish
   - jethrokuan/z
 
 pip_packages:
