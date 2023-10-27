@@ -8,7 +8,7 @@ number_nodejs: "18"
 
 # %%%%%%%%%%%%%%%% git config %%%%%%%%%%%%%%%%%%%
 git_user_name: "Edwin Flores"
-git_user_email: "enrique@sfi-networks.com"
+git_user_email: "enrique@slackwarnet.com"
 
 # %%%%%%%%%%%%%%%% url config %%%%%%%%%%%%%%%%%%%
 tflint_url: "https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh"
@@ -32,7 +32,7 @@ url_deb:
   - package: "https://launchpad.net/~fish-shell/+archive/ubuntu/release-3/+files/fish_3.6.1-1~jammy_amd64.deb"
 
   # %%% powershell
-  - package: "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+  - package: "https://packages.microsoft.com/config/ubuntu/{{ os_version }}/packages-microsoft-prod.deb"
 
 # %%%%%%%%%%%%%%%% gpg url key %%%%%%%%%%%%%%%%%%%
 hashicorp_url_gpg: "https://apt.releases.hashicorp.com/gpg"

@@ -48,8 +48,6 @@
    group: root
    mode: '0644'
 
-# %%%%%%%%%%%%%%%%%%%%%% END configure repo oracle %%%%%%%%%%%%%%%%%
-
 # %%%%%%%%%%%%%%%%%%%%%% configure repo nodejs %%%%%%%%%%%%%%%%%
 
 - name: Download and store Node's key
@@ -67,8 +65,6 @@
    group: root
    mode: '0644'
 
-# %%%%%%%%%%%%%%%%%%%%%% END configure repo nodejs %%%%%%%%%%%%%%%%%
-
 # %%%%%%%%%%%%%%%%%%%%%% configure repo microsoft %%%%%%%%%%%%%%%%%
 - name: Download and store Microsoft's key
   ansible.builtin.get_url:
@@ -81,8 +77,6 @@
   ansible.builtin.apt_repository:
    repo: "deb [arch={{ dpkg_architecture.stdout }} signed-by=/etc/apt/trusted.gpg.d/microsoft.asc] {{ az_url_cli }} {{ ansible_distribution_release }} main"
 
-# %%%%%%%%%%%%%%%%%%%%%% END repo microsoft %%%%%%%%%%%%%%%%%
-
 # %%%%%%%%%%%%%%%%%%%%%% configure repo visual code %%%%%%%%%%%%%%%%%
 - name: Download and install VSCode GPG key
   ansible.builtin.apt_key:
@@ -92,7 +86,6 @@
 - name: Add gpg Microsoft repository
   ansible.builtin.apt_repository:
    repo: "deb [arch={{ dpkg_architecture.stdout }} signed-by=/etc/apt/trusted.gpg.d/vscode-archive-keyring.gpg] {{ vscode_url }} stable main"
-# %%%%%%%%%%%%%%%%%%%%%% END repo visual code %%%%%%%%%%%%%%%%%
 
 # %%%%%%%%%%%%%%%%%%%%%% Configure repo microsoft edge %%%%%%%%%%%%%%%%%
 
@@ -100,4 +93,12 @@
   ansible.builtin.apt_repository:
    repo: "deb [arch={{ dpkg_architecture.stdout }}] {{ edge_url }} stable main"
 
-# %%%%%%%%%%%%%%%%%%%%%% EMD Configure repo  %%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%% Configure repo keepassxc %%%%%%%%%%%%%%%%%
+- name: Add repository for keepassxc
+  ansible.builtin.apt_repository:
+   repo: "deb https://ppa.launchpadcontent.net/phoerious/keepassxc/ubuntu/ {{ ansible_distribution_release }} main"
+
+# %%%%%%%%%%%%%%%%%%%%%% Configure repo  %%%%%%%%%%%%%%%%%
+- name: Add respository for Save Record
+  ansible.builtin.apt_repository:
+   repo: "deb https://ppa.launchpadcontent.net/obsproject/obs-studio/ubuntu/ {{ ansible_distribution_release }} main"

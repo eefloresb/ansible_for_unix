@@ -1,6 +1,5 @@
 ---
 - name: Init block
-  become: true
   block:
 
    - name: Link to program yaml-language-server

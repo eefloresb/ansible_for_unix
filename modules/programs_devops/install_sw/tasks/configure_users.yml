@@ -1,0 +1,201 @@
+---
+- name: Block to configuration repo
+  become: false
+  block:
+
+   - name: Configure git in localhost
+     ansible.builtin.shell: |
+      set -o pipefail
+      git config --global user.email "{{ git_user_email }}"
+      git config --global user.name "{{ git_user_name }}"
+     register: configure_git
+     changed_when: configure_git.rc != 0
+     args:
+      executable: /bin/bash
+
+   - name: Create ~/.local/share/fonts
+     ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: "0755"
+     loop:
+      - "~/.local/share/fonts"
+
+   - name: Download hacker font
+     ansible.builtin.unarchive:
+      src: "{{ hk_font_url }}"
+      dest: ~/.local/share/fonts/
+      remote_src: true
+
+   - name: Configure the hacker nerd fonts
+     ansible.builtin.shell: |
+       set -o pipefail
+       cd ~/.local/share/fonts && curl -fLO "{{ droid_font_url }}"
+     register: nerd_fonts
+     changed_when: nerd_fonts.rc != 0
+     args:
+      chdir: /tmp
+      executable: /bin/bash
+
+   - name: Update cache of fonts
+     ansible.builtin.shell: |
+       set -o pipefail
+       fc-cache -f -v
+     register: fc_cache
+     changed_when: fc_cache.rc != 0
+     args:
+      executable: /bin/bash
+
+   - name: Clone a repo in the separate directoryfisher install craftzdog
+     ansible.builtin.git:
+      repo: https://github.com/craftzdog/dotfiles-public.git
+      dest: /tmp/ansible-examples
+      update: false
+      version: master
+
+   - name: Copy the directories from remote server
+     ansible.builtin.copy:
+      src: /tmp/ansible-examples/.config/
+      dest: ~/.config/.
+      mode: "0755"
+
+   - name: Clone a repo the packer nvim in my local
+     ansible.builtin.git:
+      repo: https://github.com/wbthomason/packer.nvim
+      dest: "~/.local/share/nvim/site/pack/packer/start/packer.nvim"
+      update: false
+      version: master
+
+   - name: Change config the fish to exa
+     ansible.builtin.lineinfile:
+      path: "~/.config/fish/config-linux.fish"
+      regexp: "^alias ll*"
+      line: 'alias ll "exa -l -g --icons -a -s modified -h"'
+      state: present
+
+   - name: Install plugins for nvim
+     community.general.npm:
+      name: "{{ item }}"
+      # path: /home/eflores/
+      global: false
+     loop: "{{ npm_packages }}"
+
+   - name: Install packages complements for nvim
+     ansible.builtin.pip:
+      name: "{{ item }}"
+      executable: pip3
+     loop: "{{ pip_packages }}"
+
+   - name: Copy template the init.lua
+     ansible.builtin.template:
+      src: init.j2
+      dest: "~/.config/nvim/init.lua"
+      mode: "0644"
+
+   - name: Copy file config-linux.fish in remote server
+     ansible.builtin.template:
+      src: config-linux.j2
+      dest: "~/.config/fish/config-linux.fish"
+      mode: "0755"
+
+   - name: Install fisher
+     ansible.builtin.shell: |
+       set -o pipefail
+       curl -sL {{ fisher_url }} | source && fisher install jorgebucaran/fisher
+     register: fisher_std
+     changed_when: fisher_std.rc != 0
+     args:
+      executable: /usr/bin/fish
+
+   - name: Install z by fisher
+     ansible.builtin.shell: |
+       fisher install {{ item }}
+     register: fisher_std
+     changed_when: fisher_std.rc != 0
+     loop:
+      - "{{ fisher_packages }}"
+     args:
+      executable: /usr/bin/fish
+
+   - name: Update install fisher
+     ansible.builtin.shell: |
+       fisher update
+     register: fisher_update
+     changed_when: fisher_update.rc != 0
+     args:
+      executable: /usr/bin/fish
+
+   - name: Add collection community general
+     ansible.builtin.command:
+      cmd: ansible-galaxy collection install "{{ item }}"
+     register: community_general
+     changed_when: community_general.rc != 0
+     loop:
+      - ansible.posix
+      - community.general
+
+   - name: Install neovim with gem
+     ansible.builtin.command:
+      cmd: gem install neovim
+     register: gem_packages
+     changed_when: gem_packages.rc != 0
+     become: true
+
+   - name: Configure servers for autocomplete
+     ansible.builtin.include_tasks:
+      file: configure_programs.yml
+
+   - name: Execute the packer install for plugins
+     ansible.builtin.raw: |
+       nvim --headless -c 'redir >> /tmp/nvim.log' -c 'autocmd User PackerComplete quitall' -c PackerSync
+     register: packer
+     changed_when: packer.rc != 0
+
+   - name: Execute the packer install for plugins
+     ansible.builtin.raw: |
+       nvim --headless -c 'redir >> /tmp/nvim.log' -c 'autocmd User PackerComplete quitall' -c PackerInstall
+     register: packer
+     changed_when: packer.rc != 0
+
+   - name: Execute the packer install for plugins
+     ansible.builtin.raw: |
+       nvim --headless -c 'redir >> /tmp/nvim.log' -c 'MasonUpdate' -c 'quitall'
+     register: packer
+     changed_when: packer.rc != 0
+
+   - name: Install mason bash in programs
+     ansible.builtin.raw: |
+       nvim --headless -c 'redir >> /tmp/nvim.log' -c 'MasonInstall shellcheck' -c 'quitall'
+     register: shellcheck
+     changed_when: shellcheck.rc != 0
+
+   - name: Install tree-sitter bash in programs
+     ansible.builtin.raw: |
+       nvim --headless -c 'redir >> /tmp/nvim.log' -c 'TSInstall bash' -c 'quitall'
+     register: shellcheck
+     changed_when: shellcheck.rc != 0
+
+   - name: Configure Virtualbox for extensions
+     ansible.builtin.shell: |
+       set -o pipefail
+       vboxmanage -v|grep --color -Eo "([[:digit:]]\.?)+"|head -n 1
+     register: extension_vb
+     changed_when: extension_vb.rc != 0
+     args:
+      executable: /bin/bash
+
+   - name: Download extension for repository
+     ansible.builtin.get_url:
+      url: "{{ virtualbox_extension_url }}"
+      dest: /tmp/Oracle_VM_VirtualBox_Extension_Pack-{{ extension_vb.stdout }}.vbox-extpack
+      mode: '0644'
+
+   - name: Install extension pack from local
+     ansible.builtin.shell:
+      cmd: |
+        set -o pipefail
+        echo y | VBoxManage extpack install /tmp/Oracle_VM_VirtualBox_Extension_Pack-{{ extension_vb.stdout }}.vbox-extpack
+     register: vbox_extension
+     changed_when: vbox_extension.rc != 0
+     args:
+      executable: /bin/bash
