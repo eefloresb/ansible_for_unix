@@ -78,3 +78,17 @@
 - name: Configure Users
   ansible.builtin.include_tasks:
     file: configure_users.yml
+
+- name: Up values for private vars
+  ansible.builtin.include_vars:
+    file: ../vars/private.yml
+
+- name: Register ubuntu pro for updates
+  ansible.builtin.shell:
+    cmd: |
+     set -o pipefail
+     sudo pro attach "{{ token_pro_ubuntu }}"
+  register: token_pro
+  changed_when: token_pro.rc != 0
+  args:
+    executable: /bin/bash

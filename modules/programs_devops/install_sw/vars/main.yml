@@ -6,10 +6,6 @@ usuarios:
 
 number_nodejs: "18"
 
-# %%%%%%%%%%%%%%%% git config %%%%%%%%%%%%%%%%%%%
-git_user_name: "Edwin Flores"
-git_user_email: "enrique@slackwarnet.com"
-
 # %%%%%%%%%%%%%%%% url config %%%%%%%%%%%%%%%%%%%
 tflint_url: "https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh"
 droid_font_url: "https://github.com/ryanoasis/nerd-fonts/raw/HEAD/patched-fonts/DroidSansMono/DroidSansMNerdFont-Regular.otf"
