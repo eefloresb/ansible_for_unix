@@ -112,6 +112,7 @@ packages:
   - docker-compose-plugin
   - exa
   - fd-find
+  - fzf
   - gem
   - gh
   - git
