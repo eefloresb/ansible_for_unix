@@ -111,7 +111,7 @@ packages:
   - docker-buildx-plugin
   - docker-compose-plugin
   - exa
-  - fd-find
+ # - fd-find
   - fzf
   - gem
   - gh
