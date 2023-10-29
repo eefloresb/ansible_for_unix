@@ -5,10 +5,9 @@
 [![Repository License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![Ansible CII Best Practices certification](https://bestpractices.coreinfrastructure.org/projects/2372/badge)](https://bestpractices.coreinfrastructure.org/projects/2372)
 
-# Configure the laptop and pc for program the environment developer
+# Configurar tu pc/latop para programar en entornos de desarrollo o devops
 
 ### Motivo
-When input the working, this company 
 Cada vez que me facilitan una maquina debo configurar mi entorno de escritorio para desarrollar tecnologías en devops, esto no es seguido, pero entiendase que configurar todo tu equipo toma al menos unas cuantas horas por ende decidí crear un playbook que me permita configurar mi equipo con todo lo que necesito.
 
 ### Estructura de directorios

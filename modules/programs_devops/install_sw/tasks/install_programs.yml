@@ -62,22 +62,3 @@
 - name: Install the inkdrop deb in the pc
   ansible.builtin.apt:
     deb: /tmp/discord.deb
-
-- name: Download fzf from repository
-  ansible.builtin.git:
-    repo: https://github.com/junegunn/fzf.git
-    dest: /opt/fzf/
-    clone: true
-    depth: 1
-    single_branch: true
-    version: master
-
-- name: Run install script for fzf
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      echo 'y' | /opt/fzf/./install
-  register: fzf_download
-  changed_when: fzf_download.rc != 0
-  args:
-    executable: /bin/bash
