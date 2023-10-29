@@ -1,19 +1,18 @@
 ---
-- name: Crear grupos de Canvia
-  group:
+- name: Create groups for administration
+  ansible.builtin.group:
     name: "{{ item }}"
   with_items:
-    - cnvusers
-    - cnvadmin
+    - acm_admin
 
 - name: Create master directory
-  file:
-    path: /home/canvia
+  ansible.builtin.file:
+    path: /home/ack_slack/
     state: directory
     mode: "0755"
 
 - name: Create users and Administrator
-  user:
+  ansible.builtin.user:
     name: "{{ item.user }}"
     comment: "{{ item.fullname }}"
     group: "{{ 'cnvadmin' if item.admin == True else 'cnvusers' }}"
@@ -30,16 +29,16 @@
   ignore_errors: true
   register: create_user_results
 
-#- name: Mostrar resultados
-#  ansible.builtin.debug:
-#    var: create_user_results
+# - name: Mostrar resultados
+#   ansible.builtin.debug:
+#     var: create_user_results
 #
-#- name: Mostrar resultados
-#  ansible.builtin.debug:
-#    var: create_user_results.results[0].item.cannotchangepass
+# - name: Mostrar resultados
+#   ansible.builtin.debug:
+#     var: create_user_results.results[0].item.cannotchangepass
 
 - name: Eliminar antiguos usuarios de Canvia
-  user:
+  ansible.builtin.user:
     name: "{{ item.user }}"
     state: absent
     force: true
@@ -49,7 +48,7 @@
     label: "{{ item.user }} - {{ item.fullname }}"
 
 - name: Configurar llaves privadas
-  authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ item.split('/')[-1].split('.')[0] }}"
     key: "{{ lookup('file', item) }}"
   with_fileglob:
@@ -58,24 +57,28 @@
     label: "{{ item.split('/')[-1].split('.')[0] }}"
 
 - name: Solicitar cambio de clave en el primer inicio de sesion
-  command: chage -d 0 {{ item.user }}
+  ansible.builtin.command: chage -d 0 {{ item.user }}
   loop: "{{ linux_users }}"
   loop_control:
     label: "{{ item.user }} - {{ item.fullname }}"
+  register: command_change_password
+  changed_when: command_change_password.rc != 0
   when: item.expiredpass
 
 - name: Deshabilitar expiracion de clave para usuarios especiales
-  command: chage -M 9999999 {{ item.user }}
+  ansible.builtin.command: chage -M 9999999 {{ item.user }}
   loop: "{{ generic_users }}"
   loop_control:
     label: "{{ item.user }} - {{ item.fullname }}"
+  register: command_change_expire
+  changed_when: command_change_expire.rc != 0
   when: item.passneverexpires
 
 - name: Crear directorio ~/bin
-  file:
+  ansible.builtin.file:
     state: directory
     path: /home/canvia/{{ item.user }}/bin
-    mode: 0755
+    mode: "0755"
     owner: root
     group: root
   loop: "{{ generic_users }}"
@@ -84,38 +87,38 @@
   when: item.cannotchangepass
 
 - name: Evitar que cambien su clave
-  template:
+  ansible.builtin.template:
     src: templates/passwd
     dest: /home/canvia/{{ item.user }}/bin/passwd
-    mode: 0755
+    mode: "0755"
   loop: "{{ generic_users }}"
   loop_control:
     label: "{{ item.user }} - {{ item.fullname }}"
   when: item.cannotchangepass
 
 - name: Modificar PATH de usuario en ~/.bashrc
-  template:
+  ansible.builtin.template:
     src: templates/bashrc
     dest: /home/canvia/{{ item.user }}/.bashrc
-    mode: 0644
+    mode: "0644"
   loop: "{{ generic_users }}"
   loop_control:
     label: "{{ item.user }} - {{ item.fullname }}"
   when: item.cannotchangepass
 
 - name: Asegurarse que exista /etc/sudoers.d
-  file:
+  ansible.builtin.file:
     state: directory
     path: /etc/sudoers.d
-    mode: 0755
+    mode: "0755"
     owner: root
     group: root
 
 - name: Configurar sudo para usuarios administradores
-  template:
+  ansible.builtin.template:
     src: sudoadmin
     dest: /etc/sudoers.d/{{ item.user }}
-    mode: 0640
+    mode: "0640"
     validate: "/usr/sbin/visudo -cf %s"
     backup: true
   with_items:
@@ -126,10 +129,10 @@
   when: item.admin
 
 - name: Configurar sudo para usuarios no administradores
-  template:
+  ansible.builtin.template:
     src: unprivileged.j2
     dest: /etc/sudoers.d/{{ item.user }}
-    mode: 0640
+    mode: "0640"
     validate: "/usr/sbin/visudo -cf %s"
   with_items:
     - "{{ generic_users }}"

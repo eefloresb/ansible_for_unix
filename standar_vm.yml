@@ -14,14 +14,14 @@
       ansible.builtin.include_role:
         name: ansible_os_basevars
 
-      #   - name: Up values for subscription
-      #     ansible.builtin.include_tasks: password.yml
-      #
-      #   - name: Subscribe the os
-      #     ansible.builtin.include_role:
-      #      name: ansible_os_register
-      #     vars:
-      #      os_register_state: present
+    - name: Up values for subscription
+      ansible.builtin.include_tasks: password.yml
+ 
+    - name: Subscribe the os
+      ansible.builtin.include_role:
+       name: ansible_os_register
+      vars:
+       os_register_state: present
 
     - name: Create users systems and generic
       ansible.builtin.include_role:

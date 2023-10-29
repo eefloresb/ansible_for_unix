@@ -1,4 +1,6 @@
+# files with secret authorized
 private.yml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -55,3 +57,7 @@ Gemfile.lock
 *.key
 *.cert
 *.crt
+
+# Keys private and public
+*.pub
+id_rsa
