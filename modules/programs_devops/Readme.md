@@ -57,9 +57,11 @@ b. *install_sw*: Directorio que contiene los roles
 5. vars: Define the values from project with urls of packages and user's configuration
     * The private_yml file is encrypted because it contains sensitive information, such as passwords. This makes it useful for securely declaring and storing confidential values.
 
-        a. git_user_name: << you user account in [github](https://github.com)>>
-        b. git_user_email: << you email account register in github or personal email >>
-        c. token_pro_ubuntu: << The token from ubuntu pro, this is free, you register in canonical>>
+        a. _git_user_name_: << you user account in [github](https://github.com)>>
+
+        b. _git_user_email_: << you email account register in github or personal email >>
+
+        c. _token_pro_ubuntu_: << The token from ubuntu pro, this is free, you register in canonical >>
         
     **Note:** If you prefer, you can leave the values blank, but you must declare the variables as empty.
 6. defaults: Contiene la configuración por defecto para el ansible.
