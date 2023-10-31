@@ -26,6 +26,6 @@ eflores267@gmail.com
 
 # Comunicado
 
-Fin del soporte a rama main de Canvia se apertura nueva rama master, en ella se ira actualizando los playbooks.
+Fin del soporte a rama main de Canvia se apertura nueva rama master de tipo personal, en ella se ira actualizando los playbooks.
 
 Saludos
