@@ -3,11 +3,12 @@
   ansible.builtin.group:
     name: "{{ item }}"
   with_items:
-    - acm_admin
+    - cnvusers
+    - cnvadmin
 
 - name: Create master directory
   ansible.builtin.file:
-    path: /home/ack_slack/
+    path: /home/canvia
     state: directory
     mode: "0755"
 
