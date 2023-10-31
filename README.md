@@ -8,16 +8,24 @@
 [![Ansible CII Best Practices certification](https://bestpractices.coreinfrastructure.org/projects/2372/badge)](https://bestpractices.coreinfrastructure.org/projects/2372)
 
 # Ansible for Unix
+
 Scripts en ansible desarrollados para equipos UNIX ( solaris/GNU-Linux/AIX ) requiere
 
-* python 
-* ansible 2.10
-* ansible-galaxy
-* Ubuntu 22.04
+- python
+- ansible 2.10
+- ansible-galaxy
+- Ubuntu 22.04
 
-# Estructura 
+# Estructura
+
 Dentro del desarrollo se encuentra muchos casos practicos relacionados a anteriores trabajos realizados
 
 # Developer
 
 eflores267@gmail.com
+
+# Comunicado
+
+Fin del soporte a rama main de Canvia se apertura nueva rama master, en ella se ira actualizando los playbooks.
+
+Saludos
