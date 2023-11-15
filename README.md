@@ -27,7 +27,12 @@ New Repository: The new home for ongoing development and support is [New Reposit
 
 Archived Status: [ansible](https://github.com/eefloresb/ansible) will be archived and maintained for reference purposes, but no further updates will be released here.
 
-We appreciate your understanding and look forward to your continued engagement with our projects. If you have any questions or concerns, please reach out to us at [mailto](2000923@unmsm.edu.pe).
+We appreciate your understanding and look forward to your continued engagement with our projects. If you have any questions or concerns, please reach out to us at
+<br /><br />
+<a href="mailto:2000923@unmsm.edu.pe">Send me an e-mail
+  <img align="left" width="26px" src="https://raw.githubusercontent.com/gilbarbara/logos/main/logos/google-gmail.svg" />
+</a>
+<br/>
 
 Thank you for being part of our community.
 
