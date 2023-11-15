@@ -25,7 +25,7 @@ End of Support: We will no longer provide updates, bug fixes, or support for [Va
 
 New Repository: The new home for ongoing development and support is [New Repository Link](https://github.com/eefloresb/ansible). Please make sure to follow and contribute to the new repository.
 
-Archived Status: [vagrant](https://github.com/eefloresb/examples_vagrant_linux) will be archived and maintained for reference purposes, but no further updates will be released here.
+Archived Status: [ansible](https://github.com/eefloresb/examples_vagrant_linux) will be archived and maintained for reference purposes, but no further updates will be released here.
 
 We appreciate your understanding and look forward to your continued engagement with our projects. If you have any questions or concerns, please reach out to us at [mailto](2000923@unmsm.edu.pe).
 
