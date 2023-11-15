@@ -15,7 +15,7 @@ End of Support for Project ansible_for_unix.
 
 Dear Community,
 
-We want to inform you that support for ansible_for_unix has officially concluded. Going forward, all updates, improvements, and related activities will be carried out in the new repository, which can be found at new repository.
+We want to inform you that support for **ansible_for_unix** has officially concluded. Going forward, all updates, improvements, and related activities will be carried out in the new repository, which can be found at __new repository__.
 
 This decision is part of our ongoing commitment to streamline and enhance our projects. We encourage all users and contributors to transition to the new repository to ensure access to the latest features and support.
 
