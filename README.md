@@ -7,26 +7,30 @@
 [![Repository License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](COPYING)
 [![Ansible CII Best Practices certification](https://bestpractices.coreinfrastructure.org/projects/2372/badge)](https://bestpractices.coreinfrastructure.org/projects/2372)
 
-# Ansible for Unix
+### Public Notice:
 
-Scripts en ansible desarrollados para equipos UNIX ( solaris/GNU-Linux/AIX ) requiere
+End of Support for Project [ansible](https://github.com/eefloresb/ansible_for_unix)
 
-- python
-- ansible 2.10
-- ansible-galaxy
-- Ubuntu 22.04
+**Date:** 14/11/23
 
-# Estructura
+Dear Community,
 
-Dentro del desarrollo se encuentra muchos casos practicos relacionados a anteriores trabajos realizados
+We want to inform you that support for [ansible](https://github.com/eefloresb/ansible_for_unix) has officially concluded. Going forward, all updates, improvements, and related activities will be carried out in the new repository, which can be found at [New Repository Link](https://github.com/2000923/ansible).
 
-# Developer
+This decision is part of our ongoing commitment to streamline and enhance our projects. We encourage all users and contributors to transition to the new repository to ensure access to the latest features and support.
 
-eflores267@gmail.com
+Here are some key points to note:
 
-# Comunicado
+End of Support: We will no longer provide updates, bug fixes, or support for [Vagrant](https://github.com/eefloresb/ansible_for_unix).
 
-A fecha 31/10/2023 se establece:
-* Fin del soporte a rama main de Canvia se apertura nueva rama master, en ella se ira actualizando los playbooks.
+New Repository: The new home for ongoing development and support is [New Repository Link](https://github.com/eefloresb/ansible). Please make sure to follow and contribute to the new repository.
 
-Saludos
+Archived Status: [vagrant](https://github.com/eefloresb/examples_vagrant_linux) will be archived and maintained for reference purposes, but no further updates will be released here.
+
+We appreciate your understanding and look forward to your continued engagement with our projects. If you have any questions or concerns, please reach out to us at [mailto](2000923@unmsm.edu.pe).
+
+Thank you for being part of our community.
+
+Sincerely,
+
+[Enrique](https://www.linkedin.com/in/edwin-enrique-flores-bautista/)
